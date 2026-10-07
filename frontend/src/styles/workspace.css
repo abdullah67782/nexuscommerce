@@ -178,3 +178,10 @@
 
 @keyframes train-sweep { from { left: -35%; } to { left: 100%; } }
 @keyframes day-fill { 0%, 100% { background: var(--surface-3); } 40% { background: var(--accent); } }
+
+/* Upload: overlap decision */
+@layer components {
+  .overlap-body { display: grid; gap: 12px; }
+  .overlap-list { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; color: var(--text-2); }
+  .overlap-list strong { color: var(--text); font-weight: 500; }
+}

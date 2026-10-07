@@ -24,15 +24,19 @@ test('CSV upload stores sales, creates version 1 and reports quality', async () 
   assert.equal(freshness.body.total_records, 60);
 });
 
-test('re-uploading the same file skips duplicates and creates version 2', async () => {
+test('re-sending the same file without an operation id replays the original import', async () => {
   const a = await registerSeller(ctx.api, 'a@test.com');
   const csv = salesCsv(['Mouse'], 20);
-  await ctx.api('POST', '/data/upload', { token: a.token, form: csvForm(csv) });
+  const first = await ctx.api('POST', '/data/upload', { token: a.token, form: csvForm(csv) });
   const again = await ctx.api('POST', '/data/upload', { token: a.token, form: csvForm(csv) });
-  assert.equal(again.status, 200);
-  assert.equal(again.body.inserted, 0);
-  assert.equal(again.body.skipped, 20);
-  assert.equal(again.body.version_number, 2);
+  assert.equal(again.status, 200, JSON.stringify(again.body));
+  assert.equal(again.body.replayed, true);
+  assert.equal(again.body.upload_id, first.body.upload_id);
+  assert.equal(again.body.inserted, 20, 'replay reports the original result');
+  const versions = await ctx.api('GET', '/data/versions', { token: a.token });
+  assert.equal(versions.body.versions.length, 1);
+  const { rows } = await ctx.pool.query('SELECT COUNT(*)::int AS n FROM sales');
+  assert.equal(rows[0].n, 20);
 });
 
 test('invalid rows are rejected and recorded as anomalies the seller can resolve', async () => {
@@ -94,9 +98,7 @@ test('product names that collide with JavaScript object properties upload normal
   assert.deepEqual(products.body.products.map(p => p.name).sort(), ['__proto__', 'constructor', 'toString']);
 });
 
-// Known gap, fixed by the proposed import-identity migration (docs/import-identity-and-coverage.md).
-test('re-uploading the same file without a revenue column does not duplicate sales',
-  { todo: 'needs file/row import identity (proposed migration 002)' }, async () => {
+test('re-uploading the same file without a revenue column does not duplicate sales', async () => {
     const a = await registerSeller(ctx.api, 'a@test.com');
     const csv = ['product_name,quantity,sale_date', 'Mouse,1,2026-01-01', 'Mouse,2,2026-01-02'].join('\n');
     await ctx.api('POST', '/data/upload', { token: a.token, form: csvForm(csv) });

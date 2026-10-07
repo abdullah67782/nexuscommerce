@@ -87,11 +87,16 @@ test('an explicit import_id is idempotent, and reusing it for different data is 
   assert.equal(await salesCount(), 2);
 });
 
-test('a different import_id is a new import, even with identical rows', async () => {
+test('a new import_id with rows already imported is refused unless the import says append', async () => {
   await connect({ ...noRevenue, import_id: 'batch-1' });
   const second = await connect({ ...noRevenue, import_id: 'batch-2' });
-  assert.equal(second.body.replayed, false);
-  assert.equal(second.body.records_imported, 2);
+  assert.equal(second.status, 409, JSON.stringify(second.body));
+  assert.equal(second.body.error, 'overlap_requires_choice');
+  assert.deepEqual(second.body.overlaps.map(o => o.sale_date), ['2026-01-01', '2026-01-02']);
+  assert.equal(await salesCount(), 2, 'nothing written');
+  const append = await connect({ ...noRevenue, import_id: 'batch-2', overlap_mode: 'append' });
+  assert.equal(append.status, 200, JSON.stringify(append.body));
+  assert.equal(append.body.records_imported, 2);
   assert.equal(await salesCount(), 4);
 });
 
@@ -139,12 +144,17 @@ test('store connect requires login, a non-empty sales list and a sane import_id'
   assert.equal((await connect({ ...payload, import_id: 42 })).status, 400);
 });
 
-// Known gap, fixed by the proposed import-identity migration (docs/import-identity-and-coverage.md):
-// the legacy (product, date, quantity, revenue) constraint merges genuine identical orders.
-test('two genuine identical orders in one import are both kept', { todo: 'needs line-level source identity (proposed migration 002)' }, async () => {
+test('two genuine identical orders in one import are both kept (with and without revenue)', async () => {
   const res = await connect({ sales: [
     { product_name: 'Mouse', quantity: 1, sale_date: '2026-01-07', revenue: 10 },
     { product_name: 'Mouse', quantity: 1, sale_date: '2026-01-07', revenue: 10 },
+    { product_name: 'Pad', quantity: 2, sale_date: '2026-01-07' },
+    { product_name: 'Pad', quantity: 2, sale_date: '2026-01-07' },
   ] });
-  assert.equal(res.body.records_imported, 2);
+  assert.equal(res.status, 200, JSON.stringify(res.body));
+  assert.equal(res.body.records_imported, 4);
+  assert.equal(res.body.identical_rows_kept, 2);
+  assert.equal(await salesCount(), 4);
+  const rows = await ctx.pool.query('SELECT source_row_number FROM sales ORDER BY source_row_number');
+  assert.deepEqual(rows.rows.map(r => r.source_row_number), [1, 2, 3, 4]);
 });

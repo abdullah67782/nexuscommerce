@@ -11,9 +11,15 @@
 ```bash
 createdb nexuscommerce
 cd backend
-node config/initDb.js
-node seeder.js
+npm run migrate          # applies versioned migrations (same as: node config/initDb.js)
+node seeder.js           # demo data — destructive, demo databases only
 ```
+The server does not create or change tables on startup; it refuses to start until
+pending migrations are applied. Take a backup (`pg_dump -Fc`) before migrating an
+existing database. See `docs/import-identity-and-coverage.md`.
+
+Tests: `cd backend && npm test` — needs a separate database whose name ends in
+`_test` (copy `backend/test/env.example` to `backend/.env.test`).
 
 ### 2. Backend
 ```bash

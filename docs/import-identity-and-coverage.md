@@ -1,146 +1,196 @@
-# Import identity, line identity and data coverage — proposal
+# Import identity and data coverage
 
-Status: **proposal for architect review**. Part A is live. Parts B–E are the proposed
-migration `backend/migrations/proposed/002_import_identity_and_coverage.sql`, which is
-**not applied** and is not loaded by any code.
+Status on branch `feature/import-identity`:
 
-## Problem
+| Part | State |
+|---|---|
+| A. Versioned migrations | implemented, tested on disposable databases |
+| B. Migration 002: sources, batch/line/row identity, ownership checks | implemented, tested on disposable databases, **not applied to the development database** |
+| C. Overlap: reject (default) and explicit append | implemented |
+| D. `replace_period` | deferred — needs its own reviewed design (replacement chains, partial coverage, rollback restoration) |
+| E. Coverage (proposed 003) | design only: `docs/proposals/003_data_coverage.sql` |
 
-1. **Retries duplicate sales.** The only protection was the legacy constraint
-   `UNIQUE (product_id, sale_date, quantity, revenue)`. PostgreSQL treats NULLs as
-   distinct, so rows without revenue were inserted again on every retry.
-2. **Genuine sales are merged.** The same constraint merges two real orders with the
-   same product, day, quantity and revenue, so daily totals come out too low.
-3. **File dates are not proof of coverage.** A file's first and last transaction
-   dates do not prove that every day in between is present. Zero-filling a range
-   that is only *observed*, not *confirmed*, invents zero-sale days.
+## A. Versioned migrations
 
-## A. Live now (initDb.js step 5 + `routes/store.js`)
+- **Files:** `backend/migrations/NNN_name.sql`, each applied in its own transaction.
+  The runner is `backend/db/migrate.js`.
+- **Recording:** `schema_migrations(version, name, checksum, applied_at)` stores each
+  applied migration and the SHA-256 of its file. An applied file that has been edited
+  blocks both migrating and startup.
+- **`001_baseline.sql`:** exactly what `config/initDb.js` built up to `f0ce988`, made
+  idempotent. On an existing database it changes nothing; it is only recorded.
+- **Startup never runs DDL.** `server.js` calls `assertSchemaCurrent()` and refuses to
+  start if migrations are pending or files were edited. A restart therefore can't
+  undo a migration — for example, by re-adding the old uniqueness constraint, which
+  `initDb.js` step 3 used to do on every start.
+- **Applying is explicit:** `npm run migrate`, or `node config/initDb.js`, which now
+  does the same.
+- **Status and reversal:** `npm run migrate:status`; `node db/migrate.js down 2`
+  reverses the latest migration. Only the latest can be reversed.
 
-- Every `/api/store/connect` call is one **import record** in `data_uploads`
-  (`source = 'store_connect'`). It gets an upload version, and every sale and every
-  product it creates carries `upload_id`. It can be rolled back like a file upload.
-- **Identity:** the client's `import_id`, otherwise the SHA-256 of the canonical
-  payload (keys sorted). The record is claimed with
-  `INSERT … ON CONFLICT (uploaded_by, idempotency_key) DO NOTHING` **inside the same
-  transaction** as the data. A concurrent retry waits on the unique index, then
-  returns the committed original.
-- **Responses:**
-  - retry → `200 {…original result, replayed: true, rolled_back}`;
-  - same `import_id` with different data → `409 import_id_conflict`.
-- **Still to do:** the legacy constraint is still in place, so identical genuine
-  rows are still merged. This is a known test marked `todo`.
+## B. Migration 002 — identity
 
-## B. Line identity (proposed)
-
-| Source | Identity of a sale row | Prevents replay by |
+| Layer | Identity | Behaviour |
 |---|---|---|
-| API with line ids | `(connection_id, source_line_id)`, unique | the line id itself, across batches |
-| API without line ids | `(upload_id, source_row_number)` | the import identity of the batch |
-| File | `(upload_id, source_row_number)` | file identity `file:<sha256>` |
+| Batch (import operation) | `data_uploads (uploaded_by, idempotency_key)` | Key = explicit operation id (`client:<import_id>` for API imports, `file-op:<operation_id>` for files), otherwise a content fingerprint (`payload:<sha256>` / `file-content:<sha256>`). Same key + same content → original result, `replayed: true`. Same key + different content → `409`. |
+| Line (when the source sends line ids) | `sales (source_id, source_line_id)`, unique | Same id + same contents → skipped (counted in `skipped` / `duplicates_skipped`). Same id + **different** contents → `409 line_conflict` and **nothing** from that import is written. Also applies to a line id repeated inside one batch. |
+| Row | `sales (upload_id, source_row_number)`, unique | Every row of an import is distinct, so genuine identical orders are kept. The row number is the original data-row number, preserved through cleaning and validation, and stored on anomalies too. |
 
-- **Order IDs are not used:** one order can have several lines, so `source_line_id`
-  must identify the line, not the order.
-- **Identical genuine rows are kept:** they get different row numbers.
-- **The legacy constraint goes:** it is dropped in the same release in which both
-  import paths write line identity. In that release:
-  - `initDb.js` step 3, which re-adds the constraint on every start, must be removed;
-  - the `attributed_sales` definition must move from `initDb.js` to the migration.
-- **Rollback releases the identity** (`idempotency_key := NULL`), so the same file or
-  `import_id` can be imported again deliberately.
+**Both duplicate-removal layers are replaced:**
 
-## C. Overlapping files without line ids (proposed)
+- the database rule `unique_sale_transaction (product_id, sale_date, quantity, revenue)`
+  is dropped;
+- `removeDuplicates()` (content-based, in `routes/data.js`) is removed.
 
-The rows can't be matched to earlier rows, so the seller must choose. The upload
-takes `overlap_mode`:
+**Rollback keeps the identity.**
+- A rolled-back import stays in `data_uploads` with `status = 'rolled_back'` and its
+  key. A delayed retry receives the original result with `rolled_back: true`, and
+  nothing is restored.
+- A deliberate re-import needs a **new operation id**. File fingerprints identify
+  content only: an explicitly new `operation_id` is always a new operation, and the
+  overlap rules then apply to it.
 
-- `reject` (default): `409` with the overlapping products and dates. Nothing is
-  written.
-- `append`: the seller states these are additional sales.
-- `replace_period`: the seller states this file supersedes earlier rows for the same
-  products and dates. Earlier rows get `superseded_by_upload_id`; they are hidden by
-  `attributed_sales`, not deleted. Rolling back the replacing import clears the flag.
+**Sources.** `data_sources` holds one `file` source per seller and one `api` source
+per connected store (`provider`, `external_store_id`). Each source has an IANA
+`timezone`.
 
-Overlap is detected against active imports of the same seller, while holding
-`pg_advisory_xact_lock(seller_id)`.
+**Ownership consistency:**
 
-## D. Coverage (proposed)
+- composite FK `data_uploads (source_id, uploaded_by) → data_sources (id, seller_id)`;
+- triggers on `sales` (import seller = product owner; row source = import source) and
+  on `products` (an import-created product belongs to the importer).
 
-`data_coverage` records, per import or per connection:
+These checks apply to new or changed rows. Legacy conflicting rows stay quarantined
+by `attributed_sales`.
 
-- `observed_start` / `observed_end`: informational only;
-- `declared_start` / `declared_end`;
-- `scope`: `all_products`, or `listed_products` (with `data_coverage_products`);
-- `status`: `unconfirmed`, `confirmed` or `revoked`;
-- `evidence`: `seller_declaration` or `connector_full_export`, plus a note;
-- who declared it and when, and who revoked it, when and why
-  (`rollback`, `seller_revoked` or `superseded`).
+**Concurrency.**
+- Every import and rollback transaction takes `pg_advisory_xact_lock(7401, seller_id)`,
+  so a seller's file uploads, store-connect imports and rollbacks are serialised.
+- `upload_versions (seller_id, version_number)` is unique as a backstop.
+- The replay path reuses the connection it already holds, so it works on a
+  one-connection pool.
 
-**Resolution rules (used by v2 later):**
+**Freshness** is recomputed inside the same transaction after every successful
+import and rollback:
 
-- A product's covered days are the union of its seller's **confirmed**, non-revoked
-  periods that apply to it, starting no earlier than its first known sale.
-- **Inside** coverage, a day without sales is 0. **Outside** coverage the day is
-  unknown, never zero.
-- A rollback revokes the import's coverage in the same transaction.
-- Repeated imports: confirmed periods are merged.
-- Existing uploads are backfilled as `unconfirmed`, with observed dates only.
+- `last_upload_at` = the latest **committed** import;
+- totals and the last sale date come from `attributed_sales`.
 
-## E. API contract (proposed)
+## Business dates
 
-`POST /api/store/connect`:
+- **What a sale date is:** a business-local calendar day in the source's timezone.
+- **Accepted formats:**
+  - `YYYY-MM-DD` → that day;
+  - `YYYY-MM-DD HH:MM[:SS]` → local business time, so its calendar day;
+  - ISO timestamp with `Z` or `±HH:MM` → converted to the source timezone's day;
+  - Excel serial numbers (date cells in `.xlsx`) → that day.
+- **Rejected as `invalid_date`:** anything else, including `01/02/2026`. Day and
+  month order is ambiguous, and the old code silently read it as US order.
+- **Future dates:** "future" means after today **in the source timezone**.
+- **API output:** DATE columns are returned as `YYYY-MM-DD` strings. The pg default
+  shifted them by a day on servers east of UTC.
+- **Default timezone:** a source's default timezone is `DEFAULT_BUSINESS_TIMEZONE`,
+  falling back to `UTC`. Backfilled sources are `UTC`.
+  - **Decision needed:** should the default be `Asia/Karachi` for this deployment?
 
-```
-{ import_id?, connection?: {provider, external_store_id, display_name?},
-  products: [...],
-  sales: [{product_name, quantity, sale_date, revenue?, line_id?}],
-  coverage?: {start, end, scope, product_names?, confirmed: true, evidence_note?} }
-```
+## C. Overlap
 
-The response adds `connection_id` and `lines_without_id`.
+Overlap applies only to rows **without line ids**, checked against existing rows of the
+**same source** on the same (product, date):
 
-`POST /api/data/upload` (multipart), optional fields:
+- **`reject` (default):** `409 overlap_requires_choice`, listing up to 20
+  product/dates. Nothing is written, and the claimed identity is released with the
+  transaction.
+- **`append`:** the import states that these are additional sales. This is recorded on
+  the import (`data_uploads.overlap_mode`).
+- The upload page sends a new `operation_id` per upload click. On `409` it offers
+  **Cancel** or **Add as extra sales** (same operation, `overlap_mode=append`).
 
-- `overlap_mode`: `reject` | `append` | `replace_period`
-- `coverage_start`, `coverage_end`, `coverage_scope`, `coverage_confirmed=true`
+## D. Deferred: `replace_period`
 
-Responses:
+Not implemented. A separate design must first cover:
 
-- `200` → normal result;
-- `200 {replayed: true}` → identical file already imported;
-- `409 overlap_requires_choice` → `{overlaps: [{product, start, end, existing_upload_ids}]}`.
+- chains of replacements;
+- partial coverage;
+- restoring superseded rows when a replacing import is rolled back.
 
-Coverage endpoints:
+## E. Coverage (proposed 003 — corrected design, not implemented)
 
-- `PUT /api/data/uploads/:id/coverage` → `{start, end, scope, product_ids?, evidence_note?}`.
-  Owner only; the import must not be rolled back. Returns `200`, `400` or `404`.
-- `DELETE /api/data/uploads/:id/coverage` → status becomes `revoked`
-  (`seller_revoked`).
-- `GET /api/data/coverage?product_id=` →
-  `{confirmed_periods: [{start, end, upload_ids}], unknown_gaps: [{start, end}], latest_confirmed_date, contiguous_days_to_latest}`.
+See `docs/proposals/003_data_coverage.sql`.
 
-## F. Tests required with the migration
+1. **Scope.** A coverage record belongs to exactly **one source**, plus `all_products`
+   or a listed product set. Confirmed intervals are merged only within the same source
+   and product scope. A connected store's coverage never proves completeness for
+   another source, or for another product set.
+2. **Ownership consistency.** Composite FKs `(source_id, seller_id)`,
+   `(upload_id, seller_id)`, `(product_id, seller_id)` and `(coverage_id, seller_id)`,
+   so a coverage record, its import, its source and its products all belong to one
+   seller.
+3. **Dates.** Inclusive business-local days `[declared_start, declared_end]` in the
+   source timezone. `declared_end` must be on or before today in that zone.
+   Observed first and last dates are informational only.
+4. **Zero-transaction exports.** A confirmed complete export with **no rows** is valid
+   and establishes coverage (zero sales). It needs an import record with
+   `total_records = 0`, and is allowed only with confirmed coverage attached.
+5. **Revocation.**
+   - A rollback revokes the import's coverage in the same transaction (reason
+     `rollback`).
+   - A seller can revoke coverage (reason `seller_revoked`).
+   - Revoked periods are never used.
+6. **Resolution.**
+   - For one product and one source: the union of confirmed, non-revoked intervals
+     that apply to the product, starting no earlier than its first known sale.
+   - Inside coverage, a day with no rows is 0. Outside coverage, the day is unknown,
+     never zero.
+   - Across sources, a day is known only if **every** source that sells the product
+     is covered for it. Otherwise it is unknown.
 
-- Null revenue: retry, and identical genuine rows.
-- Identical genuine orders in one batch and in one file: both kept.
-- Retries: same `import_id`, payload-derived identity, and replay of the same file.
-- Concurrent retries (3 in parallel): exactly one import, one version and N rows.
-- The same `line_id` in two batches of one connection: stored once. The same
-  `line_id` in another seller's connection: allowed.
-- Overlap modes: `reject` writes nothing; `append` adds rows; `replace_period`
-  supersedes, and rolling back the replacing import restores the earlier rows.
-- Rollback releases the identity and revokes coverage.
-- Coverage: zero-fill only inside confirmed periods; unknown gaps reported;
-  `listed_products` scope respected; revoked periods ignored.
-- `initDb.js` restart after the migration: no constraint re-added, and the view
-  definition is unchanged.
+## Rollback strategy for migration 002
 
-## G. Migration order
+1. **Before applying:** `pg_dump -Fc nexuscommerce > pre_002.dump`, and verify that it
+   restores into a scratch database.
+2. **Rehearse:** apply on a restored copy first (`npm run migrate`), then run the test
+   suite against it.
+3. **Preferred rollback:** restore `pre_002.dump`. Imports made after the migration
+   are lost and must be redone.
+4. **Alternative:** `node db/migrate.js down 2` runs `002_import_identity.down.sql` in
+   one transaction.
+   - **It refuses and changes nothing** if genuine identical rows exist that the
+     legacy rule would reject.
+   - **It keeps** every sale, product and import record.
+   - **It drops** sources, line ids, row numbers, import status and fingerprints.
+   - After it, the server refuses to start until `npm run migrate` is run again, or
+     the code is switched back to `main`.
+5. **Code:** the migration and the code that depends on it ship together on this
+   branch. `main` stays on the old schema until the merge is approved.
 
-1. `pg_dump -Fc`.
-2. Ownership repair reviewed, or explicitly deferred.
-3. Release the code and apply 002 together.
-4. Run the full test suite against a restored copy first.
+## Tests (backend, `npm test`)
 
-**Rollback:** restore the dump. The manual DOWN steps are in the SQL file, but once
-identical genuine rows exist they can't re-add the legacy constraint.
+- **`identity.test.js`:**
+  - identical rows kept, with row numbers;
+  - operation-id replay and conflict;
+  - a new operation that overlaps → `409`, then `append`;
+  - rollback keeps identity, for both files and API imports;
+  - line ids: skip, conflict, within-batch conflict, scoped per connection and per
+    seller;
+  - `line_id` column in files;
+  - Excel serial dates;
+  - ambiguous dates rejected;
+  - timezone conversion;
+  - overlap only within the same source;
+  - concurrent mixed file / API / rollback operations: versions unique and
+    contiguous;
+  - freshness after imports and rollbacks.
+- **`upgrade.test.js`** (disposable database):
+  - a database built the old way with legacy data upgrades with no row loss;
+  - the quarantine is unchanged;
+  - sources are backfilled, and identity and rollback state are kept;
+  - after 002, identical rows are allowed and provenance violations refused;
+  - restarting is a no-op and can't undo the migration;
+  - reversal refuses with genuine identical rows, works after they're cleaned, and
+    can be re-applied;
+  - an edited migration file blocks both migrate and startup.
+- **`pool.test.js`:** one-connection pool, replay and saturation.
+- **Former TODOs, now passing:**
+  - identical genuine orders in one import;
+  - a file without revenue sent again (replayed, not duplicated).

@@ -92,3 +92,37 @@ The script runs inside `BEGIN TRANSACTION READ ONLY … ROLLBACK`. It reports:
   automatically; they are listed for manual correction.
 - Inventory is per product, not per seller import, so stock overwritten by another
   seller's file is flagged but not reconstructed.
+
+## Marking possibly contaminated models and metrics as untrusted (before any reuse)
+
+Personal models and their metrics may have been trained or measured on sales that
+another seller's import attached to this seller's products. Model files are
+**kept**, not deleted. They must be marked untrusted before anything reuses them
+— including re-enabling training or serving them in a future v2.
+
+1. **Find affected sellers.** These are the sellers listed in section 5b of the dry
+   run whose `model_metrics` or `finetune_jobs` were recorded after their first
+   conflicting import. A model trained on a seller's whole history
+   (`xgb_finetuned_<seller>.pkl`) is affected if any conflicting row of that seller
+   existed when it was trained.
+2. **Record the decision (proposed, not yet built).** Add a `model_trust` table with
+   these columns:
+   - `seller_id`, `model_name`, `artifact_path`, `artifact_sha256`;
+   - `status`: `untrusted` | `trusted` | `retired`;
+   - `reason`, `decided_by`, `decided_at`.
+
+   One row is written per affected artifact, with status `untrusted` and
+   reason `trained_on_quarantined_sales`. The artifact hash pins the decision to the
+   exact file.
+3. **Enforce it.**
+   - The ML server's model loader skips any artifact whose `(path, sha256)` is
+     `untrusted`, and uses the general model instead.
+   - The forecasting page and `/forecast/metrics` stop showing accuracy for untrusted
+     metrics; they show "not available" instead.
+   - Until this table exists, the safeguard is that training stays disabled
+     (`MANUAL_FINETUNE_ENABLED` unset). The one existing personal model,
+     `xgb_finetuned_3.pkl`, should also be checked against the dry run before it
+     is relied on.
+4. **Make a model trusted again** only by retraining after the repair, on
+   `attributed_sales`, with a held-out evaluation, and recording the new artifact
+   hash as `trusted`. Never flip the status of an old file.

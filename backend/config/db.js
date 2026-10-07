@@ -1,4 +1,10 @@
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
+
+// DATE columns hold business-local calendar days (see lib/imports.js). Return
+// them as 'YYYY-MM-DD' strings: pg's default turns them into a JS Date at the
+// server's local midnight, which JSON then prints in UTC — a day early for
+// any server east of UTC.
+types.setTypeParser(types.builtins.DATE, (value) => value);
 const dotenv = require('dotenv');
 
 dotenv.config();

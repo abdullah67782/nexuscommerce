@@ -18,9 +18,26 @@ before(async () => {
   conflictUpload = (await ctx.pool.query(
     `INSERT INTO data_uploads (uploaded_by, file_format, total_records, clean_records, quality_score)
      VALUES ($1, 'csv', 1, 1, 100) RETURNING id`, [b.id])).rows[0].id;
-  await ctx.pool.query(
-    `INSERT INTO sales (product_id, quantity, sale_date, revenue, upload_id)
-     VALUES ($1, 500, '2026-01-20', 5000, $2)`, [productA, conflictUpload]);
+  // Written before migration 002, which now forbids such rows; bypass its
+  // trigger only to reproduce the legacy data.
+  await ctx.pool.query('ALTER TABLE sales DISABLE TRIGGER sales_provenance_check');
+  try {
+    await ctx.pool.query(
+      `INSERT INTO sales (product_id, quantity, sale_date, revenue, upload_id)
+       VALUES ($1, 500, '2026-01-20', 5000, $2)`, [productA, conflictUpload]);
+  } finally {
+    await ctx.pool.query('ALTER TABLE sales ENABLE TRIGGER sales_provenance_check');
+  }
+});
+
+test('new rows that contradict provenance are refused by the database', async () => {
+  await assert.rejects(
+    ctx.pool.query(`INSERT INTO sales (product_id, quantity, sale_date, upload_id) VALUES ($1, 1, '2026-01-21', $2)`,
+      [productA, conflictUpload]),
+    /sale provenance/);
+  await assert.rejects(
+    ctx.pool.query(`INSERT INTO products (name, user_id, upload_id) VALUES ('X', $1, $2)`, [a.id, conflictUpload]),
+    /product provenance/);
 });
 after(async () => { await ctx.teardown(); });
 

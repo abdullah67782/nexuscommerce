@@ -154,6 +154,9 @@ export default function UploadPage() {
   const [rollbackTarget, setRollbackTarget] = useState(null);
   const [rollbackLoading, setRollbackLoading] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  // Set when the server refuses a file because it overlaps sales already
+  // imported for the same products and dates; the seller decides what it is.
+  const [overlap, setOverlap] = useState(null);
 
   // ── Data fetch ─────────────────────────────────────────────────────────────
   const fetchPageData = useCallback(async () => {
@@ -189,9 +192,18 @@ export default function UploadPage() {
   };
 
   // ── Upload ────────────────────────────────────────────────────────────────
-  const handleUpload = async () => {
+  // Each upload action gets its own operation id. Automatic retries of the
+  // same request reuse it (and are replayed, never imported twice); choosing
+  // "add as extra sales" re-sends the same operation with overlap_mode=append.
+  const newOperationId = () => (globalThis.crypto?.randomUUID?.() || `op-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+  const handleUpload = async (overlapMode = 'reject', operationId = newOperationId()) => {
     if (!file) return;
-    const fd = new FormData(); fd.append('file', file);
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('operation_id', operationId);
+    if (overlapMode === 'append') fd.append('overlap_mode', 'append');
+    setOverlap(null);
     setUploading(true); setStep(1);
     const timers = [setTimeout(() => setStep(2), 600), setTimeout(() => setStep(3), 1400), setTimeout(() => setStep(4), 2300)];
     try {
@@ -200,19 +212,27 @@ export default function UploadPage() {
       setStep(5);
       const d = r.data;
       setResult(d);
-      toast.success('File processed successfully!');
-      if (d.skipped > 0) {
+      if (d.replayed) {
+        toast(d.rolled_back
+          ? 'This upload was already processed and then rolled back. Nothing was imported again.'
+          : 'This upload was already processed. Showing the original result.', { duration: 5000 });
+      } else {
+        toast.success('File processed successfully!');
+      }
+      if (!d.replayed && d.skipped > 0) {
         setTimeout(() => {
-          toast(`${fmtNum(d.skipped)} duplicate transactions detected and skipped. Your data remains accurate.`, {
-            icon: '⚠️', duration: 5000,
-            style: { background: '#221d14', color: '#f2b544', border: '1px solid #f2b54440' },
-          });
+          toast(`${fmtNum(d.skipped)} lines were already imported earlier (same line id) and were skipped.`, { duration: 5000 });
         }, 1200);
       }
       setTimeout(() => { setUploading(false); setFile(null); setStep(0); fetchPageData(); }, 1500);
     } catch (err) {
       timers.forEach(clearTimeout);
-      toast.error(err.response?.data?.error || 'Processing failed');
+      const body = err.response?.data;
+      if (err.response?.status === 409 && body?.error === 'overlap_requires_choice') {
+        setOverlap({ operationId, count: body.overlap_count, examples: body.overlaps || [] });
+      } else {
+        toast.error(body?.message || body?.error || 'Processing failed');
+      }
       setUploading(false); setStep(0);
     }
   };
@@ -282,9 +302,29 @@ Desk Mat,Accessories,19.99,100,2023-10-02,1999.00,300,50`;
           <Stat label="Anomalies" value={fmtNum(unresolvedAnom)} hint={unresolvedAnom > 0 ? 'unresolved' : 'all clear'} tone={unresolvedAnom > 0 ? 'var(--warning)' : 'var(--success)'} loading={anomaliesLoading} />
         </section>
 
+        {overlap && !uploading && (
+          <Panel tone="var(--warning)" aria-labelledby="overlap-title">
+            <PanelHeader title="These sales may already be imported" titleId="overlap-title"
+              description={`${fmtNum(overlap.count)} product/date ${overlap.count === 1 ? 'combination already has' : 'combinations already have'} sales from an earlier file. Nothing was imported.`} />
+            <div className="panel-body overlap-body">
+              <p className="side-note">
+                The file has no line ids, so its rows can&apos;t be matched to the earlier ones. If this file repeats sales
+                you already uploaded, cancel. If these are additional sales on the same days, add them.
+              </p>
+              <ul className="overlap-list">
+                {overlap.examples.slice(0, 5).map((o) => <li key={`${o.product}-${o.sale_date}`}><strong>{o.product}</strong> · {o.sale_date}</li>)}
+              </ul>
+              <div className="toolbar">
+                <Button variant="secondary" onClick={() => setOverlap(null)}>Cancel</Button>
+                <Button onClick={() => handleUpload('append', overlap.operationId)}>Add as extra sales</Button>
+              </div>
+            </div>
+          </Panel>
+        )}
+
         {!result && (
           <Panel tone="var(--data)" aria-labelledby="intake-title">
-            <PanelHeader title="Upload sales data" titleId="intake-title" description="CSV, JSON or Excel — validated and de-duplicated before anything is saved" />
+            <PanelHeader title="Upload sales data" titleId="intake-title" description="CSV, JSON or Excel — validated before anything is saved; sending the same file again never imports it twice" />
             <div className="intake">
               <div className="intake-main">
                 {!file && !uploading && (
@@ -315,7 +355,7 @@ Desk Mat,Accessories,19.99,100,2023-10-02,1999.00,300,50`;
                       </div>
                       <button aria-label="Remove selected file" onClick={() => setFile(null)} className="icon-button"><HiXMark /></button>
                     </div>
-                    <Button block icon={<HiSparkles />} onClick={handleUpload}>Process &amp; upload file</Button>
+                    <Button block icon={<HiSparkles />} onClick={() => handleUpload()}>Process &amp; upload file</Button>
                   </div>
                 )}
 
@@ -457,6 +497,7 @@ Desk Mat,Accessories,19.99,100,2023-10-02,1999.00,300,50`;
                       ['quantity', 'Integer > 0', '50', '-10 or zero'],
                       ['sale_date', 'YYYY-MM-DD', '2023-10-01', '10/01/23 or future'],
                       ['revenue', 'Float > 0', '1499.50', '0 or negative'],
+                      ['line_id (optional)', 'Text, unique per sale line', 'ORD-1001-2', 'same id reused for a different sale'],
                     ].map(([c, t, g, b]) => (
                       <tr key={c}>
                         <td><code className="code-chip">{c}</code></td>

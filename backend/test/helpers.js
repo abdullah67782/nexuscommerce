@@ -20,7 +20,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
 const TABLES = [
   'anomalies_detected', 'upload_versions', 'data_freshness', 'finetune_jobs', 'forecasts',
-  'model_metrics', 'inventory', 'sales', 'products', 'data_uploads', 'users',
+  'model_metrics', 'inventory', 'sales', 'products', 'data_uploads', 'data_sources', 'users',
 ];
 
 // ── Fake ML server ──────────────────────────────────────────────────────────
@@ -81,10 +81,8 @@ async function setup() {
   process.env.ML_SERVER_URL = ml.url; // must be set before routes are loaded
   const app = require('../app');
   const pool = require('../config/db');
-  const createTables = require('../config/initDb');
-  const quiet = console.log;
-  console.log = () => {};
-  try { await createTables(); } finally { console.log = quiet; }
+  const { migrate } = require('../db/migrate');
+  await migrate(pool);
   await resetDb(pool);
 
   const server = await new Promise(resolve => {

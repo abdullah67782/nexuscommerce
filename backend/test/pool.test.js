@@ -31,8 +31,8 @@ test('an identical store-connect retry is replayed on a one-connection pool', as
   const retry = await connect(noRevenue);
   assert.equal(retry.status, 200, JSON.stringify(retry.body));
   assert.equal(retry.body.replayed, true);
-  const conflict = await connect({ ...noRevenue, import_id: 'x' });
-  assert.equal(conflict.status, 200);
+  const appended = await connect({ ...noRevenue, import_id: 'x', overlap_mode: 'append' });
+  assert.equal(appended.status, 200, JSON.stringify(appended.body));
   const clash = await connect({ sales: [{ product_name: 'Mouse', quantity: 1, sale_date: '2026-01-03' }], import_id: 'x' });
   assert.equal(clash.status, 409, JSON.stringify(clash.body));
 });

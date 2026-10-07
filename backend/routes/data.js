@@ -6,6 +6,10 @@ const fs = require('fs');
 const path = require('path');
 const pool = require('../config/db');
 const authMiddleware = require('../middleware/auth');
+const {
+  ImportConflict, sha256, lockSeller, businessDate, todayIn, ensureSource, claimImport,
+  replayOf, insertSales, addVersion, recomputeFreshness, productResolver, freshnessScore,
+} = require('../lib/imports');
 
 const router = express.Router();
 
@@ -79,27 +83,23 @@ async function parseFile(filePath) {
 }
 
 // ─── Data Cleaning Utilities ─────────────────────────────────────────────────
+// Every row keeps its original data-row number (1 = first row after the
+// header) under the ROW symbol, through cleaning and validation, so anomalies
+// and stored sales point back to the exact line of the file. Rows are never
+// removed for being identical: genuine identical orders are kept, and replays
+// of the same file are stopped by import identity instead (lib/imports.js).
+const ROW = Symbol('sourceRow');
 
 function normalizeKeys(rows) {
-  return rows.map((row) => {
+  return rows.map((row, i) => {
     const n = Object.create(null); // header names can never hit Object.prototype
     for (const key of Object.keys(row)) {
       const k = key.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
       n[k] = row[key];
     }
+    n[ROW] = i + 1;
     return n;
   });
-}
-
-function removeDuplicates(rows) {
-  const seen = new Set();
-  let duplicatesRemoved = 0;
-  const unique = rows.filter((row) => {
-    const key = JSON.stringify(row);
-    if (seen.has(key)) { duplicatesRemoved++; return false; }
-    seen.add(key); return true;
-  });
-  return { data: unique, duplicatesRemoved };
 }
 
 function median(values) {
@@ -109,313 +109,134 @@ function median(values) {
   return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
+// Median imputation (SRS FR-2). Every imputed value is reported, not silent.
 function fillMissingWithMedian(rows, numericFields) {
-  let missingCount = 0;
+  const imputed = [];
   for (const field of numericFields) {
     const values = rows.map((r) => parseFloat(r[field])).filter((v) => !isNaN(v));
     const med = median(values);
     for (const row of rows) {
       const val = row[field];
       if (val === null || val === undefined || val === '' || isNaN(parseFloat(val))) {
-        row[field] = med; missingCount++;
+        imputed.push({ row: row[ROW], field, original: val, value: med });
+        row[field] = med;
       } else {
         row[field] = parseFloat(val);
       }
     }
   }
-  return missingCount;
+  return imputed;
 }
 
-function isValidDate(value) {
-  if (!value) return false;
-  const d = new Date(value);
-  return !isNaN(d.getTime());
-}
-
+// IQR outlier removal (SRS FR-2). Removed rows are reported with their row number.
 function detectOutliersIQR(rows, field) {
   const values = rows.map((r) => parseFloat(r[field])).filter((v) => !isNaN(v));
-  if (values.length < 4) return { cleaned: rows, outliersDetected: 0 };
+  if (values.length < 4) return { cleaned: rows, outliers: [] };
   const sorted = [...values].sort((a, b) => a - b);
   const q1 = sorted[Math.floor(sorted.length * 0.25)];
   const q3 = sorted[Math.floor(sorted.length * 0.75)];
   const iqr = q3 - q1;
   const lower = q1 - 1.5 * iqr;
   const upper = q3 + 1.5 * iqr;
-  let outliersDetected = 0;
+  const outliers = [];
   const cleaned = rows.filter((row) => {
     const val = parseFloat(row[field]);
     if (isNaN(val)) return true;
-    if (val < lower || val > upper) { outliersDetected++; return false; }
+    if (val < lower || val > upper) { outliers.push({ row: row[ROW], field, value: val, row_data: row }); return false; }
     return true;
   });
-  return { cleaned, outliersDetected };
+  return { cleaned, outliers };
 }
 
 // ─── Data Cleaning Pipeline ──────────────────────────────────────────────────
 
 function cleanData(rawRows) {
-  const report = {
-    total_records: rawRows.length,
-    clean_records: 0,
-    duplicates_removed: 0,
-    missing_values_handled: 0,
-    outliers_detected: 0,
-    quality_score: 0,
-    before_sample: rawRows.slice(0, 3),
-    after_sample: [],
-  };
-
   let rows = normalizeKeys(rawRows);
-
-  const dedupResult = removeDuplicates(rows);
-  rows = dedupResult.data;
-  report.duplicates_removed = dedupResult.duplicatesRemoved;
 
   const numericFields = ['price', 'current_price', 'quantity', 'revenue', 'stock_level', 'reorder_threshold'];
   const presentNumeric = numericFields.filter((f) => rows.some((r) => r[f] !== undefined));
-  report.missing_values_handled = fillMissingWithMedian(rows, presentNumeric);
+  const imputed = fillMissingWithMedian(rows, presentNumeric);
 
+  const outliers = [];
   for (const field of ['quantity', 'revenue']) {
     if (rows.some((r) => r[field] !== undefined)) {
       const result = detectOutliersIQR(rows, field);
       rows = result.cleaned;
-      report.outliers_detected += result.outliersDetected;
+      outliers.push(...result.outliers);
     }
   }
 
-  report.clean_records = rows.length;
-  report.after_sample = rows.slice(0, 3);
-  report.quality_score = report.total_records > 0
-    ? parseFloat(((report.clean_records / report.total_records) * 100).toFixed(2))
-    : 0;
-
-  return { cleanedRows: rows, report };
-}
-
-// ─── Freshness Score ─────────────────────────────────────────────────────────
-
-function calculateFreshnessScore(lastUploadAt) {
-  if (!lastUploadAt) return 0;
-  const days = (Date.now() - new Date(lastUploadAt).getTime()) / (1000 * 60 * 60 * 24);
-  if (days < 1)   return 100;
-  if (days <= 2)  return 80;
-  if (days <= 7)  return 60;
-  if (days <= 14) return 40;
-  if (days <= 28) return 20;
-  return 0;
+  const report = {
+    total_records: rawRows.length,
+    clean_records: rows.length,
+    quality_score: rawRows.length > 0 ? parseFloat(((rows.length / rawRows.length) * 100).toFixed(2)) : 0,
+  };
+  return { cleanedRows: rows, report, imputed, outliers };
 }
 
 // ─── Per-Row Validation ──────────────────────────────────────────────────────
+// Sale dates are business-local days in the source timezone (lib/imports.js).
 
-function validateRow(row, rowIdx, uploadId, sellerId) {
+function validateRow(row, timezone) {
   const anomalies = [];
+  const rowNumber   = row[ROW];
   const productName = row.product_name || row.name || null;
   const quantity    = parseFloat(row.quantity);
   const revenue     = parseFloat(row.revenue);
   const price       = parseFloat(row.current_price || row.price);
-  const saleDate    = row.sale_date || row.date || null;
-  const now         = new Date();
-  const tenYearsAgo = new Date(now.getFullYear() - 10, now.getMonth(), now.getDate());
+  const rawDate     = row.sale_date ?? row.date ?? null;
+  const lineId      = row.line_id === undefined || row.line_id === null || row.line_id === ''
+    ? null : String(row.line_id).trim();
 
   const push = (field, type, value, severity) =>
-    anomalies.push({ upload_id: uploadId, seller_id: sellerId, product_name: productName || '(empty)',
-      field, anomaly_type: type, original_value: String(value ?? ''), row_number: rowIdx + 1, severity });
+    anomalies.push({ product_name: productName || '(empty)', field, anomaly_type: type,
+      original_value: String(value ?? ''), row_number: rowNumber, severity });
 
-  // Product name required
   if (!productName || String(productName).trim() === '') {
     push('product_name', 'missing_product_name', row.product_name || '', 'critical');
     return { valid: false, anomalies };
   }
-
-  // Quantity must be > 0
   if (isNaN(quantity) || quantity <= 0) {
     push('quantity', quantity < 0 ? 'negative_value' : 'zero_quantity', row.quantity, 'critical');
     return { valid: false, anomalies };
   }
-
-  // Revenue must be > 0 if present
-  if (!isNaN(revenue) && revenue !== null && revenue <= 0) {
+  if (!Number.isInteger(quantity)) {
+    push('quantity', 'fractional_quantity', row.quantity, 'critical');
+    return { valid: false, anomalies };
+  }
+  if (!isNaN(revenue) && revenue <= 0) {
     push('revenue', revenue < 0 ? 'negative_value' : 'zero_revenue', row.revenue, 'critical');
     return { valid: false, anomalies };
   }
-
-  // Sale date validation
-  if (saleDate) {
-    if (!isValidDate(saleDate)) {
-      push('sale_date', 'invalid_date', saleDate, 'critical');
-      return { valid: false, anomalies };
-    }
-    const dateObj = new Date(saleDate);
-    if (dateObj > now) {
-      push('sale_date', 'future_date', saleDate, 'critical');
-      return { valid: false, anomalies };
-    }
-    if (dateObj < tenYearsAgo) {
-      push('sale_date', 'old_date', saleDate, 'warning');
-      // warning only — still insert
-    }
+  if (lineId !== null && lineId.length > 255) {
+    push('line_id', 'invalid_line_id', lineId.slice(0, 40), 'critical');
+    return { valid: false, anomalies };
   }
 
-  // Price warning (not a rejection)
+  let saleDate = null;
+  if (rawDate !== null && rawDate !== '') {
+    saleDate = businessDate(rawDate, timezone);
+    if (!saleDate) {
+      push('sale_date', 'invalid_date', rawDate, 'critical');
+      return { valid: false, anomalies };
+    }
+    if (saleDate > todayIn(timezone)) {
+      push('sale_date', 'future_date', rawDate, 'critical');
+      return { valid: false, anomalies };
+    }
+    const tenYearsAgo = `${Number(todayIn(timezone).slice(0, 4)) - 10}${todayIn(timezone).slice(4)}`;
+    if (saleDate < tenYearsAgo) push('sale_date', 'old_date', rawDate, 'warning'); // still imported
+  }
+
   if (!isNaN(price) && price <= 0) {
     push('price', price < 0 ? 'negative_value' : 'zero_price', price, 'warning');
   }
 
-  return { valid: true, anomalies };
-}
-
-// ─── Database Storage (v2 — dedup + seller-aware) ───────────────────────────
-
-async function storeDataV2(cleanedRows, sellerId, uploadId) {
-  const client = await pool.connect();
-  let inserted  = 0;
-  let skipped   = 0;
-  let rejected  = 0;
-  const allAnomalies = [];
-
-  try {
-    await client.query('BEGIN');
-
-    for (let idx = 0; idx < cleanedRows.length; idx++) {
-      const row = cleanedRows[idx];
-
-      // Per-row validation
-      const { valid, anomalies } = validateRow(row, idx, uploadId, sellerId);
-      allAnomalies.push(...anomalies);
-      if (!valid) { rejected++; continue; }
-
-      const productName = row.product_name || row.name;
-      const category    = row.category || null;
-      const price       = parseFloat(row.current_price || row.price) || null;
-      const quantity    = parseFloat(row.quantity);
-      const saleDate    = row.sale_date || row.date || null;
-      const revenue     = parseFloat(row.revenue) || null;
-
-      // Upsert product
-      let productId;
-      // Scoped to this seller: another seller's product with the same name
-      // (or an ownerless product) must never receive these sales.
-      const existProd = await client.query(
-        `SELECT id FROM products WHERE name = $1 AND user_id = $2`,
-        [productName, sellerId]
-      );
-
-      if (existProd.rows.length > 0) {
-        productId = existProd.rows[0].id;
-        if (price !== null || category !== null) {
-          await client.query(
-            `UPDATE products SET current_price = COALESCE($1, current_price),
-             category = COALESCE($2, category) WHERE id = $3`,
-            [price, category, productId]
-          );
-        }
-      } else {
-        const ins = await client.query(
-          `INSERT INTO products (name, category, current_price, user_id, upload_id)
-           VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-          [productName, category, price, sellerId, uploadId]
-        );
-        productId = ins.rows[0].id;
-      }
-
-      // Insert sale with dedup (ON CONFLICT … DO NOTHING)
-      if (!isNaN(quantity) && saleDate && isValidDate(saleDate)) {
-        const saleResult = await client.query(
-          `INSERT INTO sales (product_id, quantity, sale_date, revenue, upload_id)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT (product_id, sale_date, quantity, revenue) DO NOTHING
-           RETURNING id`,
-          [productId, quantity, new Date(saleDate), revenue, uploadId]
-        );
-
-        if (saleResult.rows.length > 0) {
-          inserted++;
-        } else {
-          skipped++;
-          allAnomalies.push({
-            upload_id: uploadId, seller_id: sellerId, product_name: productName,
-            field: 'transaction', anomaly_type: 'duplicate_transaction',
-            original_value: `date=${saleDate}, qty=${quantity}, rev=${revenue}`,
-            row_number: idx + 1, severity: 'info',
-          });
-        }
-      }
-
-      // Upsert inventory
-      const stockLevel = parseFloat(row.stock_level);
-      if (!isNaN(stockLevel)) {
-        const existInv = await client.query(
-          `SELECT id FROM inventory WHERE product_id = $1`, [productId]
-        );
-        const reorder = parseFloat(row.reorder_threshold) || 10;
-        if (existInv.rows.length > 0) {
-          await client.query(
-            `UPDATE inventory SET stock_level = $1, reorder_threshold = $2, updated_at = NOW()
-             WHERE product_id = $3`,
-            [stockLevel, reorder, productId]
-          );
-        } else {
-          await client.query(
-            `INSERT INTO inventory (product_id, stock_level, reorder_threshold) VALUES ($1, $2, $3)`,
-            [productId, stockLevel, reorder]
-          );
-        }
-      }
-    }
-
-    // Bulk-insert anomalies
-    for (const a of allAnomalies) {
-      await client.query(
-        `INSERT INTO anomalies_detected
-         (upload_id, seller_id, product_name, field, anomaly_type, original_value, row_number, severity)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-        [a.upload_id, a.seller_id, a.product_name, a.field,
-         a.anomaly_type, a.original_value, a.row_number, a.severity]
-      );
-    }
-
-    await client.query('COMMIT');
-    return { inserted, skipped, rejected, anomalyCount: allAnomalies.length };
-  } catch (err) {
-    await client.query('ROLLBACK');
-    throw err;
-  } finally {
-    client.release();
-  }
-}
-
-// ─── Freshness Upsert ────────────────────────────────────────────────────────
-
-// `db` may be a pool or a checked-out client; callers holding a client must
-// pass it, otherwise a saturated pool deadlocks waiting for a second connection.
-async function updateFreshness(sellerId, insertedCount, db = pool) {
-  // Find the latest sale date for this seller's products
-  const lastSaleRes = await db.query(
-    `SELECT MAX(sale_date) AS last_sale_date FROM attributed_sales WHERE seller_id = $1`,
-    [sellerId]
-  );
-
-  // Total records for this seller
-  const totalRes = await db.query(
-    `SELECT COUNT(*) AS total FROM attributed_sales WHERE seller_id = $1`,
-    [sellerId]
-  );
-
-  const lastSaleDate   = lastSaleRes.rows[0]?.last_sale_date || null;
-  const totalRecords   = parseInt(totalRes.rows[0]?.total || 0);
-  const freshnessScore = calculateFreshnessScore(new Date());
-
-  await db.query(
-    `INSERT INTO data_freshness (seller_id, last_upload_at, last_sale_date, total_records, freshness_score)
-     VALUES ($1, NOW(), $2, $3, $4)
-     ON CONFLICT (seller_id) DO UPDATE SET
-       last_upload_at  = NOW(),
-       last_sale_date  = EXCLUDED.last_sale_date,
-       total_records   = EXCLUDED.total_records,
-       freshness_score = EXCLUDED.freshness_score,
-       updated_at      = NOW()`,
-    [sellerId, lastSaleDate, totalRecords, freshnessScore]
-  );
+  return {
+    valid: true, anomalies, productName: String(productName).trim(), quantity,
+    revenue: isNaN(revenue) ? null : revenue, price: isNaN(price) ? null : price,
+    category: row.category || null, saleDate, lineId, rowNumber,
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -423,73 +244,157 @@ async function updateFreshness(sellerId, insertedCount, db = pool) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─── POST /api/data/upload ───────────────────────────────────────────────────
+// Multipart: file, optional operation_id (identity of THIS upload action) and
+// optional overlap_mode ('reject' default | 'append').
+// No operation_id: identity is the file's content fingerprint, so re-sending the
+// same file replays the original result. A new operation_id is a deliberate new
+// import; overlaps with earlier rows of the same source are then refused unless
+// overlap_mode = 'append'.
 router.post('/data/upload', authMiddleware, upload.single('file'), async (req, res) => {
-  const sellerId = req.user?.id || null;
-
+  const sellerId = req.user.id;
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded. Send a file with key "file".' });
   }
-
   const filePath = req.file.path;
-  const ext      = path.extname(req.file.originalname).toLowerCase();
+  const cleanup = () => fs.unlink(filePath, () => {});
 
+  const operationId = req.body?.operation_id;
+  const overlapMode = req.body?.overlap_mode || 'reject';
+  if (operationId !== undefined && (typeof operationId !== 'string' || !operationId.trim() || operationId.length > 200)) {
+    cleanup();
+    return res.status(400).json({ error: 'operation_id must be a non-empty string of at most 200 characters.' });
+  }
+  if (!['reject', 'append'].includes(overlapMode)) {
+    cleanup();
+    return res.status(400).json({ error: 'overlap_mode must be "reject" or "append".' });
+  }
+
+  let rawData;
+  let contentSha;
   try {
-    // 1. Parse
-    const rawData = await parseFile(filePath);
-    if (!rawData || rawData.length === 0) {
-      return res.status(400).json({ error: 'File is empty or could not be parsed' });
+    contentSha = sha256(fs.readFileSync(filePath));
+    rawData = await parseFile(filePath);
+  } catch (err) {
+    cleanup();
+    return res.status(400).json({ error: 'File could not be parsed', details: err.message });
+  }
+  if (!rawData || rawData.length === 0) {
+    cleanup();
+    return res.status(400).json({ error: 'File is empty or could not be parsed' });
+  }
+
+  const { cleanedRows, report, imputed, outliers } = cleanData(rawData);
+  const ext = path.extname(req.file.originalname).toLowerCase().replace('.', '');
+  const key = operationId ? `file-op:${operationId}` : `file-content:${contentSha}`;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await lockSeller(client, sellerId);
+    const source = await ensureSource(client, sellerId, {
+      kind: 'file', provider: 'file_upload', externalId: 'default', displayName: 'File uploads',
+    });
+
+    const uploadId = await claimImport(client, {
+      sellerId, sourceId: source.id, source: 'file_upload', key, contentSha256: contentSha,
+      fileFormat: ext, total: report.total_records, overlapMode,
+    });
+    if (!uploadId) {
+      await client.query('ROLLBACK');
+      const replay = await replayOf(client, sellerId, key, contentSha);
+      return res.status(replay.status).json(replay.body);
     }
 
-    // 2. In-memory cleaning (normalize, fill missing, basic outlier removal)
-    const { cleanedRows, report } = cleanData(rawData);
+    const products = productResolver(client, sellerId, uploadId);
+    const anomalies = [];
+    const rows = [];
+    let rejected = 0;
+    let withoutDate = 0;
 
-    // 3. Create upload record first to get upload_id
-    const uploadRec = await pool.query(
-      `INSERT INTO data_uploads (uploaded_by, file_format, total_records, clean_records, quality_score)
-       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      [sellerId, ext.replace('.', ''), report.total_records, report.clean_records, report.quality_score]
-    );
-    const uploadId = uploadRec.rows[0].id;
+    for (const row of cleanedRows) {
+      const v = validateRow(row, source.timezone);
+      anomalies.push(...v.anomalies);
+      if (!v.valid) { rejected++; continue; }
 
-    // 4. Store with per-row validation + dedup
-    const { inserted, skipped, rejected, anomalyCount } = await storeDataV2(cleanedRows, sellerId, uploadId);
+      const productId = await products.resolve(v.productName, {
+        category: v.category, price: v.price, updateDetails: true,
+      });
+      if (v.saleDate) {
+        rows.push({ productId, saleDate: v.saleDate, quantity: v.quantity, revenue: v.revenue,
+          lineId: v.lineId, rowNumber: v.rowNumber });
+      } else {
+        withoutDate++;
+      }
 
-    // 5. Get next version number for this seller
-    const verRes = await pool.query(
-      `SELECT COALESCE(MAX(version_number), 0) + 1 AS next_ver
-       FROM upload_versions WHERE seller_id = $1`,
-      [sellerId]
-    );
-    const versionNumber = verRes.rows[0].next_ver;
+      // Inventory snapshot: the last row for a product wins (unchanged behaviour).
+      const stockLevel = parseFloat(row.stock_level);
+      if (!isNaN(stockLevel)) {
+        const reorder = parseFloat(row.reorder_threshold) || 10;
+        const inv = await client.query('SELECT id FROM inventory WHERE product_id = $1', [productId]);
+        if (inv.rows.length) {
+          await client.query(
+            'UPDATE inventory SET stock_level = $1, reorder_threshold = $2, updated_at = NOW() WHERE product_id = $3',
+            [stockLevel, reorder, productId]);
+        } else {
+          await client.query(
+            'INSERT INTO inventory (product_id, stock_level, reorder_threshold) VALUES ($1, $2, $3)',
+            [productId, stockLevel, reorder]);
+        }
+      }
+    }
 
-    await pool.query(
-      `INSERT INTO upload_versions
-         (seller_id, upload_id, version_number, rows_added, rows_skipped, rows_rejected)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [sellerId, uploadId, versionNumber, inserted, skipped, rejected]
-    );
+    for (const o of outliers) {
+      anomalies.push({ product_name: o.row_data.product_name || o.row_data.name || '(empty)', field: o.field,
+        anomaly_type: 'statistical_outlier', original_value: String(o.value), row_number: o.row, severity: 'warning' });
+    }
+    for (const m of imputed) {
+      anomalies.push({ product_name: '(row)', field: m.field, anomaly_type: 'imputed_value',
+        original_value: `${m.original ?? ''} -> ${m.value}`, row_number: m.row, severity: 'info' });
+    }
 
-    // 6. Update data_freshness
-    if (sellerId) await updateFreshness(sellerId, inserted);
+    const result = await insertSales(client, { importId: uploadId, sourceId: source.id, rows, overlapMode });
 
-    // 7. Clean up temp file
-    fs.unlink(filePath, () => {});
+    for (const a of anomalies) {
+      await client.query(
+        `INSERT INTO anomalies_detected
+         (upload_id, seller_id, product_name, field, anomaly_type, original_value, row_number, severity)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [uploadId, sellerId, a.product_name, a.field, a.anomaly_type, a.original_value, a.row_number, a.severity]);
+    }
 
-    res.status(200).json({
-      message:        'File uploaded and processed successfully',
-      total_rows:     report.total_records,
-      inserted,
-      skipped,
-      rejected,
-      quality_score:  report.quality_score,
-      version_number: versionNumber,
-      upload_id:      uploadId,
-      anomaly_count:  anomalyCount,
+    const versionNumber = await addVersion(client, {
+      sellerId, importId: uploadId, added: result.inserted, skipped: result.alreadyImported, rejected,
     });
+    const summary = {
+      message:            'File uploaded and processed successfully',
+      total_rows:         report.total_records,
+      inserted:           result.inserted,
+      skipped:            result.alreadyImported,
+      rejected,
+      identical_rows_kept: result.identicalRowsKept,
+      rows_without_sale_date: withoutDate,
+      outliers_removed:   outliers.length,
+      values_imputed:     imputed.length,
+      quality_score:      report.quality_score,
+      version_number:     versionNumber,
+      upload_id:          uploadId,
+      anomaly_count:      anomalies.length,
+      source_id:          source.id,
+    };
+    await client.query(
+      'UPDATE data_uploads SET clean_records = $2, quality_score = $3, result_summary = $4 WHERE id = $1',
+      [uploadId, report.clean_records, report.quality_score, summary]);
+    await recomputeFreshness(client, sellerId);
+    await client.query('COMMIT');
+    res.status(200).json({ ...summary, replayed: false });
   } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    if (err instanceof ImportConflict) return res.status(err.status).json(err.body);
     console.error('Upload error:', err.message);
-    if (req.file?.path) fs.unlink(req.file.path, () => {});
     res.status(500).json({ error: 'Error processing uploaded file', details: err.message });
+  } finally {
+    client.release();
+    cleanup();
   }
 });
 
@@ -591,82 +496,67 @@ router.patch('/data/anomalies/:id/resolve', authMiddleware, async (req, res) => 
 });
 
 // ─── POST /api/data/rollback/:uploadId ──────────────────────────────────────
+// Undo the seller's most recent committed import (file or store-connect).
+// The import record keeps its identity and is marked rolled_back, so a delayed
+// retry of the same operation is answered with the original result
+// (rolled_back: true) and never restores the data.
 router.post('/data/rollback/:uploadId', authMiddleware, async (req, res) => {
   const sellerId = req.user.id;
-  const uploadId = parseInt(req.params.uploadId);
+  const uploadId = parseInt(req.params.uploadId, 10);
+  if (!Number.isInteger(uploadId)) return res.status(400).json({ error: 'Invalid upload id' });
 
+  const client = await pool.connect();
   try {
-    // Verify this upload belongs to this seller and is the most recent active one
-    const verCheck = await pool.query(
-      `SELECT uv.id, uv.rows_added, uv.is_rolled_back
-       FROM upload_versions uv
-       WHERE uv.seller_id = $1 AND uv.upload_id = $2`,
-      [sellerId, uploadId]
-    );
+    await client.query('BEGIN');
+    await lockSeller(client, sellerId); // no import or rollback of this seller can interleave
 
+    const verCheck = await client.query(
+      `SELECT uv.id, uv.is_rolled_back FROM upload_versions uv
+       WHERE uv.seller_id = $1 AND uv.upload_id = $2`,
+      [sellerId, uploadId]);
     if (!verCheck.rows.length) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Upload not found or not yours' });
     }
     if (verCheck.rows[0].is_rolled_back) {
+      await client.query('ROLLBACK');
       return res.status(400).json({ error: 'This upload is already rolled back' });
     }
-
-    // Ensure it's the most recent non-rolled-back upload
-    const mostRecent = await pool.query(
+    const mostRecent = await client.query(
       `SELECT upload_id FROM upload_versions
        WHERE seller_id = $1 AND is_rolled_back = false
        ORDER BY version_number DESC LIMIT 1`,
-      [sellerId]
-    );
+      [sellerId]);
     if (!mostRecent.rows.length || mostRecent.rows[0].upload_id !== uploadId) {
+      await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Only the most recent upload can be rolled back' });
     }
 
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
+    const delSales = await client.query('DELETE FROM sales WHERE upload_id = $1 RETURNING id', [uploadId]);
 
-      // Delete sales tied to this upload
-      const delSales = await client.query(
-        `DELETE FROM sales WHERE upload_id = $1 RETURNING id`, [uploadId]
-      );
+    // Products created by this import that no longer have any sales. Their
+    // inventory and forecast rows reference them, so remove those first.
+    const orphanProducts = `SELECT id FROM products
+       WHERE upload_id = $1 AND user_id = $2
+         AND id NOT IN (SELECT DISTINCT product_id FROM sales WHERE product_id IS NOT NULL)`;
+    await client.query(`DELETE FROM inventory WHERE product_id IN (${orphanProducts})`, [uploadId, sellerId]);
+    await client.query(`DELETE FROM forecasts WHERE product_id IN (${orphanProducts})`, [uploadId, sellerId]);
+    await client.query(`DELETE FROM products WHERE id IN (${orphanProducts})`, [uploadId, sellerId]);
 
-      // Products created by this upload that no longer have any sales. Their
-      // inventory and forecast rows reference them, so remove those first —
-      // otherwise the foreign keys make the whole rollback fail.
-      const orphanProducts = `SELECT id FROM products
-         WHERE upload_id = $1 AND user_id = $2
-           AND id NOT IN (SELECT DISTINCT product_id FROM sales WHERE product_id IS NOT NULL)`;
-      await client.query(`DELETE FROM inventory WHERE product_id IN (${orphanProducts})`, [uploadId, sellerId]);
-      await client.query(`DELETE FROM forecasts WHERE product_id IN (${orphanProducts})`, [uploadId, sellerId]);
-      await client.query(`DELETE FROM products WHERE id IN (${orphanProducts})`, [uploadId, sellerId]);
+    await client.query(
+      `UPDATE upload_versions SET is_rolled_back = true, rollback_at = NOW()
+       WHERE upload_id = $1 AND seller_id = $2`, [uploadId, sellerId]);
+    await client.query(`UPDATE data_uploads SET status = 'rolled_back' WHERE id = $1`, [uploadId]);
 
-      // Mark version as rolled back
-      await client.query(
-        `UPDATE upload_versions
-         SET is_rolled_back = true, rollback_at = NOW()
-         WHERE upload_id = $1 AND seller_id = $2`,
-        [uploadId, sellerId]
-      );
-
-      await client.query('COMMIT');
-
-      // Recalculate freshness on the connection we already hold.
-      await updateFreshness(sellerId, 0, client);
-
-      res.json({
-        status:            'success',
-        rolled_back_rows:  delSales.rows.length,
-      });
-    } catch (err) {
-      await client.query('ROLLBACK');
-      throw err;
-    } finally {
-      client.release();
-    }
+    await recomputeFreshness(client, sellerId);
+    await client.query('COMMIT');
+    res.json({ status: 'success', rolled_back_rows: delSales.rows.length });
   } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
     console.error('Rollback error:', err.message);
     res.status(500).json({ error: 'Error rolling back upload', details: err.message });
+  } finally {
+    client.release();
   }
 });
 
@@ -689,7 +579,7 @@ router.get('/data/freshness', authMiddleware, async (req, res) => {
 
     const row = result.rows[0];
     // Recalculate freshness score live (in case time has passed)
-    const freshScore = calculateFreshnessScore(row.last_upload_at);
+    const freshScore = freshnessScore(row.last_upload_at);
     const daysSince  = row.last_upload_at
       ? Math.floor((Date.now() - new Date(row.last_upload_at).getTime()) / (1000 * 60 * 60 * 24))
       : null;
