@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const pool = require('../config/db');
 const authMiddleware = require('../middleware/auth');
+const { findOwnedProduct } = require('../lib/ownership');
 
 const router = express.Router();
 const finetuneRouter = express.Router();
@@ -72,6 +73,11 @@ router.get('/:productId/accuracy', authMiddleware, async (req, res) => {
   }
 
   try {
+    const product = await findOwnedProduct(productId, sellerId);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
     const result = await pool.query(
       `SELECT
          f.forecast_date::text AS date,
@@ -81,7 +87,7 @@ router.get('/:productId/accuracy', authMiddleware, async (req, res) => {
        JOIN sales s ON s.product_id = f.product_id
                    AND s.sale_date = f.forecast_date
        WHERE f.product_id = $1
-         AND (f.seller_id = $2 OR f.seller_id IS NULL)
+         AND f.seller_id = $2
        GROUP BY f.forecast_date, f.predicted_demand
        ORDER BY f.forecast_date ASC`,
       [productId, sellerId]
@@ -125,16 +131,12 @@ router.get('/:productId', authMiddleware, async (req, res) => {
   }
 
   try {
-    // Look up product category
-    let category = 'United_Kingdom';
-    try {
-      const productRes = await pool.query('SELECT category FROM products WHERE id = $1', [productId]);
-      if (productRes.rows.length && productRes.rows[0].category) {
-        category = productRes.rows[0].category;
-      }
-    } catch (catErr) {
-      console.warn('Could not look up product category, using default:', catErr.message);
+    // Only the product's owner may forecast it. Checked before calling the ML server.
+    const product = await findOwnedProduct(productId, sellerId);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
     }
+    const category = product.category || 'United_Kingdom';
 
     // Call ML server
     let result;

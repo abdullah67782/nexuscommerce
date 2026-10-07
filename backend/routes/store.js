@@ -22,14 +22,26 @@ async function callML(method, endpoint, data = null) {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /api/store/connect
-// Import store sales data (CSV rows) and immediately trigger fine-tuning.
+// Import store sales data (product + sales rows) for the logged-in seller.
 // Body: { products: [{name, category, price}], sales: [{product_name, quantity, sale_date, revenue}] }
+//
+// Importing does NOT start model fine-tuning. Automatic fine-tuning is disabled
+// until separate evidence shows it helps; the response says so explicitly.
 // ═══════════════════════════════════════════════════════════════════════════════
+// A real calendar date (YYYY-MM-DD…) that is not in the future, matching the
+// upload validator's rule. Rejects rolled-over dates such as 2026-02-30.
+const isValidDate = (value) => {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(value)) return false;
+  const day = value.slice(0, 10);
+  const parsed = new Date(`${day}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === day && parsed <= new Date();
+};
+
 router.post('/connect', authMiddleware, async (req, res) => {
   const userId = req.user.id;
-  const { products = [], sales = [] } = req.body;
+  const { products = [], sales = [] } = req.body || {};
 
-  if (!sales.length) {
+  if (!Array.isArray(sales) || !sales.length) {
     return res.status(400).json({ error: 'sales array is required and must not be empty.' });
   }
 
@@ -37,68 +49,73 @@ router.post('/connect', authMiddleware, async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // Upsert products and build a name→id map
+    // Reuse this seller's existing product by name; create it otherwise.
     const productMap = {};
-    for (const p of products) {
-      const result = await client.query(
-        `INSERT INTO products (user_id, name, category, current_price)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT DO NOTHING
-         RETURNING id, name`,
-        [userId, p.name, p.category || null, p.price || null],
+    let productsCreated = 0;
+    const ensureProduct = async (name, category = null, price = null) => {
+      if (productMap[name]) return productMap[name];
+      const existing = await client.query(
+        'SELECT id FROM products WHERE user_id = $1 AND name = $2 ORDER BY id LIMIT 1',
+        [userId, name],
       );
-      if (result.rows.length) {
-        productMap[p.name] = result.rows[0].id;
-      }
-    }
-
-    // Ensure there's at least a default product for this user
-    let defaultProductId;
-    {
-      const r = await client.query(
-        `SELECT id FROM products WHERE user_id = $1 ORDER BY id LIMIT 1`,
-        [userId],
-      );
-      if (r.rows.length) {
-        defaultProductId = r.rows[0].id;
+      if (existing.rows.length) {
+        productMap[name] = existing.rows[0].id;
       } else {
-        const r2 = await client.query(
-          `INSERT INTO products (user_id, name) VALUES ($1, 'Default') RETURNING id`,
-          [userId],
+        const created = await client.query(
+          `INSERT INTO products (user_id, name, category, current_price)
+           VALUES ($1, $2, $3, $4) RETURNING id`,
+          [userId, name, category, price],
         );
-        defaultProductId = r2.rows[0].id;
+        productMap[name] = created.rows[0].id;
+        productsCreated++;
+      }
+      return productMap[name];
+    };
+
+    for (const p of products) {
+      if (p && typeof p.name === 'string' && p.name.trim()) {
+        await ensureProduct(p.name.trim(), p.category || null, p.price ?? null);
       }
     }
 
-    // Insert sales rows
-    let inserted = 0;
+    // Insert sales rows; skip exact duplicates instead of failing the import.
+    let imported = 0;
+    let duplicates = 0;
+    let rejected = 0;
     for (const s of sales) {
-      const pid = productMap[s.product_name] ?? defaultProductId;
-      await client.query(
+      const name = typeof s?.product_name === 'string' ? s.product_name.trim() : '';
+      const quantity = Number(s?.quantity);
+      if (!name || !Number.isFinite(quantity) || quantity <= 0 || !isValidDate(s?.sale_date)) {
+        rejected++;
+        continue;
+      }
+      const productId = await ensureProduct(name);
+      const result = await client.query(
         `INSERT INTO sales (product_id, quantity, sale_date, revenue)
-         VALUES ($1, $2, $3, $4)`,
-        [pid, s.quantity, s.sale_date, s.revenue || null],
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (product_id, sale_date, quantity, revenue) DO NOTHING
+         RETURNING id`,
+        [productId, quantity, s.sale_date, s.revenue ?? null],
       );
-      inserted++;
+      if (result.rows.length) imported++;
+      else duplicates++;
     }
 
     await client.query('COMMIT');
 
-    // Trigger fine-tuning in the ML server (non-blocking from client's perspective)
-    let finetune;
-    try {
-      finetune = await callML('POST', '/finetune', {
-        seller_id: userId,
-        min_records: 30,
-      });
-    } catch (mlErr) {
-      finetune = { message: `Fine-tuning could not start: ${mlErr.message}` };
-    }
-
     res.json({
-      message: 'Store connected and fine-tuning triggered.',
-      records_imported: inserted,
-      finetune,
+      status: 'imported',
+      message: 'Store data imported. Model training was not started.',
+      records_received: sales.length,
+      records_imported: imported,
+      duplicates_skipped: duplicates,
+      records_rejected: rejected,
+      products_created: productsCreated,
+      fine_tuning: {
+        status: 'not_started',
+        automatic: false,
+        reason: 'Automatic fine-tuning is disabled.',
+      },
     });
   } catch (err) {
     await client.query('ROLLBACK');

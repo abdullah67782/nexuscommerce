@@ -293,9 +293,11 @@ async function storeDataV2(cleanedRows, sellerId, uploadId) {
 
       // Upsert product
       let productId;
+      // Scoped to this seller: another seller's product with the same name
+      // (or an ownerless product) must never receive these sales.
       const existProd = await client.query(
-        `SELECT id FROM products WHERE name = $1`,
-        [productName]
+        `SELECT id FROM products WHERE name = $1 AND user_id = $2`,
+        [productName, sellerId]
       );
 
       if (existProd.rows.length > 0) {
@@ -496,37 +498,17 @@ router.post('/data/upload', authMiddleware, upload.single('file'), async (req, r
 });
 
 // ─── GET /api/data/quality ───────────────────────────────────────────────────
-router.get('/data/quality', async (req, res) => {
+router.get('/data/quality', authMiddleware, async (req, res) => {
   try {
-    // Try to extract seller from auth token if present (optional auth)
-    let sellerId = null;
-    const authHeader = req.headers.authorization;
-    if (authHeader?.startsWith('Bearer ')) {
-      try {
-        const jwt = require('jsonwebtoken');
-        const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
-        sellerId = decoded.id || decoded.userId || null;
-      } catch { /* no-op */ }
-    }
-
-    const query = sellerId
-      ? `SELECT du.id, du.file_format, du.total_records, du.clean_records,
+    const query = `SELECT du.id, du.file_format, du.total_records, du.clean_records,
                 du.quality_score, du.uploaded_at,
                 COALESCE(uv.rows_skipped, 0)  AS duplicates,
                 COALESCE(uv.rows_rejected, 0) AS rejected
          FROM data_uploads du
          LEFT JOIN upload_versions uv ON uv.upload_id = du.id
          WHERE du.uploaded_by = $1
-         ORDER BY du.uploaded_at DESC LIMIT 1`
-      : `SELECT du.id, du.file_format, du.total_records, du.clean_records,
-                du.quality_score, du.uploaded_at,
-                COALESCE(uv.rows_skipped, 0)  AS duplicates,
-                COALESCE(uv.rows_rejected, 0) AS rejected
-         FROM data_uploads du
-         LEFT JOIN upload_versions uv ON uv.upload_id = du.id
          ORDER BY du.uploaded_at DESC LIMIT 1`;
-
-    const params = sellerId ? [sellerId] : [];
+    const params = [req.user.id];
     const result = await pool.query(query, params);
 
     if (!result.rows.length) {
@@ -653,13 +635,15 @@ router.post('/data/rollback/:uploadId', authMiddleware, async (req, res) => {
         `DELETE FROM sales WHERE upload_id = $1 RETURNING id`, [uploadId]
       );
 
-      // Delete products tied exclusively to this upload (not referenced by other sales)
-      await client.query(
-        `DELETE FROM products
-         WHERE upload_id = $1
-           AND id NOT IN (SELECT DISTINCT product_id FROM sales WHERE product_id IS NOT NULL)`,
-        [uploadId]
-      );
+      // Products created by this upload that no longer have any sales. Their
+      // inventory and forecast rows reference them, so remove those first —
+      // otherwise the foreign keys make the whole rollback fail.
+      const orphanProducts = `SELECT id FROM products
+         WHERE upload_id = $1 AND user_id = $2
+           AND id NOT IN (SELECT DISTINCT product_id FROM sales WHERE product_id IS NOT NULL)`;
+      await client.query(`DELETE FROM inventory WHERE product_id IN (${orphanProducts})`, [uploadId, sellerId]);
+      await client.query(`DELETE FROM forecasts WHERE product_id IN (${orphanProducts})`, [uploadId, sellerId]);
+      await client.query(`DELETE FROM products WHERE id IN (${orphanProducts})`, [uploadId, sellerId]);
 
       // Mark version as rolled back
       await client.query(
@@ -736,8 +720,10 @@ router.get('/products', authMiddleware, async (req, res) => {
               COALESCE(i.reorder_threshold, 10) AS reorder_threshold
        FROM products p
        LEFT JOIN inventory i ON p.id = i.product_id
+       WHERE p.user_id = $1
        ORDER BY p.id
-       LIMIT 200`
+       LIMIT 200`,
+      [req.user.id]
     );
     res.json({ count: result.rows.length, products: result.rows });
   } catch (err) {
@@ -779,9 +765,9 @@ router.get('/sales', authMiddleware, async (req, res) => {
       SELECT s.sale_date, SUM(s.quantity)::INT AS quantity, SUM(s.revenue)::FLOAT AS revenue
       FROM sales s
       JOIN products p ON s.product_id = p.id
-      WHERE 1=1`;
-    const params = [];
-    let i = 1;
+      WHERE p.user_id = $1`;
+    const params = [req.user.id];
+    let i = 2;
 
     const prodFilter = product && product !== 'all' ? product : product_id;
     if (prodFilter && prodFilter !== 'all') {
@@ -792,7 +778,9 @@ router.get('/sales', authMiddleware, async (req, res) => {
     if (range && range !== 'all') {
       const days = parseInt(range);
       if (!isNaN(days)) {
-        query += ` AND s.sale_date >= (SELECT MAX(sale_date) FROM sales) - INTERVAL '${days} days'`;
+        // Range ends at this seller's latest sale, not the latest sale of anyone.
+        query += ` AND s.sale_date >= (SELECT MAX(s2.sale_date) FROM sales s2
+                   JOIN products p2 ON p2.id = s2.product_id WHERE p2.user_id = $1) - INTERVAL '${days} days'`;
       }
     } else {
       if (start_date)  { query += ` AND s.sale_date >= $${i++}`; params.push(start_date); }
@@ -809,32 +797,25 @@ router.get('/sales', authMiddleware, async (req, res) => {
 });
 
 // ─── GET /api/dashboard/stats ────────────────────────────────────────────────
-router.get('/dashboard/stats', async (req, res) => {
+router.get('/dashboard/stats', authMiddleware, async (req, res) => {
   try {
-    // Optional seller filter from JWT
-    let sellerId = null;
-    const authHeader = req.headers.authorization;
-    if (authHeader?.startsWith('Bearer ')) {
-      try {
-        const jwt = require('jsonwebtoken');
-        const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
-        sellerId = decoded.id || decoded.userId || null;
-      } catch { /* no-op */ }
-    }
+    const sellerId = req.user.id;
+    const ownSales = `FROM sales s JOIN products p ON p.id = s.product_id WHERE p.user_id = $1`;
 
     const [prodsRes, salesRes, revRes, qualRes, dateRes, anomRes] = await Promise.all([
-      pool.query('SELECT COUNT(*) AS total_products FROM products'),
-      pool.query('SELECT COUNT(*) AS total_sales_records FROM sales'),
-      pool.query('SELECT COALESCE(SUM(revenue), 0) AS total_revenue FROM sales'),
-      pool.query('SELECT quality_score FROM data_uploads ORDER BY uploaded_at DESC LIMIT 1'),
-      pool.query('SELECT MIN(sale_date) AS earliest_date, MAX(sale_date) AS latest_date FROM sales'),
-      sellerId
-        ? pool.query(
-            `SELECT COUNT(*) AS total FROM anomalies_detected
-             WHERE seller_id = $1 AND severity = 'critical' AND resolved = false`,
-            [sellerId]
-          )
-        : Promise.resolve({ rows: [{ total: 0 }] }),
+      pool.query('SELECT COUNT(*) AS total_products FROM products WHERE user_id = $1', [sellerId]),
+      pool.query(`SELECT COUNT(*) AS total_sales_records ${ownSales}`, [sellerId]),
+      pool.query(`SELECT COALESCE(SUM(s.revenue), 0) AS total_revenue ${ownSales}`, [sellerId]),
+      pool.query(
+        'SELECT quality_score FROM data_uploads WHERE uploaded_by = $1 ORDER BY uploaded_at DESC LIMIT 1',
+        [sellerId]
+      ),
+      pool.query(`SELECT MIN(s.sale_date) AS earliest_date, MAX(s.sale_date) AS latest_date ${ownSales}`, [sellerId]),
+      pool.query(
+        `SELECT COUNT(*) AS total FROM anomalies_detected
+         WHERE seller_id = $1 AND severity = 'critical' AND resolved = false`,
+        [sellerId]
+      ),
     ]);
 
     res.json({

@@ -35,8 +35,10 @@ const seedDatabase = async () => {
     console.log('✓ Users seeded');
 
     // Fetch user IDs
-    const userRes = await pool.query('SELECT id, role FROM users');
-    const adminId = userRes.rows.find(u => u.role === 'admin')?.id || 1;
+    const userRes = await pool.query('SELECT id, role, email FROM users');
+    // Demo products belong to the demo seller. Products without an owner are
+    // invisible to every account since seller isolation was enforced.
+    const sellerId = userRes.rows.find(u => u.email === 'seller@nexus.com')?.id;
 
     // 2. Seed Products (10 products across 3 categories)
     const products = [
@@ -52,11 +54,14 @@ const seedDatabase = async () => {
       { name: 'Cable Management Kit', category: 'Accessories', price: 14.99 },
     ];
 
+    // Clear upload history first: products and sales reference data_uploads,
+    // so truncating it later with CASCADE would wipe the freshly seeded rows.
+    await pool.query('TRUNCATE data_uploads CASCADE');
     await pool.query('TRUNCATE products CASCADE');
     for (const p of products) {
       await pool.query(
-        'INSERT INTO products (name, category, current_price) VALUES ($1, $2, $3)',
-        [p.name, p.category, p.price]
+        'INSERT INTO products (name, category, current_price, user_id) VALUES ($1, $2, $3, $4)',
+        [p.name, p.category, p.price, sellerId]
       );
     }
     console.log('✓ Products seeded');
@@ -96,10 +101,9 @@ const seedDatabase = async () => {
     console.log(`✓ Sales seeded (${totalRecords} records)`);
 
     // 4. Seed Data Uploads record
-    await pool.query('TRUNCATE data_uploads CASCADE');
     await pool.query(
       'INSERT INTO data_uploads (uploaded_by, file_format, total_records, clean_records, quality_score) VALUES ($1, $2, $3, $4, $5)',
-      [adminId, 'CSV', totalRecords, totalRecords, 98.5]
+      [sellerId, 'CSV', totalRecords, totalRecords, 98.5]
     );
     console.log('✓ Data upload history seeded');
 

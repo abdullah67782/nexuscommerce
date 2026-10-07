@@ -18,6 +18,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from features import build_features, EXCLUDE_COLS
 from model_loader import get_model_for_seller
 from forecaster import forecast_future
+from sales_history import product_sales_history, seller_sales_history
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', 'backend', '.env'))
 
@@ -137,68 +138,12 @@ def _get_stored_accuracy(seller_id: int) -> Optional[int]:
         conn.close()
 
 def _get_product_sales_history(product_id: int, seller_id: int) -> Optional[pd.DataFrame]:
-    conn = get_db_connection()
-    try:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(
-                """SELECT sale_date, SUM(quantity) as quantity
-                   FROM sales
-                   WHERE product_id = %s
-                   GROUP BY sale_date
-                   ORDER BY sale_date ASC""",
-                (product_id,),
-            )
-            rows = cur.fetchall()
-    finally:
-        conn.close()
-
-    if not rows:
-        return None
-
-    df = pd.DataFrame(rows)
-    df["sale_date"] = pd.to_datetime(df["sale_date"])
-    df["quantity"] = df["quantity"].astype(float)
-    full_idx = pd.date_range(df["sale_date"].min(), df["sale_date"].max(), freq="D")
-    df = (
-        df.set_index("sale_date")
-        .reindex(full_idx, fill_value=0)
-        .rename_axis("sale_date")
-        .reset_index()
-    )
-    return df
+    # Returns None when the product is not owned by this seller (see sales_history.py).
+    return product_sales_history(get_db_connection, product_id, seller_id)
 
 
 def _get_seller_sales_history(seller_id: int) -> Optional[pd.DataFrame]:
-    conn = get_db_connection()
-    try:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(
-                """SELECT s.sale_date, SUM(s.quantity) as quantity
-                   FROM sales s
-                   JOIN products p ON s.product_id = p.id
-                   WHERE p.user_id = %s
-                   GROUP BY s.sale_date
-                   ORDER BY s.sale_date ASC""",
-                (seller_id,),
-            )
-            rows = cur.fetchall()
-    finally:
-        conn.close()
-
-    if not rows:
-        return None
-
-    df = pd.DataFrame(rows)
-    df["sale_date"] = pd.to_datetime(df["sale_date"])
-    df["quantity"] = df["quantity"].astype(float)
-    full_idx = pd.date_range(df["sale_date"].min(), df["sale_date"].max(), freq="D")
-    df = (
-        df.set_index("sale_date")
-        .reindex(full_idx, fill_value=0)
-        .rename_axis("sale_date")
-        .reset_index()
-    )
-    return df
+    return seller_sales_history(get_db_connection, seller_id)
 
 
 def _update_finetune_job(user_id: int, status: str, metrics=None, error=None):
