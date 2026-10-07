@@ -82,6 +82,8 @@ export default function ForecastingPage() {
   const [ftLastTrained, setFtLastTrained] = useState(null);
   const [ftError, setFtError] = useState(null);
   const [ftStarting, setFtStarting] = useState(false);
+  // Training is controlled by the server and is off unless it says otherwise.
+  const [trainingEnabled, setTrainingEnabled] = useState(false);
   const pollingRef = useRef(null);
 
   // ── Bar animation state ───────────────────────────────────────────────────
@@ -146,6 +148,7 @@ export default function ForecastingPage() {
   const loadFtStatus = async () => {
     try {
       const r = await api.get('/finetune/status');
+      setTrainingEnabled(r.data.training_enabled === true);
       if (r.data.status === 'running') setFtState('training');
       else if (r.data.has_finetuned_model) setFtState('has_model');
       else setFtState('idle');
@@ -161,7 +164,8 @@ export default function ForecastingPage() {
       setFtState('training');
       toast.success('Training started — this takes 2-3 minutes');
     } catch (e) {
-      toast.error(e.response?.data?.error || 'Failed to start training');
+      if (e.response?.status === 403) setTrainingEnabled(false);
+      toast.error(e.response?.data?.message || e.response?.data?.error || 'Failed to start training');
     } finally {
       setFtStarting(false);
     }
@@ -249,7 +253,7 @@ export default function ForecastingPage() {
           description="See how much of each product you are likely to sell, the range around it, and what drives it."
           meta={<ModelStatus ftState={ftState} ftAccuracy={ftAccuracy} ftLastTrained={ftLastTrained} />}
         >
-          {ftState === 'has_model' && <Button variant="secondary" onClick={() => setFtState('idle')} icon={<HiArrowPath />}>Retrain model</Button>}
+          {ftState === 'has_model' && trainingEnabled && <Button variant="secondary" onClick={() => setFtState('idle')} icon={<HiArrowPath />}>Retrain model</Button>}
         </PageHeader>
 
         {/* ── Controls ─────────────────────────────────────────────────── */}
@@ -364,6 +368,7 @@ export default function ForecastingPage() {
           ftAccuracy={ftAccuracy}
           ftError={ftError}
           ftStarting={ftStarting}
+          trainingEnabled={trainingEnabled}
           onStart={startFinetune}
           onRetry={() => setFtState('idle')}
           onGenerate={generate}
@@ -466,15 +471,31 @@ function ModelStatus({ ftState, ftAccuracy, ftLastTrained }) {
       </StatusBadge>
     );
   }
-  return <StatusBadge tone="neutral">Base model · not personalised yet</StatusBadge>;
+  return <StatusBadge tone="neutral">General model</StatusBadge>;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PERSONAL MODEL — idle · training · completed · has_model · failed
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function FineTuneCard({ ftState, ftAccuracy, ftError, ftStarting, onStart, onRetry, onGenerate }) {
+function FineTuneCard({ ftState, ftAccuracy, ftError, ftStarting, trainingEnabled, onStart, onRetry, onGenerate }) {
   if (ftState === 'loading') return null;
+
+  if (ftState === 'idle' && !trainingEnabled) {
+    return (
+      <Panel variant="subtle">
+        <div className="model-plate">
+          <div>
+            <p className="model-kicker" style={{ color: 'var(--text-2)' }}>Personal model training is off</p>
+            <p className="model-copy">
+              In our tests, extra training on a single store&apos;s history did not reliably improve forecasts, so training new
+              personal models is turned off. Forecasts keep using the general model, or a personal model trained earlier.
+            </p>
+          </div>
+        </div>
+      </Panel>
+    );
+  }
 
   if (ftState === 'idle') {
     return (
@@ -539,7 +560,7 @@ function FineTuneCard({ ftState, ftAccuracy, ftError, ftStarting, onStart, onRet
             <p className="model-kicker" style={{ color: 'var(--danger)' }}>Training failed</p>
             <p className="model-copy">{ftError || 'An unexpected error occurred. Please try again.'}</p>
           </div>
-          <Button variant="danger" onClick={onRetry} icon={<HiArrowPath />}>Retry</Button>
+          {trainingEnabled && <Button variant="danger" onClick={onRetry} icon={<HiArrowPath />}>Retry</Button>}
         </div>
       </Panel>
     );

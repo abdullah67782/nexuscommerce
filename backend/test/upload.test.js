@@ -82,3 +82,25 @@ test('two sellers uploading the same product name get separate products', async 
      WHERE p.name = 'Mouse' GROUP BY p.user_id ORDER BY p.user_id`);
   assert.deepEqual(rows, [{ user_id: a.id, n: 10 }, { user_id: b.id, n: 10 }]);
 });
+
+test('product names that collide with JavaScript object properties upload normally', async () => {
+  const a = await registerSeller(ctx.api, 'a@test.com');
+  const csv = ['product_name,quantity,sale_date,revenue',
+    'constructor,1,2026-01-01,10', '__proto__,2,2026-01-01,20', 'toString,3,2026-01-01,30'].join('\n');
+  const res = await ctx.api('POST', '/data/upload', { token: a.token, form: csvForm(csv) });
+  assert.equal(res.status, 200, JSON.stringify(res.body));
+  assert.equal(res.body.inserted, 3);
+  const products = await ctx.api('GET', '/products', { token: a.token });
+  assert.deepEqual(products.body.products.map(p => p.name).sort(), ['__proto__', 'constructor', 'toString']);
+});
+
+// Known gap, fixed by the proposed import-identity migration (docs/import-identity-and-coverage.md).
+test('re-uploading the same file without a revenue column does not duplicate sales',
+  { todo: 'needs file/row import identity (proposed migration 002)' }, async () => {
+    const a = await registerSeller(ctx.api, 'a@test.com');
+    const csv = ['product_name,quantity,sale_date', 'Mouse,1,2026-01-01', 'Mouse,2,2026-01-02'].join('\n');
+    await ctx.api('POST', '/data/upload', { token: a.token, form: csvForm(csv) });
+    await ctx.api('POST', '/data/upload', { token: a.token, form: csvForm(csv) });
+    const { rows } = await ctx.pool.query('SELECT COUNT(*)::int AS n FROM sales');
+    assert.equal(rows[0].n, 2);
+  });

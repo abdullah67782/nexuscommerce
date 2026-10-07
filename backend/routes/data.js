@@ -82,7 +82,7 @@ async function parseFile(filePath) {
 
 function normalizeKeys(rows) {
   return rows.map((row) => {
-    const n = {};
+    const n = Object.create(null); // header names can never hit Object.prototype
     for (const key of Object.keys(row)) {
       const k = key.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
       n[k] = row[key];
@@ -389,19 +389,13 @@ async function storeDataV2(cleanedRows, sellerId, uploadId) {
 async function updateFreshness(sellerId, insertedCount) {
   // Find the latest sale date for this seller's products
   const lastSaleRes = await pool.query(
-    `SELECT MAX(s.sale_date) AS last_sale_date
-     FROM sales s
-     JOIN products p ON s.product_id = p.id
-     WHERE p.user_id = $1`,
+    `SELECT MAX(sale_date) AS last_sale_date FROM attributed_sales WHERE seller_id = $1`,
     [sellerId]
   );
 
   // Total records for this seller
   const totalRes = await pool.query(
-    `SELECT COUNT(*) AS total
-     FROM sales s
-     JOIN products p ON s.product_id = p.id
-     WHERE p.user_id = $1`,
+    `SELECT COUNT(*) AS total FROM attributed_sales WHERE seller_id = $1`,
     [sellerId]
   );
 
@@ -763,9 +757,8 @@ router.get('/sales', authMiddleware, async (req, res) => {
     const { product_id, start_date, end_date, product, range } = req.query;
     let query = `
       SELECT s.sale_date, SUM(s.quantity)::INT AS quantity, SUM(s.revenue)::FLOAT AS revenue
-      FROM sales s
-      JOIN products p ON s.product_id = p.id
-      WHERE p.user_id = $1`;
+      FROM attributed_sales s
+      WHERE s.seller_id = $1`;
     const params = [req.user.id];
     let i = 2;
 
@@ -779,8 +772,8 @@ router.get('/sales', authMiddleware, async (req, res) => {
       const days = parseInt(range);
       if (!isNaN(days)) {
         // Range ends at this seller's latest sale, not the latest sale of anyone.
-        query += ` AND s.sale_date >= (SELECT MAX(s2.sale_date) FROM sales s2
-                   JOIN products p2 ON p2.id = s2.product_id WHERE p2.user_id = $1) - INTERVAL '${days} days'`;
+        query += ` AND s.sale_date >= (SELECT MAX(s2.sale_date) FROM attributed_sales s2
+                   WHERE s2.seller_id = $1) - INTERVAL '${days} days'`;
       }
     } else {
       if (start_date)  { query += ` AND s.sale_date >= $${i++}`; params.push(start_date); }
@@ -800,7 +793,8 @@ router.get('/sales', authMiddleware, async (req, res) => {
 router.get('/dashboard/stats', authMiddleware, async (req, res) => {
   try {
     const sellerId = req.user.id;
-    const ownSales = `FROM sales s JOIN products p ON p.id = s.product_id WHERE p.user_id = $1`;
+    // Excludes sales quarantined for conflicting provenance (see attributed_sales in initDb.js).
+    const ownSales = 'FROM attributed_sales s WHERE s.seller_id = $1';
 
     const [prodsRes, salesRes, revRes, qualRes, dateRes, anomRes] = await Promise.all([
       pool.query('SELECT COUNT(*) AS total_products FROM products WHERE user_id = $1', [sellerId]),

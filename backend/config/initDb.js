@@ -154,6 +154,35 @@ const createTables = async () => {
     }
   }
 
+  // ── Step 5: Import identity for API imports (additive; see docs/import-identity-and-coverage.md)
+  // Every store-connect batch is recorded in data_uploads like a file upload.
+  // A retry with the same (seller, idempotency_key) reuses the original record.
+  await pool.query(`
+    ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS source          VARCHAR(20) NOT NULL DEFAULT 'file_upload';
+    ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(255);
+    ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS payload_sha256  CHAR(64);
+    ALTER TABLE data_uploads ADD COLUMN IF NOT EXISTS result_summary  JSONB;
+    CREATE UNIQUE INDEX IF NOT EXISTS data_uploads_seller_idempotency_key
+      ON data_uploads (uploaded_by, idempotency_key);
+  `);
+
+  // ── Step 6: Sales whose provenance agrees with the product's owner ───────
+  // Before seller isolation, an upload could attach sales to another seller's
+  // product. Those rows (import uploaded_by <> product owner) are quarantined:
+  // kept in "sales" for repair, but excluded from every seller-facing read and
+  // from the ML server's history queries, which all read this view.
+  // Rows without an import record (seeded/legacy) keep the product owner.
+  await pool.query(`
+    CREATE OR REPLACE VIEW attributed_sales AS
+    SELECT s.id, s.product_id, s.quantity, s.sale_date, s.revenue, s.upload_id, s.created_at,
+           p.user_id AS seller_id
+    FROM sales s
+    JOIN products p ON p.id = s.product_id
+    LEFT JOIN data_uploads du ON du.id = s.upload_id
+    WHERE p.user_id IS NOT NULL
+      AND (s.upload_id IS NULL OR du.uploaded_by = p.user_id);
+  `);
+
   console.log('All tables created successfully');
 };
 

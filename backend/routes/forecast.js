@@ -3,6 +3,7 @@ const axios = require('axios');
 const pool = require('../config/db');
 const authMiddleware = require('../middleware/auth');
 const { findOwnedProduct } = require('../lib/ownership');
+const { isManualTrainingEnabled, TRAINING_DISABLED } = require('../lib/training');
 
 const router = express.Router();
 const finetuneRouter = express.Router();
@@ -84,8 +85,9 @@ router.get('/:productId/accuracy', authMiddleware, async (req, res) => {
          ROUND(f.predicted_demand)::int AS predicted,
          ROUND(SUM(s.quantity))::int AS actual
        FROM forecasts f
-       JOIN sales s ON s.product_id = f.product_id
+       JOIN attributed_sales s ON s.product_id = f.product_id
                    AND s.sale_date = f.forecast_date
+                   AND s.seller_id = f.seller_id
        WHERE f.product_id = $1
          AND f.seller_id = $2
        GROUP BY f.forecast_date, f.predicted_demand
@@ -235,6 +237,9 @@ router.get('/:productId', authMiddleware, async (req, res) => {
 
 // POST /api/finetune
 finetuneRouter.post('/', authMiddleware, async (req, res) => {
+  if (!isManualTrainingEnabled()) {
+    return res.status(403).json(TRAINING_DISABLED);
+  }
   const sellerId = req.user.id;
   const category = req.body?.category || 'United_Kingdom';
   try {
@@ -251,7 +256,7 @@ finetuneRouter.get('/status', authMiddleware, async (req, res) => {
   const sellerId = req.user.id;
   try {
     const result = await callMLServer('GET', `/finetune/status/${sellerId}`);
-    res.json(result);
+    res.json({ ...result, training_enabled: isManualTrainingEnabled() });
   } catch (err) {
     console.error('Finetune status error:', err.message);
     res.status(500).json({ error: err.message });

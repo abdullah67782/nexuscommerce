@@ -2,7 +2,8 @@
 
 Every query is scoped to the requesting seller: a product's history is only
 returned when the product belongs to that seller (products with no owner never
-match). Kept separate from main.py so it can be tested without FastAPI.
+match), and sales quarantined for conflicting provenance are excluded. Kept
+separate from main.py so it can be tested without FastAPI.
 
 Daily filling is unchanged from the original behaviour (zeros between the first
 and last recorded sale). Coverage-aware filling is planned for a later phase.
@@ -11,23 +12,25 @@ from typing import Callable, Optional
 
 import pandas as pd
 
+# Both queries read the attributed_sales view (created by backend/config/initDb.js):
+# sales of products owned by the seller, excluding rows whose import was made by
+# a different seller (quarantined provenance conflicts). The view is the single
+# definition of "this seller's sales" for the backend and the ML server.
 PRODUCT_HISTORY_SQL = """
-    SELECT s.sale_date, SUM(s.quantity) AS quantity
-    FROM sales s
-    JOIN products p ON p.id = s.product_id
-    WHERE s.product_id = %s
-      AND p.user_id = %s
-    GROUP BY s.sale_date
-    ORDER BY s.sale_date ASC
+    SELECT sale_date, SUM(quantity) AS quantity
+    FROM attributed_sales
+    WHERE product_id = %s
+      AND seller_id = %s
+    GROUP BY sale_date
+    ORDER BY sale_date ASC
 """
 
 SELLER_HISTORY_SQL = """
-    SELECT s.sale_date, SUM(s.quantity) AS quantity
-    FROM sales s
-    JOIN products p ON s.product_id = p.id
-    WHERE p.user_id = %s
-    GROUP BY s.sale_date
-    ORDER BY s.sale_date ASC
+    SELECT sale_date, SUM(quantity) AS quantity
+    FROM attributed_sales
+    WHERE seller_id = %s
+    GROUP BY sale_date
+    ORDER BY sale_date ASC
 """
 
 

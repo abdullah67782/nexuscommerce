@@ -55,8 +55,9 @@ class ProductHistoryIsolation(unittest.TestCase):
         conn = FakeConnection([{"sale_date": "2026-01-01", "quantity": 3}])
         sales_history.product_sales_history(lambda: conn, product_id=7, seller_id=42)
         sql, params = conn.executed[0]
-        self.assertIn("JOIN products p ON p.id = s.product_id", sql)
-        self.assertIn("p.user_id = %s", sql)
+        self.assertIn("FROM attributed_sales", sql)
+        self.assertIn("seller_id = %s", sql)
+        self.assertNotIn(" sales ", sql.replace("attributed_sales", ""), "must not read the raw sales table")
         self.assertEqual(params, (7, 42))
         self.assertTrue(conn.closed)
 
@@ -83,7 +84,8 @@ class SellerHistoryIsolation(unittest.TestCase):
         conn = FakeConnection([{"sale_date": "2026-01-01", "quantity": 3}])
         sales_history.seller_sales_history(lambda: conn, seller_id=42)
         sql, params = conn.executed[0]
-        self.assertIn("p.user_id = %s", sql)
+        self.assertIn("FROM attributed_sales", sql)
+        self.assertIn("seller_id = %s", sql)
         self.assertEqual(params, (42,))
 
 
