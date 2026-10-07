@@ -1,0 +1,28 @@
+test_daily_filling_is_unchanged (test_sales_history.ProductHistoryIsolation.test_daily_filling_is_unchanged) ... ok
+test_missing_seller_never_queries (test_sales_history.ProductHistoryIsolation.test_missing_seller_never_queries) ... ok
+test_no_rows_means_no_history (test_sales_history.ProductHistoryIsolation.test_no_rows_means_no_history) ... ok
+test_query_is_scoped_to_the_product_owner (test_sales_history.ProductHistoryIsolation.test_query_is_scoped_to_the_product_owner) ... ok
+test_query_is_scoped_to_the_seller (test_sales_history.SellerHistoryIsolation.test_query_is_scoped_to_the_seller) ... ok
+test_feature_list_matches_frozen_protocol (test_v2_parity.FeatureParity.test_feature_list_matches_frozen_protocol) ... ok
+test_methods_match_experiment (test_v2_parity.FeatureParity.test_methods_match_experiment) ... ok
+test_origin_features_match_experiment (test_v2_parity.FeatureParity.test_origin_features_match_experiment) ... ok
+test_routes_match_frozen_protocol (test_v2_parity.FeatureParity.test_routes_match_frozen_protocol) ... ok
+test_first_and_last_windows_reproduce (test_v2_parity.FrozenReplay.test_first_and_last_windows_reproduce) ... ok
+test_routed_rule_matches_v2_selection (test_v2_parity.FrozenReplay.test_routed_rule_matches_v2_selection) ... ok
+test_average_tier_is_28_day_mean (test_v2_parity.Tiers.test_average_tier_is_28_day_mean) ... ok
+test_rare_model_tier_uses_tsb_without_models (test_v2_parity.Tiers.test_rare_model_tier_uses_tsb_without_models) ... ok
+test_regular_model_tier_requires_models (test_v2_parity.Tiers.test_regular_model_tier_requires_models) ... ok
+test_rejects_invalid_quantities (test_v2_parity.Tiers.test_rejects_invalid_quantities) ... ok
+test_tier_boundaries (test_v2_parity.Tiers.test_tier_boundaries) ... ok
+test_feature_contract_mismatch_is_refused (test_v2_serving.Registry.test_feature_contract_mismatch_is_refused) ... ok
+test_loads_only_manifest_models (test_v2_serving.Registry.test_loads_only_manifest_models) ... ok
+test_manifest_cannot_point_outside_models_v2_or_at_pickles (test_v2_serving.Registry.test_manifest_cannot_point_outside_models_v2_or_at_pickles) ... ok
+test_missing_manifest_is_refused (test_v2_serving.Registry.test_missing_manifest_is_refused) ... ok
+test_tampered_model_is_refused (test_v2_serving.Registry.test_tampered_model_is_refused) ... ok
+test_v2_code_never_references_legacy_artifacts (test_v2_serving.Registry.test_v2_code_never_references_legacy_artifacts) ... ok
+test_reproduces_fixture_forecasts (test_v2_serving.ServingFixture.test_reproduces_fixture_forecasts) ... ok
+
+----------------------------------------------------------------------
+Ran 23 tests in 43.909s
+
+OK

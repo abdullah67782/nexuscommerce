@@ -1,0 +1,607 @@
+TAP version 13
+# ◇ injected env (0) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+# ◇ injected env (0) from .env // tip: ⌘ suppress logs { quiet: true }
+# Connected to PostgreSQL database
+# Subtest: product list only contains the seller’s own products
+ok 1 - product list only contains the seller’s own products
+  ---
+  duration_ms: 404.705517
+  type: 'test'
+  ...
+# Subtest: sales history only contains the seller’s own sales
+ok 2 - sales history only contains the seller’s own sales
+  ---
+  duration_ms: 14.82411
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Subtest: dashboard stats and data quality are per seller
+ok 3 - dashboard stats and data quality are per seller
+  ---
+  duration_ms: 25.701755
+  type: 'test'
+  ...
+# Subtest: inventory alerts are per seller
+ok 4 - inventory alerts are per seller
+  ---
+  duration_ms: 6.963754
+  type: 'test'
+  ...
+# Subtest: ownerless products are invisible to every seller
+ok 5 - ownerless products are invisible to every seller
+  ---
+  duration_ms: 14.578645
+  type: 'test'
+  ...
+# ◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+# ◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+# Connected to PostgreSQL database
+# Subtest: register creates an account and returns a token
+ok 6 - register creates an account and returns a token
+  ---
+  duration_ms: 166.992484
+  type: 'test'
+  ...
+# Subtest: register rejects a duplicate email and missing fields
+ok 7 - register rejects a duplicate email and missing fields
+  ---
+  duration_ms: 100.798108
+  type: 'test'
+  ...
+# Subtest: login succeeds with the right password and fails otherwise
+ok 8 - login succeeds with the right password and fails otherwise
+  ---
+  duration_ms: 303.700123
+  type: 'test'
+  ...
+# Subtest: protected routes reject missing, invalid and expired tokens
+ok 9 - protected routes reject missing, invalid and expired tokens
+  ---
+  duration_ms: 31.977044
+  type: 'test'
+  ...
+# ◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+# ◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+# Connected to PostgreSQL database
+# Subtest: missing, non-numeric and fractional quantities are rejected; nothing is imputed
+ok 10 - missing, non-numeric and fractional quantities are rejected; nothing is imputed
+  ---
+  duration_ms: 401.092764
+  type: 'test'
+  ...
+# Subtest: unusually large orders are kept and flagged, never removed
+ok 11 - unusually large orders are kept and flagged, never removed
+  ---
+  duration_ms: 244.897663
+  type: 'test'
+  ...
+# Subtest: ambiguous dates are rejected with the accepted formats
+ok 12 - ambiguous dates are rejected with the accepted formats
+  ---
+  duration_ms: 243.326355
+  type: 'test'
+  ...
+# Subtest: new sources default to Asia/Karachi; a source timezone can be changed for future imports
+ok 13 - new sources default to Asia/Karachi; a source timezone can be changed for future imports
+  ---
+  duration_ms: 263.503984
+  type: 'test'
+  ...
+# Subtest: a confirmed export with no sales is accepted only with coverage for all products
+ok 14 - a confirmed export with no sales is accepted only with coverage for all products
+  ---
+  duration_ms: 272.981282
+  type: 'test'
+  ...
+# Subtest: coverage rows must lie in the period and may not overlap earlier data of the same source
+ok 15 - coverage rows must lie in the period and may not overlap earlier data of the same source
+  ---
+  duration_ms: 279.469741
+  type: 'test'
+  ...
+# Subtest: a file with rejected rows cannot be confirmed as complete
+ok 16 - a file with rejected rows cannot be confirmed as complete
+  ---
+  duration_ms: 233.375259
+  type: 'test'
+  ...
+# Subtest: new rows inside a confirmed period need an explicit append
+ok 17 - new rows inside a confirmed period need an explicit append
+  ---
+  duration_ms: 262.662361
+  type: 'test'
+  ...
+# Subtest: rolling back an import revokes its coverage
+ok 18 - rolling back an import revokes its coverage
+  ---
+  duration_ms: 258.279256
+  type: 'test'
+  ...
+# Subtest: store connect: confirmed coverage, including an empty delivery
+ok 19 - store connect: confirmed coverage, including an empty delivery
+  ---
+  duration_ms: 236.987512
+  type: 'test'
+  ...
+# Subtest: history: recorded days are used, unknown gaps are kept, zeros only inside confirmed periods
+ok 20 - history: recorded days are used, unknown gaps are kept, zeros only inside confirmed periods
+  ---
+  duration_ms: 243.500882
+  type: 'test'
+  ...
+# Subtest: history: a revoked period turns its empty days back into unknown
+ok 21 - history: a revoked period turns its empty days back into unknown
+  ---
+  duration_ms: 289.916925
+  type: 'test'
+  ...
+# Subtest: v2 endpoint is off unless switched on, and only serves the owner
+ok 22 - v2 endpoint is off unless switched on, and only serves the owner
+  ---
+  duration_ms: 255.145101
+  type: 'test'
+  ...
+# Subtest: v2 endpoint sends only the usable history and explains gaps and tiers
+ok 23 - v2 endpoint sends only the usable history and explains gaps and tiers
+  ---
+  duration_ms: 293.550362
+  type: 'test'
+  ...
+# Subtest: v2 endpoint: insufficient history returns no forecast; the ML server being down is a clear 503
+ok 24 - v2 endpoint: insufficient history returns no forecast; the ML server being down is a clear 503
+  ---
+  duration_ms: 244.773406
+  type: 'test'
+  ...
+# ◇ injected env (0) from .env // tip: ⌘ suppress logs { quiet: true }
+# ◇ injected env (0) from .env // tip: ⌘ suppress logs { quiet: true }
+# Connected to PostgreSQL database
+# Subtest: owner gets a forecast; the request reaches the ML server with their seller id
+ok 25 - owner gets a forecast; the request reaches the ML server with their seller id
+  ---
+  duration_ms: 430.607664
+  type: 'test'
+  ...
+# Subtest: another seller gets 404 for someone else's product and the ML server is never called
+ok 26 - another seller gets 404 for someone else's product and the ML server is never called
+  ---
+  duration_ms: 6.04545
+  type: 'test'
+  ...
+# Subtest: unknown and malformed product ids are rejected
+ok 27 - unknown and malformed product ids are rejected
+  ---
+  duration_ms: 6.869859
+  type: 'test'
+  ...
+# Subtest: insufficient history from the ML server is passed through as 422
+ok 28 - insufficient history from the ML server is passed through as 422
+  ---
+  duration_ms: 7.643422
+  type: 'test'
+  ...
+# Subtest: forecast-vs-actual only uses the seller’s own forecast rows
+ok 29 - forecast-vs-actual only uses the seller’s own forecast rows
+  ---
+  duration_ms: 14.746289
+  type: 'test'
+  ...
+# Subtest: model metrics are per seller
+ok 30 - model metrics are per seller
+  ---
+  duration_ms: 12.980142
+  type: 'test'
+  ...
+# Subtest: fine-tune status is requested for the logged-in seller only
+ok 31 - fine-tune status is requested for the logged-in seller only
+  ---
+  duration_ms: 6.152773
+  type: 'test'
+  ...
+# ◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+# ◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+# Connected to PostgreSQL database
+# Subtest: identical rows in a file are kept, with their original row numbers
+ok 32 - identical rows in a file are kept, with their original row numbers
+  ---
+  duration_ms: 377.427709
+  type: 'test'
+  ...
+# Subtest: operation ids: same id replays, reused id with other content conflicts, new id is a new operation
+ok 33 - operation ids: same id replays, reused id with other content conflicts, new id is a new operation
+  ---
+  duration_ms: 275.602033
+  type: 'test'
+  ...
+# Subtest: a rolled-back file keeps its identity: a retry never restores it, a new operation can
+ok 34 - a rolled-back file keeps its identity: a retry never restores it, a new operation can
+  ---
+  duration_ms: 280.494964
+  type: 'test'
+  ...
+# Subtest: files with a line_id column use line identity across uploads
+ok 35 - files with a line_id column use line identity across uploads
+  ---
+  duration_ms: 265.107678
+  type: 'test'
+  ...
+# Subtest: xlsx date cells (Excel serial numbers) become the right calendar day
+ok 36 - xlsx date cells (Excel serial numbers) become the right calendar day
+  ---
+  duration_ms: 257.536911
+  type: 'test'
+  ...
+# Subtest: ambiguous or invalid date formats are rejected, not guessed
+ok 37 - ambiguous or invalid date formats are rejected, not guessed
+  ---
+  duration_ms: 255.418929
+  type: 'test'
+  ...
+# Subtest: line ids: re-delivered lines are skipped, new lines imported
+ok 38 - line ids: re-delivered lines are skipped, new lines imported
+  ---
+  duration_ms: 240.689123
+  type: 'test'
+  ...
+# Subtest: a line id that arrives with changed contents is an explicit conflict and nothing is written
+ok 39 - a line id that arrives with changed contents is an explicit conflict and nothing is written
+  ---
+  duration_ms: 239.038387
+  type: 'test'
+  ...
+# Subtest: line ids are scoped to a connection; other connections and sellers are independent
+ok 40 - line ids are scoped to a connection; other connections and sellers are independent
+  ---
+  duration_ms: 237.969831
+  type: 'test'
+  ...
+# Subtest: overlap is only checked within the same source
+ok 41 - overlap is only checked within the same source
+  ---
+  duration_ms: 229.921069
+  type: 'test'
+  ...
+# Subtest: sale dates are business days in the connection timezone
+ok 42 - sale dates are business days in the connection timezone
+  ---
+  duration_ms: 228.026177
+  type: 'test'
+  ...
+# Subtest: a rolled-back store import keeps its identity
+ok 43 - a rolled-back store import keeps its identity
+  ---
+  duration_ms: 265.458494
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Subtest: concurrent file uploads, store imports and a rollback keep versions unique and data consistent
+ok 44 - concurrent file uploads, store imports and a rollback keep versions unique and data consistent
+  ---
+  duration_ms: 341.048921
+  type: 'test'
+  ...
+# Subtest: freshness is recomputed after imports and rollbacks
+ok 45 - freshness is recomputed after imports and rollbacks
+  ---
+  duration_ms: 268.149857
+  type: 'test'
+  ...
+# ◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+# ◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+# Connected to PostgreSQL database
+# Subtest: the pool really has one connection
+ok 46 - the pool really has one connection
+  ---
+  duration_ms: 211.963757
+  type: 'test'
+  ...
+# Subtest: an identical store-connect retry is replayed on a one-connection pool
+ok 47 - an identical store-connect retry is replayed on a one-connection pool
+  ---
+  duration_ms: 214.678314
+  type: 'test'
+  ...
+# Subtest: concurrent retries while the pool is saturated all succeed
+ok 48 - concurrent retries while the pool is saturated all succeed
+  ---
+  duration_ms: 162.306836
+  type: 'test'
+  ...
+# Subtest: upload, rollback and forecasting work on a one-connection pool
+ok 49 - upload, rollback and forecasting work on a one-connection pool
+  ---
+  duration_ms: 187.363158
+  type: 'test'
+  ...
+# ◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+# ◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Subtest: new rows that contradict provenance are refused by the database
+ok 50 - new rows that contradict provenance are refused by the database
+  ---
+  duration_ms: 380.89815
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Subtest: the owner’s sales history excludes rows imported by another seller
+ok 51 - the owner’s sales history excludes rows imported by another seller
+  ---
+  duration_ms: 14.673305
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Subtest: dashboard totals exclude the conflicting row
+ok 52 - dashboard totals exclude the conflicting row
+  ---
+  duration_ms: 16.675735
+  type: 'test'
+  ...
+# Subtest: forecast-vs-actual does not use the conflicting row as an actual
+ok 53 - forecast-vs-actual does not use the conflicting row as an actual
+  ---
+  duration_ms: 8.400003
+  type: 'test'
+  ...
+# Subtest: freshness totals exclude the conflicting row
+ok 54 - freshness totals exclude the conflicting row
+  ---
+  duration_ms: 29.513305
+  type: 'test'
+  ...
+# Subtest: the shared attributed_sales view (also used by the ML server) excludes it
+ok 55 - the shared attributed_sales view (also used by the ML server) excludes it
+  ---
+  duration_ms: 1.972523
+  type: 'test'
+  ...
+# Subtest: the importing seller does not gain access either
+ok 56 - the importing seller does not gain access either
+  ---
+  duration_ms: 7.037186
+  type: 'test'
+  ...
+# ◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+# ◇ injected env (0) from .env // tip: ⌘ suppress logs { quiet: true }
+# Connected to PostgreSQL database
+# Subtest: only the most recent upload can be rolled back, and only once
+ok 57 - only the most recent upload can be rolled back, and only once
+  ---
+  duration_ms: 351.344328
+  type: 'test'
+  ...
+# Subtest: rollback works for uploads that also created inventory rows
+ok 58 - rollback works for uploads that also created inventory rows
+  ---
+  duration_ms: 174.584523
+  type: 'test'
+  ...
+# Subtest: a seller cannot roll back another seller's upload
+ok 59 - a seller cannot roll back another seller's upload
+  ---
+  duration_ms: 242.752733
+  type: 'test'
+  ...
+# ◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+# ◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+# Connected to PostgreSQL database
+# Subtest: connecting a store imports sales and does not start fine-tuning
+ok 60 - connecting a store imports sales and does not start fine-tuning
+  ---
+  duration_ms: 262.999342
+  type: 'test'
+  ...
+# Subtest: each import gets one import record, a version and provenance on every row
+ok 61 - each import gets one import record, a version and provenance on every row
+  ---
+  duration_ms: 169.230533
+  type: 'test'
+  ...
+# Subtest: retrying the same payload without revenue does not duplicate sales
+ok 62 - retrying the same payload without revenue does not duplicate sales
+  ---
+  duration_ms: 171.272219
+  type: 'test'
+  ...
+# Subtest: an explicit import_id is idempotent, and reusing it for different data is refused
+ok 63 - an explicit import_id is idempotent, and reusing it for different data is refused
+  ---
+  duration_ms: 158.309993
+  type: 'test'
+  ...
+# Subtest: a new import_id with rows already imported is refused unless the import says append
+ok 64 - a new import_id with rows already imported is refused unless the import says append
+  ---
+  duration_ms: 162.379431
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Subtest: concurrent identical retries create exactly one import
+ok 65 - concurrent identical retries create exactly one import
+  ---
+  duration_ms: 155.945931
+  type: 'test'
+  ...
+# Subtest: product names that collide with JavaScript object properties import normally
+ok 66 - product names that collide with JavaScript object properties import normally
+  ---
+  duration_ms: 172.700162
+  type: 'test'
+  ...
+# Subtest: invalid sale rows are counted as rejected, not imported
+ok 67 - invalid sale rows are counted as rejected, not imported
+  ---
+  duration_ms: 146.769535
+  type: 'test'
+  ...
+# Subtest: store connect requires login, a non-empty sales list and a sane import_id
+ok 68 - store connect requires login, a non-empty sales list and a sane import_id
+  ---
+  duration_ms: 139.634031
+  type: 'test'
+  ...
+# Subtest: two genuine identical orders in one import are both kept (with and without revenue)
+ok 69 - two genuine identical orders in one import are both kept (with and without revenue)
+  ---
+  duration_ms: 168.543991
+  type: 'test'
+  ...
+# ◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+# ◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+# Connected to PostgreSQL database
+# Subtest: starting training is refused and never reaches the ML server
+ok 70 - starting training is refused and never reaches the ML server
+  ---
+  duration_ms: 257.224513
+  type: 'test'
+  ...
+# Subtest: training status still works and says training is disabled
+ok 71 - training status still works and says training is disabled
+  ---
+  duration_ms: 56.265852
+  type: 'test'
+  ...
+# Subtest: training can only be re-enabled explicitly through configuration
+ok 72 - training can only be re-enabled explicitly through configuration
+  ---
+  duration_ms: 30.916861
+  type: 'test'
+  ...
+# Subtest: training endpoints still require login
+ok 73 - training endpoints still require login
+  ---
+  duration_ms: 11.353951
+  type: 'test'
+  ...
+# Subtest: legacy database (built by the old initDb) with existing data
+ok 74 - legacy database (built by the old initDb) with existing data
+  ---
+  duration_ms: 80.141703
+  type: 'test'
+  ...
+# Subtest: migrating records the existing baseline and applies 002 without losing rows
+ok 75 - migrating records the existing baseline and applies 002 without losing rows
+  ---
+  duration_ms: 30.509018
+  type: 'test'
+  ...
+# Subtest: after 002: identical genuine rows are allowed, provenance violations are not
+ok 76 - after 002: identical genuine rows are allowed, provenance violations are not
+  ---
+  duration_ms: 10.223345
+  type: 'test'
+  ...
+# Subtest: 003 applies on top of 002 without changing rows, and restarting cannot undo either
+ok 77 - 003 applies on top of 002 without changing rows, and restarting cannot undo either
+  ---
+  duration_ms: 27.71175
+  type: 'test'
+  ...
+# Subtest: 003 enforces one seller across coverage, source, import and listed products
+ok 78 - 003 enforces one seller across coverage, source, import and listed products
+  ---
+  duration_ms: 23.651763
+  type: 'test'
+  ...
+# Subtest: 003 reverses cleanly (sales kept), and reversal stays latest-first
+ok 79 - 003 reverses cleanly (sales kept), and reversal stays latest-first
+  ---
+  duration_ms: 14.876734
+  type: 'test'
+  ...
+# Subtest: reversal of 002 refuses while genuine identical rows exist, and changes nothing
+ok 80 - reversal of 002 refuses while genuine identical rows exist, and changes nothing
+  ---
+  duration_ms: 5.302398
+  type: 'test'
+  ...
+# Subtest: reversal of 002 works once the data allows it, and 002 + 003 can be re-applied
+ok 81 - reversal of 002 works once the data allows it, and 002 + 003 can be re-applied
+  ---
+  duration_ms: 43.12761
+  type: 'test'
+  ...
+# Subtest: an edited, already-applied migration is detected and blocks both migrate and startup
+ok 82 - an edited, already-applied migration is detected and blocks both migrate and startup
+  ---
+  duration_ms: 7.556165
+  type: 'test'
+  ...
+# ◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+# ◇ injected env (0) from .env // tip: ⌘ suppress logs { quiet: true }
+# Connected to PostgreSQL database
+# Subtest: CSV upload stores sales, creates version 1 and reports quality
+ok 83 - CSV upload stores sales, creates version 1 and reports quality
+  ---
+  duration_ms: 380.525271
+  type: 'test'
+  ...
+# Subtest: re-sending the same file without an operation id replays the original import
+ok 84 - re-sending the same file without an operation id replays the original import
+  ---
+  duration_ms: 201.01746
+  type: 'test'
+  ...
+# Subtest: invalid rows are rejected and recorded as anomalies the seller can resolve
+ok 85 - invalid rows are rejected and recorded as anomalies the seller can resolve
+  ---
+  duration_ms: 267.052708
+  type: 'test'
+  ...
+# Error: Only CSV, JSON, and Excel (.xlsx) files are supported
+#     at fileFilter (/home/claude/nc/backend/routes/data.js:38:10)
+#     at wrappedFileFilter (/home/claude/nc/backend/node_modules/multer/index.js:45:7)
+#     at Multipart.<anonymous> (/home/claude/nc/backend/node_modules/multer/lib/make-middleware.js:183:7)
+#     at Multipart.emit (node:events:519:28)
+#     at HeaderParser.cb (/home/claude/nc/backend/node_modules/busboy/lib/types/multipart.js:358:14)
+#     at HeaderParser.push (/home/claude/nc/backend/node_modules/busboy/lib/types/multipart.js:162:20)
+#     at SBMH.ssCb [as _cb] (/home/claude/nc/backend/node_modules/busboy/lib/types/multipart.js:394:37)
+#     at feed (/home/claude/nc/backend/node_modules/streamsearch/lib/sbmh.js:219:14)
+#     at SBMH.push (/home/claude/nc/backend/node_modules/streamsearch/lib/sbmh.js:104:16)
+#     at Multipart._write (/home/claude/nc/backend/node_modules/busboy/lib/types/multipart.js:567:19)
+# Subtest: unsupported file types are refused and store nothing
+ok 86 - unsupported file types are refused and store nothing
+  ---
+  duration_ms: 140.8399
+  type: 'test'
+  ...
+# Subtest: two sellers uploading the same product name get separate products
+ok 87 - two sellers uploading the same product name get separate products
+  ---
+  duration_ms: 308.911285
+  type: 'test'
+  ...
+# Subtest: product names that collide with JavaScript object properties upload normally
+ok 88 - product names that collide with JavaScript object properties upload normally
+  ---
+  duration_ms: 178.337826
+  type: 'test'
+  ...
+# Subtest: re-uploading the same file without a revenue column does not duplicate sales
+ok 89 - re-uploading the same file without a revenue column does not duplicate sales
+  ---
+  duration_ms: 158.993304
+  type: 'test'
+  ...
+1..89
+# tests 89
+# suites 0
+# pass 89
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 20179.931427
