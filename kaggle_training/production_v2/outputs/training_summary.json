@@ -1,0 +1,19 @@
+{
+  "manifest_sha256": "800ff78e560fc74b553623b03ce401cb34c50b992564814ae3385ecdc88cd26b",
+  "7": {
+    "training_rows": 583934,
+    "series": 530,
+    "first_label_date": "2011-03-26",
+    "last_label_date": "2015-05-25",
+    "feature_rows_checked_against_v2": 300,
+    "max_feature_difference": 2.1611271040048028e-07
+  },
+  "28": {
+    "training_rows": 572804,
+    "series": 530,
+    "first_label_date": "2011-03-26",
+    "last_label_date": "2015-05-04",
+    "feature_rows_checked_against_v2": 300,
+    "max_feature_difference": 2.1611271040048028e-07
+  }
+}

@@ -1,0 +1,7 @@
+horizon,comparison,relative_change_in_abs_error_pct,interval_low,interval_high,products
+7,v2_rule vs shared_model,-0.65,-1.22,-0.31,60
+7,v2_rule vs mean_28,-3.82,-5.77,-1.93,60
+7,v2_rule vs tsb,-2.4,-3.3,-1.34,60
+28,v2_rule vs shared_model,-0.77,-1.78,-0.11,60
+28,v2_rule vs mean_28,-5.22,-7.4,-2.7,60
+28,v2_rule vs tsb,-3.91,-6.41,-0.81,60

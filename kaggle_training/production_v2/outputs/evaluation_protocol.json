@@ -1,0 +1,287 @@
+{
+  "protocol_id": "nexus-v2-production-evaluation-20261008-v1",
+  "status": "frozen_before_holdout_sales_were_read",
+  "models": {
+    "release": "nexus-v2-shared-20261008",
+    "files": {
+      "7": "shared_total_7.json",
+      "28": "shared_total_28.json"
+    }
+  },
+  "holdout": {
+    "reservation_id": "nexus-production-holdout-20261008-v1",
+    "products": [
+      "FOODS_1_006",
+      "FOODS_1_064",
+      "FOODS_1_113",
+      "FOODS_1_185",
+      "FOODS_1_215",
+      "FOODS_2_043",
+      "FOODS_2_324",
+      "FOODS_2_347",
+      "FOODS_2_384",
+      "FOODS_3_014",
+      "FOODS_3_030",
+      "FOODS_3_065",
+      "FOODS_3_070",
+      "FOODS_3_085",
+      "FOODS_3_121",
+      "FOODS_3_160",
+      "FOODS_3_164",
+      "FOODS_3_406",
+      "FOODS_3_596",
+      "FOODS_3_767",
+      "HOBBIES_1_017",
+      "HOBBIES_1_018",
+      "HOBBIES_1_137",
+      "HOBBIES_1_157",
+      "HOBBIES_1_169",
+      "HOBBIES_1_172",
+      "HOBBIES_1_224",
+      "HOBBIES_1_260",
+      "HOBBIES_1_274",
+      "HOBBIES_1_315",
+      "HOBBIES_1_328",
+      "HOBBIES_1_336",
+      "HOBBIES_1_358",
+      "HOBBIES_1_419",
+      "HOBBIES_2_036",
+      "HOBBIES_2_047",
+      "HOBBIES_2_094",
+      "HOBBIES_2_095",
+      "HOBBIES_2_108",
+      "HOBBIES_2_132",
+      "HOUSEHOLD_1_119",
+      "HOUSEHOLD_1_132",
+      "HOUSEHOLD_1_198",
+      "HOUSEHOLD_1_220",
+      "HOUSEHOLD_1_268",
+      "HOUSEHOLD_1_279",
+      "HOUSEHOLD_1_328",
+      "HOUSEHOLD_1_336",
+      "HOUSEHOLD_1_345",
+      "HOUSEHOLD_1_369",
+      "HOUSEHOLD_1_422",
+      "HOUSEHOLD_1_513",
+      "HOUSEHOLD_1_516",
+      "HOUSEHOLD_2_030",
+      "HOUSEHOLD_2_130",
+      "HOUSEHOLD_2_152",
+      "HOUSEHOLD_2_170",
+      "HOUSEHOLD_2_195",
+      "HOUSEHOLD_2_308",
+      "HOUSEHOLD_2_499"
+    ],
+    "stores": [
+      "CA_1",
+      "CA_2",
+      "CA_3",
+      "CA_4",
+      "TX_1",
+      "TX_2",
+      "TX_3",
+      "WI_1",
+      "WI_2",
+      "WI_3"
+    ]
+  },
+  "training_end": "2015-05-31",
+  "evaluation_start": "2015-12-01",
+  "evaluation_end": "2016-05-22",
+  "horizons": [
+    7,
+    28
+  ],
+  "windows": [
+    {
+      "horizon": 7,
+      "start": "2015-12-01",
+      "end": "2015-12-07"
+    },
+    {
+      "horizon": 7,
+      "start": "2015-12-08",
+      "end": "2015-12-14"
+    },
+    {
+      "horizon": 7,
+      "start": "2015-12-15",
+      "end": "2015-12-21"
+    },
+    {
+      "horizon": 7,
+      "start": "2015-12-22",
+      "end": "2015-12-28"
+    },
+    {
+      "horizon": 7,
+      "start": "2015-12-29",
+      "end": "2016-01-04"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-01-05",
+      "end": "2016-01-11"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-01-12",
+      "end": "2016-01-18"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-01-19",
+      "end": "2016-01-25"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-01-26",
+      "end": "2016-02-01"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-02-02",
+      "end": "2016-02-08"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-02-09",
+      "end": "2016-02-15"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-02-16",
+      "end": "2016-02-22"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-02-23",
+      "end": "2016-02-29"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-03-01",
+      "end": "2016-03-07"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-03-08",
+      "end": "2016-03-14"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-03-15",
+      "end": "2016-03-21"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-03-22",
+      "end": "2016-03-28"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-03-29",
+      "end": "2016-04-04"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-04-05",
+      "end": "2016-04-11"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-04-12",
+      "end": "2016-04-18"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-04-19",
+      "end": "2016-04-25"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-04-26",
+      "end": "2016-05-02"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-05-03",
+      "end": "2016-05-09"
+    },
+    {
+      "horizon": 7,
+      "start": "2016-05-10",
+      "end": "2016-05-16"
+    },
+    {
+      "horizon": 28,
+      "start": "2015-12-01",
+      "end": "2015-12-28"
+    },
+    {
+      "horizon": 28,
+      "start": "2015-12-29",
+      "end": "2016-01-25"
+    },
+    {
+      "horizon": 28,
+      "start": "2016-01-26",
+      "end": "2016-02-22"
+    },
+    {
+      "horizon": 28,
+      "start": "2016-02-23",
+      "end": "2016-03-21"
+    },
+    {
+      "horizon": 28,
+      "start": "2016-03-22",
+      "end": "2016-04-18"
+    },
+    {
+      "horizon": 28,
+      "start": "2016-04-19",
+      "end": "2016-05-16"
+    }
+  ],
+  "eligibility": "Store/product pair needs a first recorded price >= 180 days before the training cutoff (as in the first final evaluation). Every pair is reported; excluded pairs are not replaced.",
+  "history": "Each forecast uses that pair's daily sales from its first-price date to the day before the window (no gaps in M5 after launch).",
+  "primary": "v2_rule \u2014 the application's own code path: ml/v2 forecast_totals with models loaded by ml/v2 registry (rare -> TSB, otherwise shared model).",
+  "comparisons_reported_not_selected": [
+    "shared_model",
+    "tsb",
+    "mean_28"
+  ],
+  "metrics": {
+    "WAPE_percent": "100 x sum|forecast - actual| / sum(actual)",
+    "MAE_total_units": "mean |forecast - actual| per window",
+    "bias_percent": "100 x sum(forecast - actual) / sum(actual)"
+  },
+  "groups": "Sales-pattern group recomputed at each origin from the previous 180 days.",
+  "no_tuning": "Results cannot change the models, the rule, tiers or thresholds. Any change needs another fresh holdout.",
+  "sources": {
+    "calendar": "d12b5914ef03e66649adf5dd9e996e6602251c22b7a6af8f1f7e3aa12f8860f5",
+    "sales": "7c2e7770397258a4b2531ececdcb2f7c6ec5321d8af856a52289265d281ed941",
+    "prices": "f58bfc7bf8422e4d8493d461cd4f26f3ed627e204c129228ef5a7326e41b6de7"
+  },
+  "file_hashes": {
+    "kaggle_training/production_v2/outputs/holdout_reservation.json": "270e24189b739dfbaa2de2ec30f5ca932eac2b94b576caa0717411f6e5375800",
+    "ml/models_v2/manifest.json": "800ff78e560fc74b553623b03ce401cb34c50b992564814ae3385ecdc88cd26b",
+    "ml/models_v2/shared_total_7.json": "527438cea9132213f6a09f94905b5ebff4756c435e7b5cf2cc2ec71eb24a5041",
+    "ml/models_v2/shared_total_28.json": "8916771384e4fa8f3d0dfecdc7901fe6d49fefe8fc6ff1ea74a9a71cc1bec2bf",
+    "kaggle_training/production_v2/common.py": "2f04acbc16dd5416d6b64852c3ac49d1862c2daeb0a287a2fe3325d995c5ad6b",
+    "kaggle_training/production_v2/evaluate_production.py": "c30f8749fb105c76b1e211df489d236ba4f47b3a9e07b884db8135ecf026351f",
+    "ml/v2/features.py": "359a1af066c56c1c2b9dc6dd68f51dc1870a279bf1b99d8571c14f1270ad4d12",
+    "ml/v2/methods.py": "b7ac7a08b4e32b799bcc8394e2a7e289cecb6c1bb1c10cf15d1f994e95f02a93",
+    "ml/v2/forecast.py": "5b9c8d9e2f80158a93bdf40eb99114c0db6919196be2d7ea7226005fd572203e",
+    "ml/v2/registry.py": "a5a6a38a8578a54c372fb40b5072a70990dbabd80602ca3116829806454c46b6",
+    "kaggle_training/new_training/reserved_final_evaluation.py": "3dccead17a4e0712f4cd00f5d2ac47c6e6c7e2688edd78ffdff8c26f7982fb08",
+    "kaggle_training/new_training/weekly_forecasting.py": "3e00d6bb382154d680fb47d0e97e7b9c224401f2424a2f30d039ea27e2de329f"
+  },
+  "versions": {
+    "python": "3.13.16",
+    "pandas": "3.0.5",
+    "numpy": "2.5.3",
+    "xgboost": "3.4.1"
+  }
+}
