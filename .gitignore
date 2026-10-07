@@ -1,0 +1,46 @@
+# ── Dependencies & build output ─────────────────────────────────────────
+node_modules/
+.next/
+out/
+build/
+coverage/
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.tsbuildinfo
+
+# ── Secrets & local config (never commit) ───────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+
+# ── Logs ────────────────────────────────────────────────────────────────
+*.log
+..server.log
+..ml.log
+npm-debug.log*
+
+# ── User-uploaded files (seller data stays local) ───────────────────────
+backend/uploads/
+
+# ── Large raw datasets (download separately; see README) ────────────────
+data/Pakistan Largest Ecommerce Dataset.csv
+data/m5/
+data/store_item_demand/
+kaggle_training/original_training/datasets/
+*.zip
+
+# ── Office documents & local backups (kept on disk, not in the repo) ────
+*.docx
+*.pptx
+~$*
+_ui_backup_*/
+
+# ── OS / editor noise ───────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

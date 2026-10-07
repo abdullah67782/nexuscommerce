@@ -1,0 +1,15 @@
+{
+  "elapsed_seconds": 745.3559435999996,
+  "python": "3.12.4",
+  "xgboost": "3.4.1",
+  "pandas": "2.2.2",
+  "numpy": "1.26.4",
+  "target_stores": [
+    "CA_1",
+    "TX_1",
+    "WI_1"
+  ],
+  "subset_run": true,
+  "items_per_category_requested": 20,
+  "eligible_items": 53
+}

@@ -1,0 +1,553 @@
+COMSATS University, Islamabad Pakistan
+Project Name
+NEXUSCOMMERCE
+(An AI-Driven E-Commerce Intelligence and Decision Support System)
+By
+Muhammad Abdullah      CIIT/SP23-BAI-027/ISB
+Layiba Aslam      CIIT/SP23-BAI-054/ISB
+Supervisor
+Dr. M. Manzoor Illahi Tamimi
+Bachelor of Science in Artificial Intelligence (2023-2027)
+COMSATS University, Islamabad Pakistan
+Project Name
+NEXUSCOMMERCE
+(An AI-Driven E-Commerce Intelligence and Decision Support System)
+A project presented to
+COMSATS University, Islamabad
+In partial fulfillment
+of the requirement for the degree of
+Bachelor of Science in Artificial Intelligence (2023-2027)
+By
+Muhammad Abdullah      CIIT/SP23-BAI-027/ISB
+Layiba Aslam      CIIT/SP23-BAI-054/ISB
+DECLARATION
+We hereby declare that this software, neither whole nor as a part, has been copied out from any source. It is further declared that we have developed this software and accompanied report entirely on the basis of our personal efforts. If any part of this project is proved to be copied out from any source or found to be a reproduction of some other, we will stand by the consequences. No Portion of the work presented has been submitted of any application for any other degree or qualification of this or any other university or institute of learning.
+Student Name 1                                                                                Student Name 2
+Muhammad Abdullah                                                                      Layiba Aslam
+CERTIFICATE OF APPROVAL
+It is to certify that the final year project of BS (AI) NEXUSCOMMERCE was developed by 
+Muhammad Abdullah (CIIT/SP23-BAI-027) and  Layiba Aslam (CIIT/SP23-BAI-030) under the supervision of Dr. M. Manzoor Illahi Tamimi and that in her opinion; it is fully adequate, in scope and quality for the degree of Bachelors of Science in Artificial Intelligence.
+Dr. M. Manzoor Illahi Tamimi
+Supervisor
+---------------------------------------
+External Examiner
+---------------------------------------
+Head of Department
+(Department of Computer Science)
+Executive Summary
+NexusCommerce is an AI-driven e-commerce decision support system developed to address the operational challenges faced by small and medium-scale online sellers who currently rely on fragmented tools, manual spreadsheet analysis, and intuition-based decision-making for managing their businesses. The platform unifies six critical business functions into a single intelligent system: data integration and quality management, demand forecasting, inventory intelligence with supplier management, an Agentic AI conversational assistant, interactive dashboard and reporting, and pricing intelligence with profitability tracking.
+The system accepts sales and inventory data through manual file uploads in CSV, JSON, and Excel formats and processes them through an automated pipeline of per-row validation, median-based imputation, IQR outlier detection, automatic deduplication using PostgreSQL unique constraints, and anomaly detection with severity classification. Every upload generates a quality report with a score from 0 to 100, maintains version history with safe rollback capability, and tracks data freshness to ensure all downstream analytics are built on reliable and current data.
+At the core of the system is an XGBoost machine learning model that performs recursive day-by-day demand forecasting, generating product-level predictions for 7, 14, and 30-day horizons with 95% confidence intervals and feature importance explainability. The system supports a 3-tier model priority where seller-specific fine-tuned models take precedence over category base models and fallback models. Sellers can personalize the forecasting model to their own sales patterns through a single-click warm-start fine-tuning mechanism that runs as a non-blocking background task, and model performance is evaluated using MAE, RMSE, R², and a custom 0-100 accuracy score derived from MAPE.
+The inventory intelligence module goes beyond static threshold alerts by using ML-based risk scoring that combines current stock levels, forecasted demand, sales velocity, and supplier lead times to assign risk levels, calculate exact order deadlines, recommend specific restock quantities with safety buffers, compare supplier options, and quantify the financial impact of stock risks in terms of estimated lost revenue and restock costs. An overall inventory health score provides a single metric summarizing the state of the entire product catalog.
+The Agentic AI conversational assistant operates in two modes. In Query Mode, it uses Retrieval Augmented Generation and Model Context Protocol tools to answer business questions grounded in real data from the PostgreSQL database. In Action Mode, it enables sellers to execute real business operations such as placing supplier orders, sending restock alerts, and generating PDF reports through n8n workflow automation, all through natural language commands with explicit user confirmation before execution.
+The pricing intelligence module shifts the focus from revenue to profitability by tracking cost prices, computing actual profit margins, and using ML to recommend optimal prices with plain-English reasoning, expected profit impact, and price elasticity modeling. All insights are presented through an interactive dashboard with real-time filtering, auto-refresh every 60 seconds, data freshness monitoring, critical anomaly alerts, and business health scoring.
+The system is built on a modular three-tier architecture with Next.js and React for the frontend, Node.js with Express.js for the backend API server, Python with FastAPI for the ML server, and PostgreSQL as the centralized database. Security is enforced through JWT-based authentication, bcryptjs password hashing, role-based access control, server-side seller isolation, parameterized queries, and an immutable audit trail for all AI-executed actions.
+NexusCommerce transforms the way e-commerce sellers manage their operations by replacing guesswork with data-driven intelligence and manual processes with AI-powered automation, while keeping the seller in full control of every business decision.
+Abstract
+Rationale: E-commerce sellers lack access to affordable, integrated, and intelligent tools that combine demand prediction, inventory optimization, pricing intelligence, and automated business operations into a single platform.
+Existing System: Currently, online sellers rely on disconnected tools such as marketplace dashboards, spreadsheets, and manual inventory tracking to manage their businesses, resulting in data silos, delayed decision-making, and missed opportunities. These tools provide basic sales reports and static stock alerts but lack predictive analytics, profitability visibility, supplier-aware ordering, and conversational AI capabilities.
+Targeted Challenges: Sellers face inaccurate demand predictions that lead to costly stockouts or excess inventory, manual and reactive pricing decisions made without understanding actual profit margins or demand elasticity, and time-consuming operational processes such as supplier ordering and report generation that require constant human intervention. There is no unified system that allows sellers to ask natural language questions about their business data or execute routine business actions through simple conversational commands.
+Grey Area: While individual tools exist for forecasting, inventory management, and business analytics, no affordable platform integrates XGBoost-based demand forecasting with seller-specific fine-tuning, ML-driven inventory risk scoring with financial impact quantification, profitability-focused pricing intelligence, and an Agentic AI assistant capable of executing real business actions through workflow automation.
+Objectives: NexusCommerce aims to improve demand prediction accuracy through XGBoost recursive forecasting with seller-specific model personalization, achieving at least 85% accuracy measured as 100 minus MAPE. The system optimizes inventory management through ML-based risk scoring that predicts stockout events before they occur, calculates exact order deadlines factoring supplier lead times, and recommends specific restock quantities with financial impact estimates. The platform enables sellers to interact with all business data and execute operations such as supplier ordering, alert notifications, and report generation through natural language commands via an Agentic AI assistant powered by RAG, MCP tools, and n8n workflow automation.
+Significance of the Project: NexusCommerce delivers a comprehensive, AI-powered decision support ecosystem that transforms fragmented e-commerce operations into a unified intelligent platform, enabling data-driven forecasting, proactive inventory management, profitability-focused pricing, and conversational business automation while keeping the seller in complete control of every decision.
+Acknowledgement
+All praise is to Almighty Allah who bestowed upon us a minute portion of His boundless knowledge by virtue of which we were able to accomplish this challenging task.
+We are greatly indebted to our project supervisor “Dr. M. Manzoor Illahi Tamimi”. Without their personal supervision, advice and valuable guidance, completion of this project would have been doubtful. We are grateful to them for their encouragement and continual help during this work.
+And we are also thankful to our parents and family who have been a constant source of encouragement for us and brought us with the values of honesty & hard work.
+Student Name 1                                                                               Student Name 2
+Muhammad Abdullah                                                                   Layiba Aslam
+List of Abbreviations
+List of Figures
+Figure 1 Use Case Diagram of NexusCommerce System	29
+Figure 2 NexusCommerce AI Processing Pipeline	31
+Figure 3 Mockup M1 — Login & Registration Screen	32
+Figure 4 Mockup M2 — Dashboard Screen	33
+Figure 5 Mockup M3 — Data Upload & Management Screen	35
+Figure 6 Mockup M4 — Demand Forecasting Screen	38
+Figure 7 Mockup M5 — Inventory Intelligence & Supplier Management Screen	41
+Figure 8 Mockup M6 — AI Conversational Assistant Screen	43
+Figure 9 Mockup M7 — Pricing Intelligence & Profitability Screen	46
+Figure 10 NexusCommerce System Architecture Overview Diagram	58
+Figure 11 NexusCommerce Conceptual Architecture Diagram	62
+Figure 12 NexusCommerce Layered Architecture Pattern Diagram	64
+Figure 13 Activity Diagram — Data Integration & Management	68
+Figure 14 Activity Diagram — Demand Forecasting	70
+Figure 15 Activity Diagram — Inventory Intelligence & Supplier Management	72
+Figure 16 Activity Diagram — AI Conversational Assistant (Agentic AI)	74
+Figure 17 Activity Diagram — Dashboard & Reporting Interface	76
+Figure 18 tivity Diagram — Pricing Intelligence & Profitability	78
+Figure 19 Class Diagram of NexusCommerce System	81
+Figure 20 Sequence Diagram — Data Integration & Management	83
+Figure 21 Sequence Diagram — Demand Forecasting	84
+Figure 22 Sequence Diagram — Inventory Intelligence & Supplier Management	86
+Figure 23 Sequence Diagram — AI Conversational Assistant (Agentic AI)	88
+Figure 24 Sequence Diagram — Dashboard & Reporting Interface	89
+Figure 25 Sequence Diagram — Pricing Intelligence & Profitability	90
+Figure 26 State Transition Diagram of NexusCommerce System	92
+Figure 27 Level 0 DFD — Context Diagram of NexusCommerce	93
+Figure 28 Level 1 DFD of NexusCommerce System	94
+Figure 29 Entity Relationship Diagram of NexusCommerce Database	96
+Chapter 1: Introduction and Problem Definition
+This chapter introduces the NexusCommerce project, defines the problem it addresses, outlines the proposed solution, and describes the system's scope, modules, related systems, tools, contributions, and academic relevance.
+1.1 Overview of the Project
+NexusCommerce: AI-Driven E-commerce Decision Support System is an intelligent, web-based platform designed to empower small and medium-scale e-commerce sellers with data-driven decision-making capabilities. The system addresses critical operational challenges faced by online businesses, including inaccurate demand prediction, inefficient inventory management, lack of profitability visibility, and absence of automated business workflows. NexusCommerce integrates six interconnected modules spanning data ingestion with quality assurance, XGBoost-powered demand forecasting with seller-specific model personalization, inventory intelligence with supplier management and ML-based risk scoring, an Agentic AI conversational assistant capable of executing real business actions through n8n workflow automation, interactive dashboards with role-based views, and ML-based pricing intelligence focused on profitability optimization. The proposed solution offers a scalable, modular architecture with independent frontend (Next.js), backend (Express.js), and ML server (FastAPI) components, providing a comprehensive decision support ecosystem that transforms raw sales data into actionable business insights and automated operations.
+1.2 Vision Statement
+For small and medium-scale e-commerce sellers and business managers
+Who struggle with fragmented tools, manual analysis, inaccurate demand predictions, reactive inventory management, and lack of profitability insight across their online businesses
+The NexusCommerce system
+Is an AI-driven e-commerce decision support platform
+That provides XGBoost-powered demand forecasting with seller-specific fine-tuning, ML-based inventory risk scoring with supplier management, profitability-focused pricing intelligence, and an Agentic AI assistant that can both answer business questions grounded in real data and execute actions like placing supplier orders and generating reports through natural language commands
+Unlike the current practice of using multiple disconnected tools such as spreadsheets, marketplace dashboards, and manual inventory tracking, which leads to data silos, delayed decisions, and missed opportunities
+Our product unifies data management, predictive analytics, inventory optimization, pricing intelligence, and AI-powered business automation into a single intelligent platform where sellers can upload their data, receive accurate forecasts with confidence intervals and explainability, get proactive stock alerts with financial impact estimates, and interact with an AI agent that takes real actions on their behalf with explicit confirmation.
+1.3 Problem Statement
+E-commerce sellers operating on platforms such as Daraz, Shopify, and Amazon currently lack access to affordable, integrated, and intelligent tools for managing their business operations. Sellers spend significant time manually analyzing sales trends using spreadsheets, often making inventory decisions based on intuition rather than data, leading to frequent stockouts that result in lost revenue or overstocking that ties up working capital. Demand prediction is either non-existent or relies on simple averaging methods that fail to capture seasonal patterns, trends, and product-specific behaviors. Pricing decisions are made reactively without understanding actual profit margins, cost structures, or demand elasticity, meaning sellers often do not know which products are truly profitable versus which merely generate revenue. Inventory monitoring is typically limited to checking stock levels against static thresholds, without factoring in supplier lead times, forecasted demand, or the financial consequences of running out of stock. When sellers identify that a product needs restocking, the process of contacting suppliers, calculating order quantities, and placing orders is entirely manual. Furthermore, insights from sales data, inventory status, and pricing analytics exist in separate systems with no unified view, forcing sellers to context-switch between tools and mentally correlate information. There is no conversational interface that allows sellers to ask natural language questions about their business or execute actions like placing orders through simple commands.
+1.4 Problem Solution
+NexusCommerce solves these problems by providing an end-to-end intelligent platform that transforms raw sales data into actionable insights and automated business actions. The system accepts data uploads in CSV, JSON, and Excel formats and runs an automated pipeline of validation, cleaning, deduplication, anomaly detection, and quality scoring, ensuring that all downstream analytics are built on reliable data. Demand forecasting is handled by XGBoost machine learning models that use engineered temporal features (lag values, rolling means, seasonal indicators) and recursive day-by-day prediction, providing product-level forecasts for 7, 14, and 30-day horizons with 95% confidence intervals and feature importance explainability. Sellers can further improve accuracy by fine-tuning models on their own store data through a warm-start training mechanism. Inventory management goes beyond static thresholds by using ML-based risk scoring that combines current stock, forecasted demand, and supplier lead times to assign risk levels (Critical, High, Medium, Low), calculate exact order deadlines, and recommend specific restock quantities with financial impact estimates. The Agentic AI assistant allows sellers to interact with all system data through natural language, asking questions like "Which products will run out this week?" and receiving data-grounded answers, or issuing commands like "Order 200 units of Product A" which the system confirms and executes through n8n workflow automation. The pricing module replaces guesswork with ML-based recommendations that factor in cost prices, demand forecasts, and profit margins, ensuring every pricing suggestion comes with plain-English reasoning and expected revenue impact. All insights are presented through an interactive dashboard with real-time filtering, role-based views, business health scoring, and model performance metrics.
+1.5 Objectives of the Proposed System
+BO-1: Improve demand prediction accuracy by achieving at least 85% forecast accuracy (measured as 100 minus MAPE) through XGBoost recursive forecasting with seller-specific fine-tuning.
+BO-2: Reduce stockout occurrences by providing ML-based inventory risk scoring that predicts stock problems before they happen, with at least 90% accuracy in stockout prediction.
+BO-3: Enable profitability-driven pricing by providing ML-based price recommendations that improve profit margins by at least 10% compared to seller's current pricing.
+BO-4: Reduce manual operational effort by enabling sellers to execute routine business actions (supplier orders, alert notifications, report generation) through natural language commands via the Agentic AI assistant.
+BO-5: Ensure data quality and transparency by achieving automated quality scoring with 99% deduplication accuracy and full version history with rollback capability.
+BO-6: Provide a single unified platform that consolidates data management, forecasting, inventory intelligence, pricing analytics, AI assistance, and reporting into one integrated system, eliminating data silos and tool fragmentation.
+1.6 Scope
+NexusCommerce is a web-based AI-driven decision support system that provides e-commerce sellers with integrated tools for data management, demand forecasting, inventory optimization, pricing intelligence, AI-powered business assistance, and interactive reporting. The system accepts sales and inventory data through manual file uploads in CSV, JSON, and Excel formats and processes them through an automated pipeline of per-row validation, median-based imputation, IQR outlier detection, deduplication using unique database constraints, and anomaly detection with severity classification. Every upload generates a quality report with a score from 0 to 100, maintains version history, and tracks data freshness. The demand forecasting module uses XGBoost Regressor with recursive day-by-day prediction, supporting a 3-tier model priority of seller fine-tuned, category base, and fallback models, generating product-level forecasts for 7, 14, and 30-day horizons with 95% confidence intervals and feature importance explainability. The inventory intelligence module monitors stock levels and assigns ML-based risk scores combining current stock, forecasted demand, sales velocity, and supplier lead times, calculating exact order deadlines and recommending specific restock quantities with financial impact analysis. The supplier management component allows sellers to maintain supplier profiles with cost, lead time, and minimum order information. The Agentic AI conversational assistant operates in Query Mode (using RAG and MCP tools to answer questions grounded in business data) and Action Mode (executing supplier orders, sending alerts, and generating reports through n8n workflows with explicit user confirmation). The pricing intelligence module tracks product cost prices, calculates profit margins, and uses ML to recommend optimal prices with reasoning and expected profit impact. The dashboard provides interactive visualizations with real-time filtering, role-based views, business health scoring, and model comparison metrics. The system uses Next.js with React for the frontend, Node.js with Express.js for the backend API, Python with FastAPI for the ML server, and PostgreSQL as the centralized database. The system is designed as a prototype-level academic project for demonstration purposes.
+1.6.1 Limitations/Constraints
+LI-1: Data ingestion is limited to manual file uploads in CSV, JSON, and Excel formats. Automated scheduled data pulls from external e-commerce platform APIs are not supported.
+LI-2: The demand forecasting module requires a minimum of 30 days of historical sales data per product. Products with insufficient data cannot be forecasted.
+LI-3: Model fine-tuning runs as a background task taking 2-3 minutes and only one fine-tuning job can run per seller at a time. Stuck jobs auto-expire after 30 minutes.
+LI-4: The AI conversational assistant depends on external LLM API availability. If the API is down, the assistant becomes unavailable.
+LI-5: Workflow automation through n8n depends on webhook availability. If n8n is unreachable, action execution fails gracefully with error logging.
+LI-6: The system is designed for small to medium-scale datasets and is not optimized for enterprise-level scalability or high-concurrency production deployment.
+LI-7: All AI-triggered business actions (supplier orders, report generation) require explicit user confirmation before execution. No fully autonomous decisions are made.
+LI-8: Real-time competitor pricing data, market scraping, customer behavior analysis, churn prediction, and marketing automation are out of scope.
+1.7 Modules
+Module 1: Data Integration & Management
+FE-1: Upload and process sales/inventory data from CSV, JSON, and Excel (.xlsx) files with drag-drop interface.
+FE-2: Perform per-row validation with severity-based anomaly classification (critical rejects, warnings flagged).
+FE-3: Automatically deduplicate records using unique database constraints (ON CONFLICT DO NOTHING).
+FE-4: Generate data quality reports with quality score (0-100) after every upload.
+FE-5: Detect and track data anomalies with filtering by severity and individual resolve capability.
+FE-6: Maintain upload version history with auto-incremented version numbers and safe rollback requiring typed "ROLLBACK" confirmation.
+FE-7: Track and display data freshness score (0-100) with color-coded badges and circular ring widgets.
+FE-8: Expose RESTful API endpoints: POST /api/data/upload, GET /api/data/quality, GET /api/data/versions, GET /api/data/anomalies, PATCH /api/data/anomalies/:id/resolve, POST /api/data/rollback/:uploadId, GET /api/data/freshness.
+Module 2: Demand Forecasting
+FE-1: Generate product-level demand forecasts for 7, 14, and 30-day horizons using XGBoost recursive prediction.
+FE-2: Display 95% confidence intervals calculated from residual standard deviation.
+FE-3: Provide feature importance explainability with top-10 features displayed as animated bars with human-readable labels.
+FE-4: Support seller-specific model fine-tuning through warm-start training as non-blocking background tasks.
+FE-5: Evaluate model performance using MAE, RMSE, R², and custom 0-100 accuracy score (100 minus MAPE).
+FE-6: Display forecast results through interactive area charts, accuracy ring gauge, KPI cards, and exportable data tables.
+FE-7: Generate forecast-vs-actual comparison charts by joining predictions with actual sales data.
+FE-8: Support CSV export of forecast data.
+Module 3: Inventory Intelligence & Supplier Management
+FE-1: Monitor current stock levels for all products in real time.
+FE-2: Assign ML-based risk scores per product (Critical/High/Medium/Low) using stock, demand forecasts, sales velocity, and supplier lead times.
+FE-3: Manage supplier profiles including name, contact, cost price, minimum order quantity, and lead time.
+FE-4: Calculate exact order deadlines factoring supplier lead times into stockout prevention.
+FE-5: Recommend specific restock quantities with safety buffer calculations.
+FE-6: Compare supplier options by cost, lead time, and delivery feasibility.
+FE-7: Calculate financial impact of stock risks (lost revenue estimates and restock costs).
+FE-8: Compute overall Inventory Health Score (0-100) across entire product catalog.
+FE-9: Trigger n8n webhook automation for critical inventory events.
+Module 4: AI Conversational Assistant (Agentic AI)
+FE-1: Operate in Query Mode using RAG and MCP tools to answer questions grounded in real business data.
+FE-2: Operate in Action Mode to execute supplier orders, send alerts, and generate reports via n8n workflows.
+FE-3: Classify user intent into Query or Action categories for correct processing pipeline routing.
+FE-4: Support natural language order placement with confirmation cards before execution.
+FE-5: Support bulk ordering (e.g., "Restock all critical products").
+FE-6: Generate and email PDF reports on natural language request.
+FE-7: Maintain conversation memory within sessions for multi-turn contextual interactions.
+FE-8: Display response confidence scoring (data-grounded vs general knowledge).
+FE-9: Suggest 3 relevant follow-up questions or actions after each response.
+FE-10: Require double confirmation for high-value actions (above 1000 units or Rs 100,000).
+FE-11: Maintain complete audit trail of all AI-executed actions.
+Module 5: Dashboard & Reporting
+FE-1: Provide fully interactive dashboard with filtering by product, category, date range, and data source.
+FE-2: Display data freshness ring widget, critical anomaly banner, quality cards, and KPI summary.
+FE-3: Support role-based views for sellers, analysts, and administrators.
+FE-4: Calculate and display overall business health score (0-100).
+FE-5: Show forecast-vs-actual comparison charts and model performance metrics.
+FE-6: Auto-refresh data every 60 seconds with parallel endpoint fetching.
+Module 6: Pricing Intelligence & Profitability
+FE-1: Track cost price per product and calculate gross profit, profit margin, and net revenue.
+FE-2: Use ML model to recommend optimal prices maximizing profitability (minimum 15% margin, never below cost).
+FE-3: Forecast future profit for 7, 14, and 30-day horizons using demand forecasts and cost data.
+FE-4: Display profitability dashboard with margin trends, rankings, and revenue vs profit comparison.
+FE-5: Provide pricing recommendations with plain-English reasoning and expected profit impact.
+FE-6: Show side-by-side current vs suggested price comparison with margin projections.
+FE-7: Model price elasticity per product category.
+FE-8: Track recommendation acceptance rates and measure actual profit impact for model improvement.
+1.8 Related System Analysis / Literature Review
+1.8.1 Literature Review
+Previous research in e-commerce demand forecasting and inventory optimization has demonstrated the effectiveness of machine learning approaches over traditional statistical methods. Makridakis et al. (2018) in their evaluation of ML methods for forecasting concluded that gradient boosting methods such as XGBoost consistently outperform classical approaches on structured business data, particularly when combined with engineered temporal features like lag values and rolling averages. However, most existing studies focus on aggregate-level forecasting and do not address the need for seller-specific model personalization, where individual business patterns differ significantly from general market trends.
+In the domain of intelligent inventory management, Syntetos et al. (2016) highlighted that integrating demand forecasts with supplier lead time information dramatically reduces stockout rates, yet most commercial inventory tools still rely on static reorder point thresholds without considering forecast-driven risk scoring. The concept of Agentic AI, where conversational assistants move beyond passive question-answering to actively executing business actions, has gained attention through recent advances in Retrieval Augmented Generation (RAG) and tool-use frameworks (Lewis et al., 2020; Schick et al., 2023). While RAG-based systems have shown strong performance in grounding LLM responses in factual data, their application in e-commerce decision support with integrated workflow automation (such as placing supplier orders through natural language commands) remains largely unexplored. Our project addresses this gap by combining XGBoost-based forecasting with seller-specific fine-tuning, ML-driven inventory risk scoring with financial impact quantification, and an Agentic AI assistant that bridges the gap between analytical insights and executable business actions through n8n workflow integration.
+1.8.2 Related System Analysis
+Table 1.1 Related System Analysis with Proposed Project Solution
+1.9 Tools and Technologies
+Table 1.2 Tools and Technologies for Proposed Project
+1.10 Project Contribution
+NexusCommerce introduces several technical and conceptual contributions compared to existing e-commerce analytics tools and decision support systems:
+Seller-Personalized Demand Forecasting: Unlike generic forecasting tools that apply one-size-fits-all models, NexusCommerce implements a 3-tier model priority system where seller-specific fine-tuned XGBoost models take precedence over category base models and fallback models. The warm-start fine-tuning mechanism allows sellers to personalize predictions to their own sales patterns without requiring ML expertise, achieved through a single-click training workflow that runs as a non-blocking background task. This is the project's primary research contribution, investigating whether personalized fine-tuning measurably improves forecast accuracy over generic models.
+Comprehensive Data Quality Pipeline: The system introduces a multi-layered data quality assurance pipeline that goes far beyond simple file upload. Every upload passes through per-row validation with 7 distinct rules and severity-based classification (critical/warning/info), median-based imputation, IQR outlier detection, and automatic deduplication using PostgreSQL unique constraints. The pipeline generates quality scores, maintains complete version history with safe rollback (requiring typed "ROLLBACK" confirmation), tracks data freshness with degrading scores, and stores every anomaly for later review and resolution. This level of data quality transparency is absent from commercial e-commerce tools.
+Agentic AI with Real Action Execution: The conversational assistant goes beyond passive question-answering by implementing an Agentic AI architecture with two distinct modes. Query Mode uses Retrieval Augmented Generation (RAG) and Model Context Protocol (MCP) tools to ensure every answer is grounded in the seller's actual business data from PostgreSQL, never relying on general LLM knowledge when real data exists. Action Mode transforms the assistant into an agent that can execute real business operations (placing supplier orders, sending restock alerts, generating and emailing PDF reports) through n8n workflow automation with explicit user confirmation and double confirmation for high-value transactions. This integration of conversational AI with workflow execution represents a novel application in e-commerce decision support.
+Financial Impact Quantification in Inventory Management: Rather than simply flagging low stock with color-coded alerts, the system quantifies every inventory risk in financial terms, showing sellers the estimated revenue they will lose from a stockout and the cost of the recommended restock order. This transforms abstract risk levels into concrete business decisions.
+Profitability-First Pricing Intelligence: The pricing module shifts the focus from revenue to profitability by requiring cost price inputs and computing actual profit margins before generating recommendations. Every ML-based price suggestion enforces a minimum 15% margin constraint, never recommends below cost price, and includes plain-English reasoning with expected profit impact, ensuring sellers understand and trust the recommendations.
+Contribution Impact: By integrating XGBoost forecasting with seller personalization, ML-based inventory risk scoring, Agentic AI with RAG/MCP and n8n workflow execution, and profitability-focused pricing intelligence into a single platform, NexusCommerce transforms fragmented e-commerce operations into a unified, intelligent decision support ecosystem. The system's contributions span AI/ML innovation (personalized forecasting, risk scoring), software architecture (modular 3-tier stack with independent ML server), and user experience (natural language business automation with safety confirmations).
+1.11 Relevance to Course Modules
+Software Engineering: Applied SDLC phases including requirement gathering (SRS development with revision history), system design (layered architecture, modular decomposition), implementation (full-stack development), and testing.
+Database Systems: Designed and implemented a centralized PostgreSQL database with 17 interconnected tables, foreign key relationships, unique constraints for deduplication, upsert operations, and transactional rollback logic.
+Artificial Intelligence: Implemented XGBoost-based demand forecasting with recursive prediction, feature engineering (lag values, rolling means, seasonal features), model evaluation (MAE, RMSE, R², MAPE), and seller-specific warm-start fine-tuning.
+Web Technologies: Developed a full-stack web application using Next.js/React frontend with Tailwind CSS, Express.js REST API backend, and FastAPI ML server with asynchronous background task processing.
+Data Structures and Algorithms: Implemented time-series feature engineering pipelines, recursive forecasting algorithms, risk scoring computation, and safety stock calculation formulas.
+Human-Computer Interaction: Designed interactive dashboards with real-time filtering, drag-drop upload interfaces, animated progress indicators, accuracy ring gauges, confidence band charts, and conversational AI chat interface with confirmation cards and follow-up suggestions.
+Information Security: Implemented JWT-based authentication, bcryptjs password hashing, server-side seller isolation (seller_id extracted from JWT, never from frontend), role-based access control, and input validation against SQL injection and XSS.
+Professional Practices: Followed modular code architecture with separate frontend, backend, and ML server components, RESTful API design, version control, and comprehensive error handling with logging.
+Chapter 2: Requirement Analysis
+This chapter provides a detailed analysis of the requirements for the NexusCommerce system. It defines the user classes and their characteristics, the operating environment, design constraints, use case modeling, requirement identification techniques, functional requirements derived from mockups and backend events, non-functional quality attributes, and external interface specifications. All requirements are written in specific, measurable, and verifiable terms to support implementation and testing.
+2.1 User Classes and Characteristics
+Table 2.1 User Classes and Characteristics
+2.2 Operating Environment
+OE-1: The system shall operate as a web-based application accessible via internet browsers without requiring any client-side installation.
+OE-2: The system shall operate correctly on Google Chrome (latest versions), Mozilla Firefox (latest versions), Microsoft Edge (latest versions), and Apple Safari (latest versions).
+OE-3: The backend API server shall run on Node.js with Express.js (v5.2.1) providing RESTful API services, JWT-based authentication, file upload handling via Multer, and multi-format data parsing using csv-parser and xlsx libraries.
+OE-4: The ML server shall run on Python 3.12+ with FastAPI (v0.115.0) and Uvicorn (v0.30.0), using XGBoost (>=2.0.0) for demand forecasting, Scikit-Learn (v1.5.1) for preprocessing, Pandas (v2.2.2) for data manipulation, Joblib for model serialization, and Psycopg2-binary for PostgreSQL connectivity.
+OE-5: The database layer shall use PostgreSQL (v15 or higher) as the centralized relational database for all structured data storage across all six modules.
+OE-6: The frontend application shall run on Next.js (v16.2.4) with React (v19.2.4), Tailwind CSS v4 for styling, and Recharts (v3.8.1) for data visualization.
+OE-7: The system shall support cloud-based or local server deployment with prototype-level scalability.
+OE-8: The system shall integrate with n8n workflow automation tool via webhook-based communication for executing business actions triggered by the AI assistant and inventory alerts.
+OE-9: The system is optimized for desktop and laptop usage. Mobile responsiveness may be limited in the prototype version.
+2.3 Design and Implementation Constraints
+CON-1: The system shall be implemented using Node.js with Express.js for the backend API server, Python with FastAPI for the ML server, and Next.js with React for the frontend.
+CON-2: The system shall use PostgreSQL as the primary and only database system.
+CON-3: Data ingestion is limited to manual file uploads in CSV, JSON, and Excel (.xlsx) formats. Automated scheduled data pulls from external e-commerce APIs are not supported.
+CON-4: The demand forecasting module uses XGBoost Regressor with recursive forecasting. Model accuracy depends on data quality, volume (minimum 30 days of sales history required per product), and product-specific patterns.
+CON-5: The system provides recommendations and supports AI-triggered actions (such as placing supplier orders via n8n workflows), but all actions require explicit user confirmation before execution. No fully autonomous business decisions are made without user approval.
+CON-6: The AI conversational assistant depends on external LLM APIs for natural language processing. The workflow automation depends on n8n webhook availability. System performance may be affected by API limits or downtime of these external services.
+CON-7: Role-based access control shall be implemented. All seller_id values are extracted from JWT tokens on the server, never accepted from frontend requests, to prevent cross-seller data access.
+CON-8: The system is designed for small to medium-scale datasets and is not optimized for enterprise-level scalability or high-concurrency production deployment.
+CON-9: Model fine-tuning runs as a background task and may take 2-3 minutes. Only one fine-tuning job can run per seller at a time. Stuck jobs are auto-expired after 30 minutes.
+CON-10: Online payments and subscription management are out of scope. The system is a decision support tool, not a transaction processing platform.
+2.4 Use Case Diagram
+The use case diagram illustrates the interactions between the identified user classes (actors), external systems, and the NexusCommerce platform. It establishes the scope of user roles, access rights, and system capabilities across all six modules.
+Figure 1 Use Case Diagram of NexusCommerce System
+The diagram shows the following actor-system interactions:
+The E-commerce Seller interacts with: Upload Data, View Dashboard, Generate Demand Forecast, Fine-Tune Model, Monitor Inventory, View Risk Scores, Manage Suppliers, View Pricing Recommendations, Interact with AI Assistant (Query Mode), Execute Business Actions via AI (Action Mode), and Export Reports.
+The Business Analyst interacts with: View Dashboard, Generate Demand Forecast, Compare Forecast vs Actual, Review Model Metrics, Analyze Pricing Trends, and Filter Reports.
+The System Administrator interacts with: Upload Data, Manage Versions, Resolve Anomalies, Monitor Data Freshness, Configure Alerts, Manage User Roles, and View AI Action Audit Trail.
+The External LLM API (external system) provides: Natural language understanding and response generation for the AI assistant.
+The n8n Workflow Tool (external system) receives: Webhook triggers for Place Supplier Order, Send Restock Alert, and Generate & Email Report workflows.
+The PostgreSQL Database (external system) provides: Centralized data storage for all modules.
+Key relationships in the diagram:
+"Interact with AI Assistant" includes "Classify Intent" (include relationship).
+"Execute Business Actions" extends "Interact with AI Assistant" (extend relationship, triggered when action intent is detected).
+"Place Supplier Order" extends "Execute Business Actions" (extend relationship).
+"Generate & Email Report" extends "Execute Business Actions" (extend relationship).
+"Fine-Tune Model" extends "Generate Demand Forecast" (extend relationship, optional personalization).
+2.5 Requirement Identifying Technique
+This section describes the techniques used to identify and document the functional requirements of the NexusCommerce system. A combination of two techniques is used to comprehensively capture both frontend interactions and backend processing behaviors.
+Technique 1: Mockup-Based Requirement Analysis
+For frontend-facing features, Mockup-Based Requirement Analysis is used. User interface mockups are created to visually represent how users will interact with the system. Functional requirements are then derived from each screen's interactive elements and behaviors. The following steps were followed:
+Step 1: Key features were identified and broken down into individual screens.
+Step 2: A Mockup ID was assigned to each screen (e.g., M1 for Login Page, M2 for Dashboard, M3 for Data Upload, M4 for Forecasting, M5 for Inventory, M6 for AI Assistant, M7 for Pricing).
+Step 3: Mockups of all screens were created.
+Step 4: Interactive elements on each screen (buttons, forms, dropdowns, charts, upload zones, chat inputs) were identified.
+Step 5: A functional requirement was derived from each element, describing what the system should do in response.
+Step 6: All functional requirements were organized using the table format provided in Section 2.6.
+Technique 2: Event-Response Table
+For backend processes that operate without direct user interface interaction, the Event-Response Table technique is used. This captures system behaviors triggered by data events, scheduled processes, ML pipeline operations, n8n workflow callbacks, and automated monitoring activities. Events include data upload completion, anomaly detection, model training completion, inventory threshold breaches, AI action execution, and workflow status callbacks.
+2.6 Functional Requirements
+This section presents the functional requirements of the NexusCommerce system derived from user interface mockups and backend event-response analysis. Requirements are organized by module and mockup screen, with each requirement written at the feature level and including a unique identifier, clear statement, and applicable business rules.
+Figure 2 NexusCommerce AI Processing Pipeline
+Mockup M1 — Login & Registration Screen
+Figure 3 Mockup M1 — Login & Registration Screen
+Table 2.2: Functional Requirements Derived from Mockup M1 — Login & Registration
+Mockup M2 — Dashboard Screen
+Figure 4 Mockup M2 — Dashboard Screen
+Table 2.3: Functional Requirements Derived from Mockup M2 — Dashboard
+Mockup M3 — Data Upload & Management Screen
+Figure 5 Mockup M3 — Data Upload & Management Screen
+Table 2.4: Functional Requirements Derived from Mockup M3 — Data Upload & Management
+Mockup M4 — Demand Forecasting Screen
+Figure 6 Mockup M4 — Demand Forecasting Screen
+Table 2.5: Functional Requirements Derived from Mockup M4 — Demand Forecasting
+Mockup M5 — Inventory Intelligence Screen
+Figure 7 Mockup M5 — Inventory Intelligence & Supplier Management Screen
+Table 2.6: Functional Requirements Derived from Mockup M5 — Inventory Intelligence
+Mockup M6 — AI Assistant Screen
+Figure 8 Mockup M6 — AI Conversational Assistant Screen
+Table 2.7: Functional Requirements Derived from Mockup M6 — AI Conversational Assistant
+Mockup M7 — Pricing Intelligence Screen
+Figure 9 Mockup M7 — Pricing Intelligence & Profitability Screen
+Table 2.8: Functional Requirements Derived from Mockup M7 — Pricing Intelligence
+Backend Process Requirements — Event-Response Table
+Table 2.9: Event-Response Table for Backend Processes
+2.7 Non-Functional Requirements
+This section specifies the quality attributes of the NexusCommerce system in specific, quantitative, and verifiable terms.
+2.7.1 Reliability
+REL-1: The system shall maintain a minimum uptime of 95% per month, excluding scheduled maintenance windows.
+REL-2: The system shall ensure that all processed outputs (forecasts, inventory updates, pricing recommendations, upload records) are preserved in the PostgreSQL database even in case of system failure.
+REL-3: The system shall automatically log 100% of data integration errors, API failures, and ML processing exceptions with timestamps and error details.
+REL-4: The system shall recover from critical failures within 2 minutes using database transaction rollback and service restart mechanisms.
+REL-5: Data upload operations shall execute within a single database transaction so that any failure during the 7-step pipeline rolls back all changes, preventing partial data states.
+2.7.2 Usability
+USE-1: A new user shall be able to navigate the dashboard and access core analytics within 5 minutes of first login without requiring external training materials.
+USE-2: Users shall be able to access any module (forecasting, inventory, pricing, AI assistant) within 3 clicks from the dashboard.
+USE-3: The AI assistant shall present responses in a clear, non-technical format suitable for business users with no technical background in at least 90% of cases.
+USE-4: The system shall provide a responsive interface compatible with desktop and laptop devices with at least 95% layout consistency across Chrome, Firefox, and Edge browsers.
+USE-5: The forecasting module shall display "—" (not "0%") when accuracy data is unavailable, preventing user confusion about model performance.
+USE-6: Destructive operations (data rollback) shall require explicit typed confirmation ("ROLLBACK") to prevent accidental data loss.
+2.7.3 Performance
+PER-1: 95% of dashboard pages shall load completely within 4 seconds under normal network conditions (20 Mbps or faster connection).
+PER-2: Demand forecasting results shall be generated and returned within 6 seconds after user clicks "Generate Forecast" for a 30-day horizon.
+PER-3: Inventory risk scores and alerts shall update within 10 seconds after new sales data is uploaded.
+PER-4: AI assistant responses shall be generated within 3 seconds for standard query-type questions.
+PER-5: Pricing recommendation computations shall complete within 5 seconds per product.
+PER-6: Data upload processing (parsing, validation, deduplication, storage, quality scoring) shall complete within 30 seconds for files up to 50 MB in size.
+PER-7: Model fine-tuning background jobs shall complete within 5 minutes for datasets up to 100,000 rows.
+PER-8: The system shall support at least 100 concurrent users without performance degradation on dashboard and forecasting operations.
+2.7.4 Security
+SEC-1: All user passwords shall be hashed using bcryptjs before storage. Plain-text passwords shall never be stored or logged.
+SEC-2: The system shall implement JWT-based authentication for all protected API endpoints. Tokens shall expire after 24 hours.
+SEC-3: The system shall implement Role-Based Access Control (RBAC) restricting module access based on user role (seller, analyst, admin).
+SEC-4: All seller_id values shall be extracted from JWT tokens on the server side. The system shall never accept seller_id from frontend request bodies or query parameters to prevent cross-seller data access.
+SEC-5: The system shall protect against SQL injection by using parameterized queries for all database operations.
+SEC-6: The system shall protect against XSS attacks by sanitizing all user inputs before rendering in the frontend.
+SEC-7: All communication between frontend and backend shall use HTTPS with TLS 1.2 or higher encryption.
+SEC-8: Unauthorized access attempts shall be detected and logged with IP address, timestamp, and attempted endpoint.
+SEC-9: All AI-executed business actions shall be recorded in an immutable audit trail that cannot be modified or deleted by any user role.
+2.8 External Interface Requirements
+2.8.1 User Interface Requirements
+The following requirements govern the visual design, interaction patterns, and overall user experience of the NEXUSCOMMERCE web application:
+2.8.2 Software Interfaces
+2.8.3 Hardware Interfaces
+2.8.4 Communications Interfaces
+Chapter 3: Design and Architecture
+This chapter presents the high-level architectural design of the NexusCommerce system. It covers the conceptual system architecture, the architectural patterns adopted, design models for the core workflows implemented across all six modules, and the PostgreSQL-based data design used for centralized data management and AI-driven analytics. Each model is accompanied by a description of its purpose, key elements, and contribution to the overall system.
+3.1 System Architecture Overview
+This section describes the overall external architecture of the NexusCommerce system, reflecting its conceptual design, major components, services, technologies, and security considerations. Unlike internal architectural styles (e.g., Layered, MVC), this section focuses on helping stakeholders understand how the entire system operates at a macro level, where each module resides, what technologies are used, and how data and control flow between system components.
+3.1.1 Purpose
+The purpose of the system architecture overview is to provide a conceptual view of the system that illustrates the big-picture design, showing where each module resides, what technologies are used, and how data and control flow between system components. The architecture diagram below (Figure 1) illustrates all major components and their interactions.
+Figure 10 NexusCommerce System Architecture Overview Diagram
+The system's context within its operational environment is as follows:
+The system operates within a web-based architecture where the frontend application built using Next.js and React runs in the user's browser and communicates with the Node.js + Express.js backend through secure HTTPS-based REST APIs. The frontend provides dashboards, forecasting visualizations, inventory monitoring panels, pricing analytics, and the AI conversational assistant interface.
+The backend server acts as the central controller of the NexusCommerce platform. It processes user requests, manages authentication and authorization via JWT tokens, handles file uploads through Multer, coordinates communication between modules, and exposes RESTful APIs for all frontend operations. The backend also manages communication with the PostgreSQL database, the FastAPI ML server, external LLM APIs, and n8n workflow automation services.
+The AI/ML processing layer is implemented using Python FastAPI services running on port 8000. This layer performs demand forecasting using XGBoost with recursive day-by-day prediction, model fine-tuning with warm-start training, feature engineering, confidence interval computation, backtest accuracy evaluation, and feature importance extraction. All machine learning computations are executed on the ML server to reduce client-side processing requirements and keep the backend responsive.
+The AI conversational assistant operates using Retrieval Augmented Generation (RAG), Model Context Protocol (MCP) tools, and external LLM APIs. The assistant retrieves real business data from PostgreSQL, processes user queries, classifies intent into Query or Action categories, generates intelligent responses grounded in actual data, and executes business actions such as supplier order placement and report generation through n8n workflow automation.
+The database layer uses PostgreSQL as the centralized relational database system. It stores users, products, sales records, inventory data, forecasts, model metrics, data uploads, finetune jobs, anomalies, upload versions, data freshness, inventory risk scores, chat history, pricing performance, and product costs. All modules share the same centralized database to ensure consistency and synchronization across the platform.
+External integrations include LLM API services for natural language processing in the AI assistant, and n8n webhook automation for executing workflows such as supplier order placement, alert notifications, and report generation. Both external services communicate with the backend via secure HTTPS connections.
+The system implements multiple security mechanisms including JWT-based authentication with 24-hour token expiry, bcryptjs password hashing, HTTPS communication with TLS 1.2+, Role-Based Access Control (RBAC) for module-level permissions, server-side seller isolation using JWT token extraction (seller_id never accepted from frontend), parameterized database queries to prevent SQL injection, input sanitization against XSS, and an immutable audit trail for all AI-executed actions.
+3.1.2 Technologies and Services
+Table 3.1: Technologies, Components, and Security Mechanisms Used in the System Architecture
+3.2 Conceptual Architecture Diagram
+Figure 11 NexusCommerce Conceptual Architecture Diagram
+The conceptual architecture of NexusCommerce consists of the following major layers and components:
+Frontend Layer (Next.js + React + Tailwind CSS + Recharts) — Handles all user interface rendering including dashboards, forecasting charts, inventory panels, pricing views, data management screens, and the AI chat interface. Communicates with the backend exclusively through HTTPS REST API calls with JWT authentication headers.
+Backend API Layer (Node.js + Express.js) — Central controller managing business logic, API routing, JWT authentication, file upload processing, inter-module coordination, and communication with the ML server, PostgreSQL database, LLM APIs, and n8n webhooks.
+AI/ML Processing Layer (Python FastAPI + XGBoost) — Dedicated ML server performing computationally intensive operations: XGBoost recursive forecasting, feature engineering, model fine-tuning as background tasks, backtest evaluation, confidence interval computation, and feature importance extraction.
+Database Layer (PostgreSQL) — Centralized relational database storing all business data, ML outputs, AI conversation logs, and system metadata across 17 interconnected tables.
+AI Conversational Assistant Layer (RAG + MCP + LLM) — Intelligent agent operating in Query Mode (retrieving and synthesizing business data for answers) and Action Mode (executing business workflows through n8n).
+External Integration Layer (LLM APIs + n8n) — External services providing natural language processing capabilities and workflow automation execution.
+Security Layer (JWT + bcryptjs + RBAC + HTTPS) — Cross-cutting security services operating across all layers ensuring authenticated access, encrypted communication, role-based permissions, and seller data isolation.
+3.3 Architecture Style / Pattern
+NexusCommerce adopts a Client-Server Layered Architecture combined with a Microservice-Inspired Separation of the ML processing engine. This style is chosen because it cleanly separates the system into Presentation, Service, AI/ML, and Data layers, making the platform easier to develop, test, scale, and maintain independently.
+Justification for this Architecture:
+The layered approach was selected because NexusCommerce integrates multiple distinct technology stacks (JavaScript/Node.js for backend, Python for ML, React for frontend) that naturally map to separate layers. The ML server runs as an independent FastAPI service on its own port (8000), allowing it to be developed, deployed, and scaled independently from the backend API server. This separation ensures that computationally intensive ML operations (model training, recursive forecasting) do not block the main API server's request handling.
+Figure 12 NexusCommerce Layered Architecture Pattern Diagram
+Layer Descriptions:
+Presentation Layer (Next.js + React + Tailwind CSS + Recharts): Handles the user interface including dashboards with real-time filtering, forecasting visualizations with confidence bands and accuracy rings, inventory monitoring with risk badges, data management with drag-drop upload and version history, pricing analytics with profitability charts, and the AI chat interface with confirmation cards and follow-up suggestions. This layer communicates exclusively with the Service Layer through HTTPS REST API calls and never accesses the database directly.
+Service Layer (Node.js + Express.js): Manages all business logic, API request handling, JWT authentication and authorization, file upload processing through Multer, data validation orchestration, and coordination between modules. This layer routes forecasting requests to the ML Layer, database operations to the Data Layer, AI queries to the external LLM API, and workflow triggers to n8n. It enforces seller isolation by extracting seller_id from JWT tokens server-side.
+AI/ML Layer (Python FastAPI + XGBoost + Scikit-Learn): Runs as an independent service handling all machine learning computations. This includes XGBoost model loading with 3-tier priority (finetuned > category > fallback), recursive day-by-day prediction, temporal feature engineering (lag values, rolling means, seasonal indicators), backtest accuracy evaluation on 20% holdout data, residual standard deviation computation for confidence intervals, feature importance extraction, and background model fine-tuning with warm-start training. The ML Layer communicates directly with PostgreSQL for fetching training data and storing model metrics.
+Data Layer (PostgreSQL): Stores all structured business data in a centralized relational database with 17 interconnected tables. Enforces data integrity through foreign key constraints, unique constraints for deduplication (ON CONFLICT DO NOTHING), ACID-compliant transactions for upload and rollback operations, and upsert operations for model metrics. All layers access the Data Layer through parameterized queries to prevent SQL injection.
+This separation allows the frontend to stay fast and responsive while backend API handling and ML computations run independently. New modules or ML models can be added without affecting existing layers. The ML server can be scaled horizontally or moved to GPU-enabled hardware without changes to the backend or frontend.
+3.4 Design Models
+This section presents all relevant design models for NexusCommerce using the Object-Oriented Development approach. NexusCommerce is an interactive, AI-driven e-commerce analytics and decision-support platform with integrated forecasting, inventory intelligence, pricing optimization, and AI-assisted business automation workflows, making activity diagrams, class diagrams, sequence diagrams, and state transition diagrams the most applicable model set. Each model is accompanied by a description of its purpose and an explanation of the key elements shown. Models focus on core workflows and critical processes, not on trivial operations such as login, logout, or basic view/edit operations.
+3.4.1 Activity Diagrams
+3.4.1.1 Module 1: Data Integration & Management
+Purpose: This activity diagram defines the workflow for data integration and management in the NexusCommerce system. It handles the collection, validation, cleaning, deduplication, anomaly detection, quality scoring, version tracking, and storage of sales and inventory data from multiple file formats.
+Role in System: Acts as the foundational module of NexusCommerce by ensuring high-quality, reliable, and consistent data for all downstream processes such as demand forecasting, inventory intelligence, pricing optimization, and AI-driven decision support.
+Workflow Steps:
+The user opens the Data Management module from the application dashboard.
+The user uploads a file either by selecting it manually or by dragging and dropping it into the upload zone. Supported formats include CSV, JSON, and XLSX.
+The system validates the uploaded file format and checks whether the file size is within the maximum allowed limit of 50 MB.
+If the file format is invalid or the file exceeds the size limit, the system displays an error message and terminates the upload process.
+If validation succeeds, the system parses the uploaded file and loads the dataset into memory for preprocessing.
+The system performs automated data cleaning operations including converting column names to lowercase, filling missing numeric values using median imputation, and detecting outliers using the IQR (Interquartile Range) method.
+The system creates a new record in the data_uploads table and generates a unique upload_id for the upload session.
+The system starts a row-by-row validation process for all uploaded records.
+For each row, the system validates that:
+product_name is not empty
+quantity is greater than 0
+revenue is greater than 0 if provided
+date is parseable
+date is not in the future
+date is not older than 10 years
+price is greater than 0 if provided
+Rows containing critical validation failures such as empty product names, negative quantities, or future dates are rejected by the system.
+Rows containing warning-level issues such as very old dates or zero prices are flagged but retained in the dataset.
+All detected anomalies, warnings, and validation issues are stored in the anomalies_detected table.
+For valid rows, the system attempts database insertion using INSERT ... ON CONFLICT DO NOTHING.
+If a duplicate conflict is detected, the row is skipped and recorded as an info-level anomaly.
+Successfully inserted rows are counted as newly added records.
+After all rows are processed, the system creates a new record in the upload_versions table containing the version number, rows added, rows skipped, and rows rejected.
+The system calculates the data quality score using:
+The calculated quality score is updated in the data_uploads table.
+The system updates or inserts a record into the data_freshness table using the current timestamp and sets the freshness_score to 100.
+Temporary uploaded files are deleted from server storage after processing is completed successfully.
+The system displays a result summary card showing total processed records, rows added, rows skipped, rows rejected, and the calculated quality score.
+The processed and validated data becomes available for forecasting, inventory management, dashboard analytics, and AI assistant modules.
+Figure 13 Activity Diagram — Data Integration & Management
+3.4.1.2 Module 2: Demand Forecasting
+Purpose: This activity diagram illustrates the workflow for generating product-level demand forecasts and optionally personalizing the forecasting model through seller-specific fine-tuning.
+Role in System: Acts as the intelligent forecasting engine of NexusCommerce by generating accurate product-level demand predictions with confidence intervals and explainability, supporting proactive inventory and pricing decisions.
+Workflow Steps:
+• User opens the Demand Forecasting module.
+• User selects a product and forecast duration (7, 14, or 30 days).
+• System retrieves historical sales data from the centralized database.
+• System validates whether sufficient historical data is available for forecasting.
+• System preprocesses data and prepares forecasting features such as lag values and rolling averages.
+• XGBoost machine learning model performs recursive day-by-day demand prediction.
+• System generates 95% confidence intervals for forecasted values.
+• System calculates forecast accuracy and extracts feature importance explanations.
+• If seller-specific fine-tuned models are available, the system loads personalized models for improved accuracy.
+• System displays forecast results through charts, KPI cards, confidence bands, and data tables.
+• Forecast data is stored in the database and shared with inventory intelligence, pricing optimization, and dashboard modules.
+Figure 14 Activity Diagram — Demand Forecasting
+3.4.1.3 Module 3: Inventory Intelligence & Supplier Management
+Purpose: This activity diagram illustrates the workflow for monitoring inventory, scoring stock risks, managing suppliers, computing restock recommendations, and triggering automated alerts.
+Role in System: Acts as the intelligent inventory management component by combining forecast data, supplier information, and ML-based risk analysis to prevent stockouts, optimize ordering, and quantify financial impact.
+Workflow Steps:
+• System retrieves current inventory levels, forecasted demand, and supplier information.
+• System applies ML-based risk scoring to identify Critical, High, Medium, or Low stock risks.
+• System calculates order deadlines using forecasted demand and supplier lead times.
+• System generates smart restock quantity recommendations with safety buffers.
+• System compares available suppliers based on cost, lead time, and minimum order quantity.
+• System computes financial impact such as potential lost revenue and restock cost.
+• System calculates the overall inventory health score for all products.
+• Inventory alerts and recommendations are displayed on the dashboard.
+• If critical stock risk is detected, the system triggers workflow automation and notifications.
+Figure 15 Activity Diagram — Inventory Intelligence & Supplier Management
+3.4.1.4 Module 4: AI Conversational Assistant (Agentic AI)
+Purpose: This activity diagram illustrates the dual-mode workflow of the Agentic AI assistant, covering both Query Mode (answering business questions) and Action Mode (executing business operations).
+Role in System: Acts as the AI-driven assistant by answering business questions grounded in real data and executing automated business actions through n8n workflow integration.
+Workflow Steps:
+• User enters a question or command in the AI assistant chat interface.
+• System classifies the request as either Query Mode or Action Mode.
+• In Query Mode, the system retrieves relevant business data using RAG and MCP tools.
+• AI generates context-aware responses grounded in real sales, inventory, and forecasting data.
+• In Action Mode, the system extracts action details such as product, quantity, or report type.
+• System displays a confirmation summary before executing any business action.
+• After user confirmation, the system triggers n8n workflow automation for actions such as placing supplier orders, sending alerts, or generating reports.
+• System displays the action result, confidence score, and follow-up suggestions to the user.
+Figure 16 Activity Diagram — AI Conversational Assistant (Agentic AI)
+3.4.1.5 Module 5: Dashboard & Reporting Interface
+Purpose: This activity diagram illustrates the workflow for loading, filtering, and displaying business analytics, model performance metrics, and system health indicators on the interactive dashboard.
+Role in System: Acts as the visualization and monitoring component by providing users with real-time insights, performance metrics, alerts, and business health analysis for informed decision-making.
+Workflow Steps:
+• System retrieves processed data from forecasting, inventory, pricing, and data management modules.
+• Dashboard loads KPI cards, charts, alerts, and analytics widgets in real time.
+• Users apply filters such as product, category, and date range to customize views.
+• System displays role-based dashboards for sellers, analysts, and administrators.
+• Forecast accuracy charts and model comparison widgets are generated for performance evaluation.
+• System calculates and displays overall business health and inventory health scores.
+• Data freshness indicators and anomaly alerts are updated dynamically.
+• Users can view, analyze, and export reports for business decision-making.
+Figure 17 Activity Diagram — Dashboard & Reporting Interface
+3.4.1.6 Module 6: Pricing Intelligence & Profitability
+Purpose: This activity diagram illustrates the workflow for tracking product costs, computing profitability, generating ML-based pricing recommendations, and forecasting future profit.
+Role in System: Acts as the pricing optimization and profitability analysis component by helping sellers maximize revenue, improve profit margins, and make data-driven pricing decisions with transparent reasoning.
+Workflow Steps:
+• System retrieves product cost prices, selling prices, sales history, and demand forecasts.
+• System calculates gross profit, profit margins, and revenue for each product.
+• ML-based pricing models analyze demand trends, pricing history, and profitability patterns.
+• System generates optimal pricing recommendations with expected profit and revenue impact.
+• Future profit forecasts are calculated using forecasted demand and pricing data.
+• System displays profitability analytics including margin trends, rankings, and comparison charts.
+• Products with low or negative margins are highlighted for seller attention.
+• Plain-English explanations and confidence scores are provided with each pricing recommendation.
+Figure 18 tivity Diagram — Pricing Intelligence & Profitability
+3.4.2 Class Diagram
+Purpose: The Class Diagram defines the static structure of NexusCommerce and illustrates the relationships between major system entities. It ensures that the backend architecture and database design support all functional requirements of the system.
+Key Elements:
+• User:
+Represents the primary actor of the system. Users can log in, upload business data, view dashboards, generate forecasts, manage inventory, analyze pricing, and interact with the AI assistant.
+• Dataset:
+Stores uploaded sales and inventory files including CSV, JSON, and Excel formats along with validation status, quality scores, freshness scores, and version history.
+• Forecast Model:
+Represents the XGBoost forecasting model used to predict future product demand for different forecasting horizons such as 7, 14, and 30 days.
+• Forecast Result:
+Stores generated forecasting outputs including predicted demand values, confidence intervals, feature importance, and forecasting accuracy metrics.
+• Inventory Record:
+Contains inventory-related information such as stock quantity, reorder levels, stock risk scores, inventory health status, and restock recommendations.
+• Supplier:
+Stores supplier information including supplier name, lead time, reliability score, pricing details, and supplier comparison data.
+• Pricing Analysis:
+Stores pricing intelligence data including product cost, selling price, profit margins, pricing recommendations, and expected revenue impact.
+• DashboardReport:
+Represents dashboard analytics and reporting information including KPI cards, business health scores, alerts, charts, model comparison widgets, and exported reports.
+• AI Conversation:
+Stores AI assistant interactions including user queries, generated responses, executed actions, confidence scores, and workflow execution details.
+• Workflow Automation:
+Represents automated business actions executed through n8n workflows such as supplier ordering, alert generation, and report creation.
+• Admin:
+Represents administrative users responsible for managing users, datasets, forecasting models, suppliers, pricing configurations, and overall system settings.
+• Authentication:
+Handles JWT-based authentication, user sessions, access control, and secure authorization within the NexusCommerce system.
+Figure 19 Class Diagram of NexusCommerce System
+3.4.3 Sequence Diagrams
+3.4.3.1 Module 1: Data Integration & Management
+Purpose: This sequence diagram illustrates the complete data upload workflow showing interactions between the User, Frontend (Upload Page), Backend API (Express.js), Validation Engine, PostgreSQL Database, and Freshness Service. It covers file parsing, per-row validation, anomaly detection, deduplication, version creation, freshness update, and result display.
+Key Interactions:
+User drags file into upload zone on Frontend.
+Frontend sends POST /api/data/upload with multipart file to Backend.
+Backend parses file (CSV/JSON/XLSX) and performs in-memory cleaning.
+Backend creates data_uploads record in Database, receives upload_id.
+Backend sends each row to Validation Engine for per-row checking.
+Validation Engine returns validation result (accept/reject/warn) for each row.
+For rejected rows, Backend stores anomaly in anomalies_detected table.
+For valid rows, Backend attempts INSERT with ON CONFLICT DO NOTHING.
+Database returns inserted ID (new row) or empty (duplicate skipped).
+For duplicates, Backend stores info-level anomaly.
+After all rows, Backend creates upload_versions record with counts.
+Backend calls Freshness Service to upsert data_freshness with score = 100.
+Backend deletes temporary file from disk.
+Backend returns upload summary (inserted, skipped, rejected, quality_score, version_number) to Frontend.
+Frontend renders result card, version history table, and anomaly panel.
+Figure 20 Sequence Diagram — Data Integration & Management
+3.4.3.2 Module 2: Demand Forecasting
+Purpose: This sequence diagram illustrates the complete forecasting workflow showing interactions between the User, Frontend (Forecasting Page), Backend API (Express.js), FastAPI ML Server, PostgreSQL Database, and Model Storage. It covers product selection, history retrieval, model loading, recursive prediction, confidence computation, result storage, and visualization rendering.
+Key Interactions:
+User selects product and period, clicks "Generate Forecast" on Frontend.
+Frontend sends GET /api/forecast/:productId?period=N to Backend.
+Backend queries products table for product category.
+Backend sends POST /predict/xgboost to ML Server with product_id, seller_id, horizon_days, category.
+ML Server queries Database for product's daily sales history.
+ML Server fills date gaps with 0 for continuous time series.
+ML Server checks history length >= 30 days (returns 422 if insufficient).
+ML Server checks Model Storage for best model: finetuned_{seller_id} > category > fallback.
+ML Server loads selected model and runs recursive day-by-day prediction.
+ML Server computes backtest accuracy on 20% holdout (returns null if < 60 rows).
+ML Server computes residual_std from full history backtest.
+ML Server extracts top 10 feature importances.
+ML Server returns predictions, accuracy, residual_std, features, model_used to Backend.
+Backend computes confidence bands (real if residual_std available, fallback otherwise).
+Backend stores each forecast point in forecasts table with seller_id.
+Backend returns formatted response to Frontend.
+Frontend renders accuracy ring, area chart, KPI cards, feature bars, data table.
+Frontend background-fetches GET /api/forecast/:productId/accuracy.
+Backend JOINs forecasts + sales tables, computes per-day accuracy.
+Frontend renders forecast-vs-actual comparison chart.
+Figure 21 Sequence Diagram — Demand Forecasting
+3.4.3.3 Module 3: Inventory Intelligence & Supplier Management
+Purpose: This sequence diagram illustrates the inventory monitoring and risk assessment workflow showing interactions between the System Timer/User, Backend API, ML Risk Scoring Engine, PostgreSQL Database, Supplier Service, Financial Calculator, and n8n Webhook Service.
+Key Interactions:
+Trigger event: new sales data uploaded OR user opens inventory module OR scheduled check.
+Backend retrieves current inventory levels from inventory table.
+Backend retrieves latest forecasted demand from forecasts table.
+Backend retrieves supplier profiles (lead time, cost, min order) from product_suppliers table.
+Backend sends product data to ML Risk Scoring Engine.
+Risk Scoring Engine computes risk score per product using stock, demand, velocity, lead time.
+Risk Scoring Engine assigns risk level: Critical/High/Medium/Low.
+Backend stores risk scores in inventory_risk_scores table.
+Backend calculates order deadlines: today + (stock / daily_demand) − lead_time.
+Backend calculates restock quantities: (daily_demand × lead_time × 1.25) − stock.

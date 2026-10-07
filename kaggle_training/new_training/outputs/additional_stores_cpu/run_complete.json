@@ -1,0 +1,13 @@
+{
+  "elapsed_seconds": 481.30458790000193,
+  "python": "3.12.4",
+  "xgboost": "3.4.1",
+  "pandas": "2.2.2",
+  "numpy": "1.26.4",
+  "target_stores": [
+    1,
+    5
+  ],
+  "data_path": "D:\\STUDY\\FYP\\code\\nexuscommerce\\data\\store_item_demand\\train.csv.zip",
+  "full_run": true
+}

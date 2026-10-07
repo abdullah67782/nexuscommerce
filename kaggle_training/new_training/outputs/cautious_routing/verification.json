@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "metric_rows_recomputed": 196,
+  "reserved_overlap": 0,
+  "selection_reproduced": true,
+  "routed_predictions_reproduced": 2544,
+  "runtime_artifacts_unchanged": 18,
+  "tests_passed": 19
+}

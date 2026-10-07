@@ -1,0 +1,9 @@
+horizon,pattern,selected_method,reason,practice_gain_percent
+7,regular,direct_general,general_fallback,0.0
+7,occasional,direct_general,general_fallback,0.0
+7,rare,tsb,consistent_group_gain,9.042413265194542
+7,dormant,direct_general,general_fallback,0.0
+28,regular,direct_general,general_fallback,0.0
+28,occasional,direct_general,general_fallback,0.0
+28,rare,tsb,consistent_group_gain,18.311534128753962
+28,dormant,direct_general,general_fallback,0.0

@@ -1,0 +1,50 @@
+{
+  "config": {
+    "target_store": 5,
+    "train_end": "2015-05-31",
+    "validation_end": "2015-11-30",
+    "test_end": "2016-05-22",
+    "horizon": 30,
+    "origin_stride": 30,
+    "general_trees": 250,
+    "adaptation_trees": 80,
+    "n_jobs": 4,
+    "min_relative_improvement": 0.02,
+    "seed": 42
+  },
+  "features": [
+    "day_of_week",
+    "month",
+    "is_weekend",
+    "dow_sin",
+    "dow_cos",
+    "doy_sin",
+    "doy_cos",
+    "lag_1_relative",
+    "lag_2_relative",
+    "lag_7_relative",
+    "lag_14_relative",
+    "lag_28_relative",
+    "mean_7_relative",
+    "std_7_relative",
+    "mean_14_relative",
+    "std_14_relative",
+    "mean_28_relative",
+    "std_28_relative",
+    "trend_7_relative"
+  ],
+  "selected_by_horizon": {
+    "7": "moving_average",
+    "14": "moving_average",
+    "30": "moving_average"
+  },
+  "scale": "previous 28-day mean sales + 1",
+  "target": "sales / scale",
+  "xgboost_version": "3.4.1",
+  "pandas_version": "2.2.2",
+  "training_countries": "US retail stores; no cross-country claim",
+  "scope": "Predefined subset and held-out stores; not an official full M5 benchmark.",
+  "runtime": "Experimental schema; requires a matching inference adapter before app integration.",
+  "dataset": "M5 subset",
+  "target_store_name": "TX_1"
+}

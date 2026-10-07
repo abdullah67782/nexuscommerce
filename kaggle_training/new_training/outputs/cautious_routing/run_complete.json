@@ -1,0 +1,8 @@
+{
+  "frozen_selection_sha256": "848b604864afc4d32149a47d4cc857ce9e045a0017c5132434b516d7d106458e",
+  "later_source_sha256": "cca00d350b600ea334d4a7586e74c8283c2c56d618cb762f655112450dea2932",
+  "reserved_overlap": 0,
+  "runtime_integration": false,
+  "selection_unchanged_after_check": true,
+  "limitation": "Rules informed by previously examined practice results. September-November results were also previously examined; this is a retrospective development check, not untouched validation. No final reserved outcomes used."
+}

@@ -1,0 +1,11 @@
+# Normalise line endings for source files so Windows and Linux agree.
+* text=auto
+
+# Keep experiment evidence and model files byte-for-byte (their SHA-256
+# hashes are verified by the frozen protocol) — never convert line endings.
+kaggle_training/new_training/** -text
+ml/models/** binary
+*.pkl binary
+*.png binary
+*.ico binary
+*.ipynb -text

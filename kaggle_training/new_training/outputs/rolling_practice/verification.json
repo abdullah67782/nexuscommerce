@@ -1,0 +1,13 @@
+{
+  "metric_rows_recomputed": 144,
+  "models_reloaded": 36,
+  "runtime_artifacts_unchanged": 18,
+  "reserved_overlap": 0,
+  "prediction_rows": 39114,
+  "passed": true,
+  "versions": {
+    "xgboost": "3.4.1",
+    "pandas": "2.2.2",
+    "numpy": "1.26.4"
+  }
+}

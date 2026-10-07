@@ -1,0 +1,9 @@
+{
+  "source_predictions_sha256": "5af5c2ce6a20c6ccb325167ef1309d37088c549b4298a0ffb35aa162183b6c04",
+  "script_sha256": "c8fdd42f5847f1f9e1dca506f37db6cf25f89acce1d148e0f99a5109f746b588",
+  "prediction_rows": 39114,
+  "reserved_overlap": 0,
+  "methods_selected": false,
+  "aggregation_checks_passed": true,
+  "output_metric_rows": 588
+}

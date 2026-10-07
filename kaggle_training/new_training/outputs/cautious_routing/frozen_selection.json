@@ -1,0 +1,78 @@
+{
+  "rules": {
+    "default_method": "direct_general",
+    "minimum_relative_gain_percent": 5.0,
+    "minimum_win_fraction": 0.8,
+    "maximum_cell_loss_percent": 5.0,
+    "minimum_products_per_cell": 10,
+    "required_folds": 3,
+    "required_stores": 3,
+    "minimum_origins_per_cell": 2,
+    "minimum_origins_per_store": {
+      "7": 24,
+      "28": 8
+    },
+    "require_improvement_in_every_fold": true,
+    "per_product_overrides": false
+  },
+  "routes": [
+    {
+      "horizon": 7,
+      "pattern": "regular",
+      "selected_method": "direct_general",
+      "reason": "general_fallback",
+      "practice_gain_percent": 0.0
+    },
+    {
+      "horizon": 7,
+      "pattern": "occasional",
+      "selected_method": "direct_general",
+      "reason": "general_fallback",
+      "practice_gain_percent": 0.0
+    },
+    {
+      "horizon": 7,
+      "pattern": "rare",
+      "selected_method": "tsb",
+      "reason": "consistent_group_gain",
+      "practice_gain_percent": 9.042413265194542
+    },
+    {
+      "horizon": 7,
+      "pattern": "dormant",
+      "selected_method": "direct_general",
+      "reason": "general_fallback",
+      "practice_gain_percent": 0.0
+    },
+    {
+      "horizon": 28,
+      "pattern": "regular",
+      "selected_method": "direct_general",
+      "reason": "general_fallback",
+      "practice_gain_percent": 0.0
+    },
+    {
+      "horizon": 28,
+      "pattern": "occasional",
+      "selected_method": "direct_general",
+      "reason": "general_fallback",
+      "practice_gain_percent": 0.0
+    },
+    {
+      "horizon": 28,
+      "pattern": "rare",
+      "selected_method": "tsb",
+      "reason": "consistent_group_gain",
+      "practice_gain_percent": 18.311534128753962
+    },
+    {
+      "horizon": 28,
+      "pattern": "dormant",
+      "selected_method": "direct_general",
+      "reason": "general_fallback",
+      "practice_gain_percent": 0.0
+    }
+  ],
+  "practice_sha256": "5af5c2ce6a20c6ccb325167ef1309d37088c549b4298a0ffb35aa162183b6c04",
+  "scope": "Global group routes, no per-product overrides. Experiment only."
+}

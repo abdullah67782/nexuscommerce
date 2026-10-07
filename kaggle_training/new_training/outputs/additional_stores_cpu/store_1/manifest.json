@@ -1,0 +1,48 @@
+{
+  "config": {
+    "target_store": 1,
+    "train_end": "2016-12-31",
+    "validation_end": "2017-06-30",
+    "test_end": "2017-12-31",
+    "horizon": 30,
+    "origin_stride": 30,
+    "general_trees": 250,
+    "adaptation_trees": 80,
+    "n_jobs": 4,
+    "min_relative_improvement": 0.02,
+    "seed": 42
+  },
+  "features": [
+    "day_of_week",
+    "month",
+    "is_weekend",
+    "dow_sin",
+    "dow_cos",
+    "doy_sin",
+    "doy_cos",
+    "lag_1_relative",
+    "lag_2_relative",
+    "lag_7_relative",
+    "lag_14_relative",
+    "lag_28_relative",
+    "mean_7_relative",
+    "std_7_relative",
+    "mean_14_relative",
+    "std_14_relative",
+    "mean_28_relative",
+    "std_28_relative",
+    "trend_7_relative"
+  ],
+  "selected_by_horizon": {
+    "7": "general",
+    "14": "general",
+    "30": "general"
+  },
+  "scale": "previous 28-day mean sales + 1",
+  "target": "sales / scale",
+  "xgboost_version": "3.4.1",
+  "pandas_version": "2.2.2",
+  "training_countries": "Not available in this dataset; do not claim cross-country validation.",
+  "scope": "One held-out store; repeat with other stores before claiming general personalization gains.",
+  "runtime": "Experimental schema; requires a matching inference adapter before app integration."
+}

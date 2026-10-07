@@ -1,0 +1,7 @@
+{
+  "protocol_sha256": "c47e42e74582c24aaf67312b7bbbd16a2dd6332e8e50aab446d612c7cb86cbf6",
+  "eligible_pairs": 170,
+  "reserved_pairs": 180,
+  "runtime_unchanged": true,
+  "limitation": "New products in the same US retail chain; fixed development-trained models, no retraining on reserved history, no cross-country claim."
+}

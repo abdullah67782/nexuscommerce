@@ -1,0 +1,52 @@
+/* Sign in / sign up — same tokens as the workspace. Static Nexus diagram
+   beside the form (no WebGL, no animated background). */
+@layer components {
+  .auth { min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(420px, 1fr); background: var(--bg); }
+
+  .auth-stage { position: relative; overflow: hidden; min-height: 100dvh; background: var(--bg-2); border-right: 1px solid var(--border); }
+  .auth-stage .nexus-stage { inset: 6% 4% 26%; }
+  .auth-stage-scrim { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(13, 16, 19, 0) 55%, var(--bg-2) 78%); }
+  .auth-stage-top { position: absolute; top: 24px; left: clamp(24px, 4vw, 48px); z-index: 2; }
+  .auth-stage-copy { position: absolute; left: clamp(24px, 4vw, 48px); right: clamp(24px, 4vw, 48px); bottom: clamp(28px, 6vh, 56px); z-index: 2; max-width: 460px; }
+  .auth-stage-copy h2 { font-size: clamp(22px, 2vw, 28px); line-height: 1.25; font-weight: 600; letter-spacing: -0.02em; color: var(--text); }
+  .auth-points { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 10px; }
+  .auth-points li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-2); }
+  .auth-points li::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+  .auth-main { position: relative; display: flex; flex-direction: column; padding: 20px clamp(20px, 4vw, 56px) 24px; }
+  .auth-topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .auth-topline .btn-ghost { margin-left: -10px; }
+  .auth-mobile-brand { display: none; }
+  .auth-form-wrap { width: 100%; max-width: 400px; margin: auto; padding: 40px 0; }
+  .auth-form-wrap > .eyebrow { font-family: var(--font-sans); font-size: 13px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--accent); }
+  .auth-title { margin-top: 8px; font-size: clamp(24px, 2.2vw, 30px); line-height: 1.2; font-weight: 600; letter-spacing: -0.02em; }
+  .auth-title em { color: inherit; }
+  .auth-subtitle { margin: 8px 0 26px; color: var(--text-2); font-size: 14px; line-height: 1.6; }
+  .auth-form { display: grid; gap: 18px; }
+  .auth-form .form-alert { margin-bottom: 2px; }
+  .auth-fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+  .auth-hint { margin-top: 8px; font-size: 12.5px; color: var(--text-3); }
+  .auth-submit { margin-top: 6px; height: 42px; }
+  .auth-switch { margin-top: 22px; font-size: 13.5px; color: var(--text-2); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .auth-footnote { text-align: center; font-size: 12.5px; color: var(--text-3); }
+  .strength { margin-top: 10px; }
+  .strength-bars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .strength-bars span { height: 3px; border-radius: 3px; background: var(--surface-3); }
+  .strength p { margin-top: 6px; font-size: 12px; font-weight: 500; }
+
+  .demo-accounts { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 14px; }
+  .demo-accounts summary { cursor: pointer; font-size: 13px; color: var(--text-2); list-style: none; display: flex; align-items: center; gap: 8px; }
+  .demo-accounts summary::before { content: "+"; color: var(--accent); width: 10px; font-weight: 600; }
+  .demo-accounts[open] summary::before { content: "–"; }
+  .demo-accounts summary::-webkit-details-marker { display: none; }
+  .demo-list { margin-top: 8px; display: grid; }
+  .demo-list button { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 6px; border-radius: 6px; font-size: 13px; color: var(--text-2); text-align: left; }
+  .demo-list button:hover { color: var(--text); background: var(--surface-2); }
+
+  @media (max-width: 960px) {
+    .auth { grid-template-columns: 1fr; }
+    .auth-stage { display: none; }
+    .auth-mobile-brand { display: block; }
+    .auth-form-wrap { padding: 32px 0; }
+  }
+}

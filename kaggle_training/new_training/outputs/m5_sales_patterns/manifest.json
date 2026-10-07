@@ -1,0 +1,18 @@
+{
+  "training_cutoff": "2015-05-31",
+  "recent_window_days": 180,
+  "sales_dates_read": [
+    "2011-01-29",
+    "2015-05-31"
+  ],
+  "series": 530,
+  "items": 53,
+  "stores": 10,
+  "thresholds": {
+    "regular": ">=80% days with recorded sales",
+    "occasional": ">=20% and <80%",
+    "rare": ">0% and <20%",
+    "dormant": "0%"
+  },
+  "limits": "Descriptive heuristics. Zero recorded sales may reflect stockouts; availability is not known. Weekly blocks are consecutive seven-day totals, not calendar weeks. No future sales or forecast errors determine groups."
+}

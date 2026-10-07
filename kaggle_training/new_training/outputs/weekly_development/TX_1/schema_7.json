@@ -1,0 +1,30 @@
+{
+  "features": [
+    "day_of_week",
+    "month",
+    "is_weekend",
+    "dow_sin",
+    "dow_cos",
+    "doy_sin",
+    "doy_cos",
+    "lag_1_relative",
+    "lag_2_relative",
+    "lag_7_relative",
+    "lag_14_relative",
+    "lag_28_relative",
+    "mean_7_relative",
+    "std_7_relative",
+    "mean_14_relative",
+    "std_14_relative",
+    "mean_28_relative",
+    "std_28_relative",
+    "trend_7_relative",
+    "selling_fraction_28",
+    "selling_fraction_56",
+    "positive_quantity_relative",
+    "days_since_sale"
+  ],
+  "target": "sum next 7 days / (past 28-day mean + 1) / 7",
+  "training_end": "2015-05-31",
+  "runtime": "Experiment only; no app integration"
+}

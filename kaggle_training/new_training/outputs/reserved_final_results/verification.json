@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "metric_rows_recomputed": 210,
+  "actual_quantities_checked": 35700,
+  "past_only_pattern_labels_checked": 35700,
+  "forecast_rows_replayed": 4760,
+  "routed_rows_checked": 5100,
+  "reserved_pairs": 180,
+  "eligible_pairs": 170,
+  "runtime_artifacts_unchanged": 18,
+  "protocol_unchanged": true,
+  "no_methods_tuned_or_selected_from_final_results": true
+}

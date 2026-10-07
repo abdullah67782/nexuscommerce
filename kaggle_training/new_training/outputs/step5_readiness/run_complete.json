@@ -1,0 +1,12 @@
+{
+  "step": 5,
+  "later_check_reproduced": true,
+  "improved_comparisons": 5,
+  "comparisons": 6,
+  "protocol_sha256": "c47e42e74582c24aaf67312b7bbbd16a2dd6332e8e50aab446d612c7cb86cbf6",
+  "frozen_models": 12,
+  "reserved_sales_inspected": false,
+  "reserved_final_test_executed": false,
+  "runtime_artifacts_unchanged": 18,
+  "next": "Step 6: run frozen evaluator once on reserved products"
+}

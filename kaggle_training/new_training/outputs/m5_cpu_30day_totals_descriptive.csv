@@ -1,0 +1,13 @@
+store,method,30_day_total_WAPE_percent
+CA_1,general,33.54530982853611
+CA_1,moving_average,39.366583916346954
+CA_1,personalized,35.221052751409836
+CA_1,seasonal_naive,38.98543092855889
+TX_1,general,39.984613177421345
+TX_1,moving_average,47.8903466148364
+TX_1,personalized,39.05481980002914
+TX_1,seasonal_naive,47.90249433106576
+WI_1,general,42.718370981306705
+WI_1,moving_average,48.17212034040513
+WI_1,personalized,42.52801260364955
+WI_1,seasonal_naive,47.992328898477766
