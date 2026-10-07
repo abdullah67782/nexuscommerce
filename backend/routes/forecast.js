@@ -4,6 +4,8 @@ const pool = require('../config/db');
 const authMiddleware = require('../middleware/auth');
 const { findOwnedProduct } = require('../lib/ownership');
 const { isManualTrainingEnabled, TRAINING_DISABLED } = require('../lib/training');
+const { productHistory, addDays } = require('../lib/coverage');
+const { todayIn, defaultTimezone } = require('../lib/imports');
 
 const router = express.Router();
 const finetuneRouter = express.Router();
@@ -32,6 +34,102 @@ async function callMLServer(method, endpoint, data = null, timeout = 30000) {
     throw new Error(`ML server request failed: ${err.message}`);
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Forecast v2 — 7- and 28-day TOTALS for one product (switchable for review).
+// Enabled only when FORECAST_V2_ENABLED=true; the existing daily forecast below
+// is unchanged and separate. The backend resolves the product's usable history
+// (lib/coverage.js: unknown days are never zero); the ML server's /v2/forecast
+// chooses the tier and method and loads only the approved ml/models_v2 files.
+// No daily breakdown, accuracy figure or confidence interval is returned.
+// ═══════════════════════════════════════════════════════════════════════════
+const isV2Enabled = () => process.env.FORECAST_V2_ENABLED === 'true';
+const V2_TIERS = { insufficient: 'fewer than 28 days', average: '28 to 179 days', model: '180 days or more' };
+
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+function explainV2(history, result, today) {
+  const notes = [];
+  const usable = history.usable;
+  const tier = result.history.tier;
+  const cut = history.gaps.find(g => g.end === addDays(usable.start, -1));
+  if (cut) {
+    notes.push({ type: 'gap', text: `Sales are missing for ${plural(cut.days, 'day')} (${cut.start} to ${cut.end}): `
+      + 'there are no records and no confirmed period, so those days are unknown, not zero. Only the '
+      + `${plural(usable.days, 'day')} after that gap are used.` });
+  }
+  const earlier = history.gaps.filter(g => g !== cut);
+  if (earlier.length) {
+    const unknown = earlier.reduce((n, g) => n + g.days, 0);
+    notes.push({ type: 'gaps', text: `${cut ? 'Earlier, there are' : 'There are'} ${plural(earlier.length, 'other gap')} `
+      + `(${plural(unknown, 'unknown day')}) since the first sale on ${history.first_sale}; they are not used.` });
+  }
+  if (tier === 'insufficient') {
+    notes.push({ type: 'tier', text: `Only ${plural(usable.days, 'complete consecutive day')} of sales are available. `
+      + 'At least 28 are needed for an estimate. Upload more history, or confirm the period your files cover so that days without sales count as zero.' });
+  } else if (tier === 'average') {
+    notes.push({ type: 'tier', text: `${plural(usable.days, 'complete consecutive day')} of history (180 are needed for the model-based forecast). `
+      + 'This is an average-based estimate: average daily sales over the last 28 days × the number of days.' });
+  } else if (result.pattern) {
+    const text = result.pattern.group === 'rare'
+      ? 'It sells on fewer than 20% of days, so it uses the rare-sales method (TSB), which follows how often it sells and how much per sale.'
+      : 'It has at least 180 days of history and does not sell rarely, so it uses the shared forecasting model.';
+    notes.push({ type: 'method', text });
+  }
+  if (usable.covered_days < usable.days) {
+    notes.push({ type: 'coverage', text: `${plural(usable.covered_days, 'day')} of the usable history are inside periods you confirmed as complete. `
+      + 'Elsewhere, only days with recorded sales are used: a day without records outside a confirmed period is missing, not zero.' });
+  }
+  const start = result.forecasts[0]?.start || addDays(usable.end, 1);
+  if (start < today) {
+    notes.push({ type: 'stale', text: `Your sales data ends on ${usable.end}, so forecasts start on ${start}, not today (${today}). Upload newer sales for a forecast from today.` });
+  }
+  return notes;
+}
+
+router.get('/v2/config', authMiddleware, (req, res) => {
+  res.json({ enabled: isV2Enabled(), horizons: [7, 28], tiers: V2_TIERS });
+});
+
+router.get('/v2/:productId', authMiddleware, async (req, res) => {
+  if (!isV2Enabled()) {
+    return res.status(404).json({ error: 'forecast_v2_disabled', message: 'Forecast v2 is switched off (FORECAST_V2_ENABLED).' });
+  }
+  const productId = Number(req.params.productId);
+  const product = await findOwnedProduct(productId, req.user.id);
+  if (!product) return res.status(404).json({ error: 'Product not found' });
+
+  const history = await productHistory(pool, req.user.id, productId);
+  const timezone = history.sources.find(s => s.timezone)?.timezone || defaultTimezone();
+  const today = todayIn(timezone);
+  if (!history.first_sale) {
+    return res.json({ version: 2, product, status: 'no_sales', history: null, forecasts: [], pattern: null,
+      notes: [{ type: 'tier', text: 'No sales are recorded for this product yet.' }], today, timezone });
+  }
+  let result;
+  try {
+    result = await callMLServer('POST', '/v2/forecast',
+      { start: history.usable.start, quantities: history.usable.quantities }, 60000);
+  } catch (err) {
+    return res.status(503).json({ error: 'forecast_v2_unavailable', message: err.message });
+  }
+  const { quantities, ...usable } = history.usable;
+  res.json({
+    version: 2,
+    product,
+    status: result.status,
+    models_release: result.models_release || null,
+    history: {
+      ...result.history, first_sale: history.first_sale, gaps: history.gaps, day_counts: history.counts,
+      covered_days: usable.covered_days, recorded_days: usable.recorded_days, sources: history.sources,
+    },
+    pattern: result.pattern,
+    forecasts: result.forecasts,
+    notes: explainV2(history, result, today),
+    today,
+    timezone,
+  });
+});
 
 // ─── GET /api/forecast/metrics ─────────────────────────────────────────────
 // Returns seller-specific model accuracy (no raw MAE/RMSE shown in UI)

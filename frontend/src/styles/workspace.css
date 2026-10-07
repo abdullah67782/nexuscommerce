@@ -185,3 +185,55 @@
   .overlap-list { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; color: var(--text-2); }
   .overlap-list strong { color: var(--text); font-weight: 500; }
 }
+
+/* Forecasting: v2 totals (layout only — colours come from existing tokens) */
+@layer components {
+  .totals-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+  .totals-main { border-right: 1px solid var(--border); min-width: 0; }
+  .totals-figures { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); height: 100%; }
+  .total-block { display: grid; align-content: start; gap: 8px; padding: 22px 20px; }
+  .total-block + .total-block { border-left: 1px solid var(--border); }
+  .total-label { font-size: 12.5px; font-weight: 500; color: var(--text-3); }
+  .total-value { font-size: 40px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; color: var(--forecast); }
+  .total-value em { font-style: normal; font-size: 13px; font-weight: 500; letter-spacing: 0; color: var(--text-3); margin-left: 8px; }
+  .total-dates { font-family: var(--font-mono); font-size: 12.5px; color: var(--text-2); }
+  .total-method { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-2); }
+  .totals-side { display: grid; align-content: start; gap: 10px; padding: 20px; }
+  .history-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .history-days { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1; color: var(--text); }
+  .history-days em { font-style: normal; font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--text-3); margin-left: 6px; }
+  .totals-side .side-note strong { color: var(--text); font-weight: 600; }
+  .history-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 4px 0 0; }
+  .history-facts div { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--r-md); }
+  .history-facts dt { font-size: 11.5px; color: var(--text-3); }
+  .history-facts dd { margin: 4px 0 0; font-size: 17px; font-weight: 600; color: var(--text); }
+  .totals-notes { margin: 0; padding: 14px 20px 16px 38px; display: grid; gap: 6px; border-top: 1px solid var(--border); font-size: 13px; line-height: 1.6; color: var(--text-2); }
+  .totals-notes li[data-type="gap"], .totals-notes li[data-type="stale"] { color: var(--text); }
+  @media (max-width: 1023px) {
+    .totals-grid { grid-template-columns: 1fr; }
+    .totals-main { border-right: 0; border-bottom: 1px solid var(--border); }
+  }
+  @media (max-width: 560px) {
+    .totals-figures { grid-template-columns: 1fr; }
+    .total-block + .total-block { border-left: 0; border-top: 1px solid var(--border); }
+    .total-value { font-size: 34px; }
+  }
+}
+
+/* Upload: confirmed coverage */
+@layer components {
+  .coverage-form { display: grid; gap: 12px; margin: 0; padding: 14px; border: 1px solid var(--border); border-radius: var(--r-md); }
+  .coverage-check { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; cursor: pointer; }
+  .coverage-check input { margin-top: 3px; accent-color: var(--accent); }
+  .coverage-check strong { display: block; font-size: 13.5px; font-weight: 500; color: var(--text); }
+  .coverage-check em { display: block; margin-top: 2px; font-style: normal; font-size: 12.5px; line-height: 1.55; color: var(--text-3); }
+  .coverage-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .coverage-fields .input-field { width: 100%; }
+  .coverage-scope, .coverage-statement { grid-column: 1 / -1; }
+  .coverage-statement strong { color: var(--text); font-weight: 500; }
+  .result-notes { display: grid; gap: 10px; border-top: 1px solid var(--border); font-size: 13px; line-height: 1.6; color: var(--text-2); }
+  .result-notes p { display: flex; gap: 8px; align-items: baseline; }
+  .result-notes svg { flex-shrink: 0; transform: translateY(2px); }
+  .date-help { display: grid; gap: 8px; }
+  @media (max-width: 560px) { .coverage-fields { grid-template-columns: 1fr; } }
+}

@@ -14,6 +14,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import HatchDefs from '../../components/charts/HatchDefs';
 import { C, axisProps, gridProps, cursorProps } from '../../components/charts/chartTheme';
 import api from '../../services/api';
+import TotalsV2, { useForecastV2Enabled } from '../../components/forecast/TotalsV2';
 import toast from 'react-hot-toast';
 import {
   HiChartBar, HiArrowDownTray, HiSparkles, HiArrowPath, HiArrowUpTray,
@@ -85,6 +86,8 @@ export default function ForecastingPage() {
   // Training is controlled by the server and is off unless it says otherwise.
   const [trainingEnabled, setTrainingEnabled] = useState(false);
   const pollingRef = useRef(null);
+  // Forecast v2 totals panel: shown only when the server has v2 switched on.
+  const v2Enabled = useForecastV2Enabled();
 
   // ── Bar animation state ───────────────────────────────────────────────────
   const [barsVisible, setBarsVisible] = useState(false);
@@ -275,6 +278,11 @@ export default function ForecastingPage() {
             </Button>
           </div>
         </Panel>
+
+        {/* ── Forecast v2: totals (separate from the daily chart below) ── */}
+        {v2Enabled && selectedProduct && (
+          <TotalsV2 productId={selectedProduct} productName={products.find(p => String(p.id) === selectedProduct)?.name} />
+        )}
 
         {/* ── States ───────────────────────────────────────────────────── */}
         {loading && (

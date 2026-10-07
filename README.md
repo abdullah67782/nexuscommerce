@@ -53,6 +53,15 @@ npm run dev
 # Runs on: http://localhost:3000
 ```
 
+### 5. Forecast v2 (totals; switchable, in review)
+Off by default. To review it, set `FORECAST_V2_ENABLED=true` in `backend/.env` and
+restart the backend. The forecasting page then shows a "Total demand ahead" panel
+(7- and 28-day totals) above the existing daily chart. The ML server loads only
+`ml/models_v2` (hash-checked). Check the serving environment once:
+`cd ml && venv\Scripts\python -m unittest tests.test_v2_serving tests.test_v2_parity`.
+Details: `docs/forecasting-milestone.md`. Before migrating a real database, follow
+`docs/migration-runbook.md` (backup + rehearsal).
+
 ## Test Accounts
 - **Seller**: `seller@nexus.com` / `password123`
 - **Analyst**: `analyst@nexus.com` / `password123`

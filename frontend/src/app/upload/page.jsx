@@ -37,6 +37,10 @@ const ANOMALY_TYPE_LABELS = {
   invalid_date: 'Invalid date',
   old_date: 'Date >10 years old',
   missing_product_name: 'Missing product name',
+  missing_quantity: 'Missing quantity',
+  invalid_quantity: 'Quantity is not a number',
+  fractional_quantity: 'Fractional quantity',
+  unusually_large_order: 'Unusually large order (kept)',
 };
 
 const COLS = ['product_name', 'category', 'price', 'quantity', 'sale_date', 'revenue', 'stock_level', 'reorder_threshold'];
@@ -97,6 +101,7 @@ function ResultCard({ result, onViewAnomalies, onRollback }) {
           <div key={label} style={tone ? { '--tone': tone } : undefined}><span>{label}</span><strong className="num">{value}</strong></div>
         ))}
       </div>
+      <ResultNotes result={result} />
       {(result.anomaly_count > 0 || inserted > 0) && (
         <div className="panel-foot panel-foot-start">
           {result.anomaly_count > 0 && <Button variant="secondary" size="sm" icon={<HiExclamationTriangle />} onClick={onViewAnomalies}>View {result.anomaly_count} anomalies</Button>}
@@ -104,6 +109,71 @@ function ResultCard({ result, onViewAnomalies, onRollback }) {
         </div>
       )}
     </Panel>
+  );
+}
+
+// Optional declaration that the file holds EVERY sale for a period. Inside a
+// confirmed period, days without rows count as zero sales; elsewhere they stay
+// unknown. A file with no sales rows is accepted only with this confirmation.
+function CoverageForm({ value, onChange }) {
+  const set = (patch) => onChange({ ...value, ...patch });
+  return (
+    <fieldset className="coverage-form">
+      <label className="coverage-check">
+        <input type="checkbox" checked={value.enabled} onChange={(e) => set({ enabled: e.target.checked })} />
+        <span>
+          <strong>This file contains every sale for a period</strong>
+          <em>Confirm the dates it covers so that days without sales count as zero, not as missing data.</em>
+        </span>
+      </label>
+      {value.enabled && (
+        <div className="coverage-fields">
+          <div>
+            <label htmlFor="coverage-start" className="label-text">First day</label>
+            <input id="coverage-start" type="date" className="input-field" value={value.start} max={value.end || undefined} onChange={(e) => set({ start: e.target.value })} />
+          </div>
+          <div>
+            <label htmlFor="coverage-end" className="label-text">Last day</label>
+            <input id="coverage-end" type="date" className="input-field" value={value.end} min={value.start || undefined} onChange={(e) => set({ end: e.target.value })} />
+          </div>
+          <div className="coverage-scope">
+            <p className="label-text">Products</p>
+            <Segmented label="Products covered" value={value.scope} onChange={(scope) => set({ scope })} fill
+              options={[{ value: 'all_products', label: 'All my products' }, { value: 'listed_products', label: 'Only products in this file' }]} />
+          </div>
+          <p className="side-note coverage-statement">
+            {value.start && value.end
+              ? <>By uploading, you confirm that no sale of {value.scope === 'all_products' ? 'any of your products' : 'the products in this file'} from <strong>{value.start}</strong> to <strong>{value.end}</strong> is missing from this file.</>
+              : 'Choose the first and last day the file covers.'}
+          </p>
+        </div>
+      )}
+    </fieldset>
+  );
+}
+
+function ResultNotes({ result }) {
+  if (!result) return null;
+  const { coverage, large_orders_flagged: large, date_help: dateHelp, source_timezone: tz } = result;
+  if (!coverage && !large && !dateHelp) return null;
+  return (
+    <div className="panel-body result-notes">
+      {coverage && (
+        <p><HiShieldCheck aria-hidden="true" style={{ color: 'var(--success)' }} />
+          Confirmed complete: {coverage.start} to {coverage.end} ({coverage.days} days, {coverage.products === 'all' ? 'all products' : `${coverage.products} product${coverage.products === 1 ? '' : 's'}`}){tz ? `, ${tz} business days` : ''}. Days without sales in this period count as zero.</p>
+      )}
+      {large > 0 && (
+        <p><HiExclamationTriangle aria-hidden="true" style={{ color: 'var(--warning)' }} />
+          {large} unusually large order{large === 1 ? ' was' : 's were'} kept and flagged for review — see Data anomalies.</p>
+      )}
+      {dateHelp && (
+        <div className="date-help">
+          <p><HiExclamationTriangle aria-hidden="true" style={{ color: 'var(--warning)' }} />{dateHelp.message}</p>
+          <ul className="overlap-list">{dateHelp.accepted_formats.map((f) => <li key={f}>{f}</li>)}</ul>
+          {dateHelp.examples?.length > 0 && <p className="side-note">Not read: {dateHelp.examples.map((e) => `row ${e.row} “${e.value}”`).join(', ')}</p>}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -157,6 +227,7 @@ export default function UploadPage() {
   // Set when the server refuses a file because it overlaps sales already
   // imported for the same products and dates; the seller decides what it is.
   const [overlap, setOverlap] = useState(null);
+  const [coverage, setCoverage] = useState({ enabled: false, start: '', end: '', scope: 'all_products' });
 
   // ── Data fetch ─────────────────────────────────────────────────────────────
   const fetchPageData = useCallback(async () => {
@@ -203,6 +274,13 @@ export default function UploadPage() {
     fd.append('file', file);
     fd.append('operation_id', operationId);
     if (overlapMode === 'append') fd.append('overlap_mode', 'append');
+    if (coverage.enabled) {
+      if (!coverage.start || !coverage.end) { toast.error('Choose the first and last day the file covers'); return; }
+      fd.append('coverage_start', coverage.start);
+      fd.append('coverage_end', coverage.end);
+      fd.append('coverage_scope', coverage.scope);
+      fd.append('coverage_confirmed', 'true');
+    }
     setOverlap(null);
     setUploading(true); setStep(1);
     const timers = [setTimeout(() => setStep(2), 600), setTimeout(() => setStep(3), 1400), setTimeout(() => setStep(4), 2300)];
@@ -224,7 +302,7 @@ export default function UploadPage() {
           toast(`${fmtNum(d.skipped)} lines were already imported earlier (same line id) and were skipped.`, { duration: 5000 });
         }, 1200);
       }
-      setTimeout(() => { setUploading(false); setFile(null); setStep(0); fetchPageData(); }, 1500);
+      setTimeout(() => { setUploading(false); setFile(null); setStep(0); setCoverage((c) => ({ ...c, enabled: false })); fetchPageData(); }, 1500);
     } catch (err) {
       timers.forEach(clearTimeout);
       const body = err.response?.data;
@@ -355,6 +433,7 @@ Desk Mat,Accessories,19.99,100,2023-10-02,1999.00,300,50`;
                       </div>
                       <button aria-label="Remove selected file" onClick={() => setFile(null)} className="icon-button"><HiXMark /></button>
                     </div>
+                    <CoverageForm value={coverage} onChange={setCoverage} />
                     <Button block icon={<HiSparkles />} onClick={() => handleUpload()}>Process &amp; upload file</Button>
                   </div>
                 )}
@@ -365,7 +444,7 @@ Desk Mat,Accessories,19.99,100,2023-10-02,1999.00,300,50`;
               <div className="intake-side">
                 <p className="side-label">Required columns</p>
                 <div className="chip-row">{COLS.map((c) => <code key={c} className="code-chip">{c}</code>)}</div>
-                <p className="side-note">Each row is checked for missing names, invalid or future dates, negative values and duplicate transactions before anything is stored.</p>
+                <p className="side-note">Each row is checked before anything is stored. Rows with a missing, fractional or negative quantity, or an ambiguous or future date, are set aside — nothing is filled in by guessing. Unusually large orders are kept and flagged.</p>
                 <button
                   onClick={() => { setGuideOpen(true); requestAnimationFrame(() => guideRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })); }}
                   className="link-arrow" style={{ justifySelf: 'start' }} aria-controls="format-guide"
@@ -494,8 +573,8 @@ Desk Mat,Accessories,19.99,100,2023-10-02,1999.00,300,50`;
                     {[
                       ['product_name', 'String', 'Wireless Mouse', '(empty)'],
                       ['price', 'Float > 0', '29.99', '$29.99 or -5'],
-                      ['quantity', 'Integer > 0', '50', '-10 or zero'],
-                      ['sale_date', 'YYYY-MM-DD', '2023-10-01', '10/01/23 or future'],
+                      ['quantity', 'Whole number > 0', '50', 'empty, 1.5, -10 or zero'],
+                      ['sale_date', 'YYYY-MM-DD', '2023-10-01', '10/01/23 (ambiguous) or future'],
                       ['revenue', 'Float > 0', '1499.50', '0 or negative'],
                       ['line_id (optional)', 'Text, unique per sale line', 'ORD-1001-2', 'same id reused for a different sale'],
                     ].map(([c, t, g, b]) => (
