@@ -24,6 +24,7 @@ npm-debug.log*
 
 # ── User-uploaded files (seller data stays local) ───────────────────────
 backend/uploads/
+backend/backups/
 
 # ── Large raw datasets (download separately; see README) ────────────────
 data/Pakistan Largest Ecommerce Dataset.csv
