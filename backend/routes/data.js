@@ -386,15 +386,17 @@ async function storeDataV2(cleanedRows, sellerId, uploadId) {
 
 // ─── Freshness Upsert ────────────────────────────────────────────────────────
 
-async function updateFreshness(sellerId, insertedCount) {
+// `db` may be a pool or a checked-out client; callers holding a client must
+// pass it, otherwise a saturated pool deadlocks waiting for a second connection.
+async function updateFreshness(sellerId, insertedCount, db = pool) {
   // Find the latest sale date for this seller's products
-  const lastSaleRes = await pool.query(
+  const lastSaleRes = await db.query(
     `SELECT MAX(sale_date) AS last_sale_date FROM attributed_sales WHERE seller_id = $1`,
     [sellerId]
   );
 
   // Total records for this seller
-  const totalRes = await pool.query(
+  const totalRes = await db.query(
     `SELECT COUNT(*) AS total FROM attributed_sales WHERE seller_id = $1`,
     [sellerId]
   );
@@ -403,7 +405,7 @@ async function updateFreshness(sellerId, insertedCount) {
   const totalRecords   = parseInt(totalRes.rows[0]?.total || 0);
   const freshnessScore = calculateFreshnessScore(new Date());
 
-  await pool.query(
+  await db.query(
     `INSERT INTO data_freshness (seller_id, last_upload_at, last_sale_date, total_records, freshness_score)
      VALUES ($1, NOW(), $2, $3, $4)
      ON CONFLICT (seller_id) DO UPDATE SET
@@ -649,8 +651,8 @@ router.post('/data/rollback/:uploadId', authMiddleware, async (req, res) => {
 
       await client.query('COMMIT');
 
-      // Recalculate freshness
-      await updateFreshness(sellerId, 0);
+      // Recalculate freshness on the connection we already hold.
+      await updateFreshness(sellerId, 0, client);
 
       res.json({
         status:            'success',

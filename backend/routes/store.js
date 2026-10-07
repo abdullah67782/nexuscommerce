@@ -115,8 +115,10 @@ router.post('/connect', authMiddleware, async (req, res) => {
       [userId, sales.length, key, payloadHash],
     );
     if (!claim.rows.length) {
+      // Reuse the connection we already hold: asking the pool for a second one
+      // here deadlocks when the pool is saturated (e.g. a one-connection pool).
       await client.query('ROLLBACK');
-      const replay = await replayOf(pool, userId, key, payloadHash);
+      const replay = await replayOf(client, userId, key, payloadHash);
       if (!replay) throw new Error('Import identity conflict could not be resolved.');
       return res.status(replay.status).json(replay.body);
     }
