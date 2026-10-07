@@ -7,6 +7,7 @@ const {
   ImportConflict, sha256, stableStringify, lockSeller, businessDate, todayIn, isValidTimezone,
   ensureSource, claimImport, replayOf, insertSales, addVersion, recomputeFreshness, productResolver,
 } = require('../lib/imports');
+const { CoverageError, parseCoverage, checkCoverage, recordCoverage } = require('../lib/coverage');
 
 const router = express.Router();
 const ML_SERVER = process.env.ML_SERVER_URL || 'http://localhost:8000';
@@ -33,8 +34,12 @@ async function callML(method, endpoint, data = null) {
 //   connection?: { provider, external_store_id, display_name?, timezone? },
 //   overlap_mode?: 'reject' | 'append',
 //   products: [{ name, category?, price? }],
-//   sales: [{ product_name, quantity, sale_date, revenue?, line_id? }]
+//   sales: [{ product_name, quantity, sale_date, revenue?, line_id? }],
+//   coverage?: { start, end, scope: 'all_products' | 'listed_products', confirmed: true }
 // }
+// coverage confirms that this delivery contains ALL sales of the connection for
+// those business days (all products, or the products named in this payload).
+// With confirmed coverage, an empty sales array is a valid "nothing sold" export.
 // Identity, line handling and overlap rules: lib/imports.js. Without import_id
 // the identity is the payload fingerprint, so an identical retry is replayed.
 // A rolled-back import keeps its identity: re-importing needs a new import_id.
@@ -50,10 +55,14 @@ const optionalString = (v, max) => v === undefined || (typeof v === 'string' && 
 
 router.post('/connect', authMiddleware, async (req, res) => {
   const userId = req.user.id;
-  const { products = [], sales = [], import_id: importId, connection, overlap_mode: overlapMode = 'reject' } = req.body || {};
+  const { products = [], sales = [], import_id: importId, connection, overlap_mode: overlapMode = 'reject',
+    coverage: coverageInput } = req.body || {};
 
-  if (!Array.isArray(sales) || !sales.length) {
-    return res.status(400).json({ error: 'sales array is required and must not be empty.' });
+  if (!Array.isArray(sales) || (!sales.length && !coverageInput)) {
+    return res.status(400).json({ error: 'sales array is required and must not be empty (unless a confirmed coverage period shows nothing was sold).' });
+  }
+  if (coverageInput !== undefined && (typeof coverageInput !== 'object' || coverageInput === null || Array.isArray(coverageInput))) {
+    return res.status(400).json({ error: 'coverage must be an object { start, end, scope, confirmed }.' });
   }
   if (!Array.isArray(products)) {
     return res.status(400).json({ error: 'products must be an array.' });
@@ -74,6 +83,7 @@ router.post('/connect', authMiddleware, async (req, res) => {
   // Fingerprint of what was sent. Payloads without a connection hash exactly as
   // before migration 002, so retries of earlier imports are still recognised.
   const fingerprintInput = connection ? { products, sales, connection } : { products, sales };
+  if (coverageInput) fingerprintInput.coverage = coverageInput;
   const contentSha = sha256(stableStringify(fingerprintInput));
   const key = importId ? `client:${importId}` : `payload:${contentSha}`;
 
@@ -89,6 +99,7 @@ router.post('/connect', authMiddleware, async (req, res) => {
       timezone: connection?.timezone || null,
     });
 
+    const coverage = parseCoverage(coverageInput ?? null, source.timezone);
     const importRecordId = await claimImport(client, {
       sellerId: userId, sourceId: source.id, source: 'store_connect', key, contentSha256: contentSha,
       fileFormat: 'api', total: sales.length, overlapMode,
@@ -102,9 +113,10 @@ router.post('/connect', authMiddleware, async (req, res) => {
     }
 
     const resolver = productResolver(client, userId, importRecordId);
+    const named = new Set();
     for (const p of products) {
       if (p && typeof p.name === 'string' && p.name.trim()) {
-        await resolver.resolve(p.name.trim(), { category: p.category || null, price: p.price ?? null });
+        named.add(await resolver.resolve(p.name.trim(), { category: p.category || null, price: p.price ?? null }));
       }
     }
 
@@ -124,10 +136,27 @@ router.post('/connect', authMiddleware, async (req, res) => {
         continue;
       }
       const productId = await resolver.resolve(name);
+      named.add(productId);
       rows.push({ productId, saleDate, quantity, revenue, lineId, rowNumber: i + 1 });
     }
 
+    const listed = [...named];
+    if (coverage) {
+      if (rejected) {
+        throw new CoverageError(400, { error: 'coverage_with_rejected_rows',
+          message: `${rejected} sale(s) were invalid, so this delivery cannot be confirmed as complete. Nothing was imported.` });
+      }
+      if (coverage.scope === 'listed_products' && !listed.length) {
+        throw new CoverageError(400, { error: 'invalid_coverage',
+          message: 'listed_products coverage needs at least one product in products or sales.' });
+      }
+      await checkCoverage(client, { sourceId: source.id, importId: importRecordId, coverage, rows, productIds: listed });
+    }
     const result = await insertSales(client, { importId: importRecordId, sourceId: source.id, rows, overlapMode });
+    const coverageSummary = coverage
+      ? await recordCoverage(client, { sellerId: userId, sourceId: source.id, importId: importRecordId, coverage,
+          productIds: listed, evidence: 'connector_full_export' })
+      : null;
     const versionNumber = await addVersion(client, {
       sellerId: userId, importId: importRecordId, added: result.inserted, skipped: result.alreadyImported, rejected,
     });
@@ -145,17 +174,18 @@ router.post('/connect', authMiddleware, async (req, res) => {
       identical_rows_kept: result.identicalRowsKept,
       records_rejected: rejected,
       products_created: resolver.created(),
+      coverage: coverageSummary,
       fine_tuning: FINE_TUNING_NOT_STARTED,
     };
     await client.query(
       'UPDATE data_uploads SET clean_records = $2, quality_score = $3, result_summary = $4 WHERE id = $1',
-      [importRecordId, valid, Number(((valid / sales.length) * 100).toFixed(2)), summary]);
+      [importRecordId, valid, sales.length ? Number(((valid / sales.length) * 100).toFixed(2)) : 100, summary]);
     await recomputeFreshness(client, userId);
     await client.query('COMMIT');
     res.json({ ...summary, replayed: false });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
-    if (err instanceof ImportConflict) return res.status(err.status).json(err.body);
+    if (err instanceof ImportConflict || err instanceof CoverageError) return res.status(err.status).json(err.body);
     console.error('Store connect error:', err.message);
     res.status(500).json({ error: 'Error importing store data' });
   } finally {

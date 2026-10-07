@@ -20,7 +20,8 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
 const TABLES = [
   'anomalies_detected', 'upload_versions', 'data_freshness', 'finetune_jobs', 'forecasts',
-  'model_metrics', 'inventory', 'sales', 'products', 'data_uploads', 'data_sources', 'users',
+  'model_metrics', 'inventory', 'data_coverage_products', 'data_coverage', 'sales', 'products',
+  'data_uploads', 'data_sources', 'users',
 ];
 
 // ── Fake ML server ──────────────────────────────────────────────────────────
@@ -55,6 +56,22 @@ function startMlStub() {
           status: 'success',
           accuracy: null,
           residual_std: 2,
+        };
+      } else if (req.url === '/v2/forecast') {
+        // Minimal stand-in for ml/v2 (tested in Python): tier by length, 28-day mean.
+        const q = body.quantities;
+        const tier = q.length < 28 ? 'insufficient' : q.length < 180 ? 'average' : 'model';
+        const mean = q.length ? q.slice(-28).reduce((a, b) => a + b, 0) / Math.min(28, q.length) : 0;
+        const last = new Date(Date.parse(`${body.start}T00:00:00Z`) + (q.length - 1) * 86400000);
+        const day = (n) => new Date(last.getTime() + n * 86400000).toISOString().slice(0, 10);
+        payload = {
+          status: tier === 'insufficient' ? 'insufficient_history' : 'ok',
+          history: { usable_days: q.length, first_day: body.start, last_day: day(0), tier },
+          pattern: tier === 'model' ? { group: 'regular', selling_day_percent: 100, window_days: 180 } : null,
+          forecasts: tier === 'insufficient' ? [] : [7, 28].map(h => ({
+            horizon_days: h, start: day(1), end: day(h), total_units: mean * h,
+            method: tier === 'model' ? 'shared_model' : 'average_28', method_label: 'stub' })),
+          models_release: tier === 'model' ? 'stub-release' : null,
         };
       } else if (req.url === '/finetune') {
         payload = { status: 'started', seller_id: body.seller_id };

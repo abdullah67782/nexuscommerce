@@ -7,9 +7,11 @@ const path = require('path');
 const pool = require('../config/db');
 const authMiddleware = require('../middleware/auth');
 const {
-  ImportConflict, sha256, lockSeller, businessDate, todayIn, ensureSource, claimImport,
+  ImportConflict, sha256, stableStringify, lockSeller, businessDate, todayIn, ensureSource, claimImport,
   replayOf, insertSales, addVersion, recomputeFreshness, productResolver, freshnessScore,
+  defaultTimezone, isValidTimezone,
 } = require('../lib/imports');
+const { CoverageError, parseCoverage, checkCoverage, recordCoverage, revokeForImport } = require('../lib/coverage');
 
 const router = express.Router();
 
@@ -102,77 +104,46 @@ function normalizeKeys(rows) {
   });
 }
 
-function median(values) {
-  if (!values.length) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-}
-
-// Median imputation (SRS FR-2). Every imputed value is reported, not silent.
-function fillMissingWithMedian(rows, numericFields) {
-  const imputed = [];
-  for (const field of numericFields) {
-    const values = rows.map((r) => parseFloat(r[field])).filter((v) => !isNaN(v));
-    const med = median(values);
-    for (const row of rows) {
-      const val = row[field];
-      if (val === null || val === undefined || val === '' || isNaN(parseFloat(val))) {
-        imputed.push({ row: row[ROW], field, original: val, value: med });
-        row[field] = med;
-      } else {
-        row[field] = parseFloat(val);
-      }
-    }
-  }
-  return imputed;
-}
-
-// IQR outlier removal (SRS FR-2). Removed rows are reported with their row number.
-function detectOutliersIQR(rows, field) {
-  const values = rows.map((r) => parseFloat(r[field])).filter((v) => !isNaN(v));
-  if (values.length < 4) return { cleaned: rows, outliers: [] };
-  const sorted = [...values].sort((a, b) => a - b);
-  const q1 = sorted[Math.floor(sorted.length * 0.25)];
-  const q3 = sorted[Math.floor(sorted.length * 0.75)];
-  const iqr = q3 - q1;
-  const lower = q1 - 1.5 * iqr;
-  const upper = q3 + 1.5 * iqr;
-  const outliers = [];
-  const cleaned = rows.filter((row) => {
-    const val = parseFloat(row[field]);
-    if (isNaN(val)) return true;
-    if (val < lower || val > upper) { outliers.push({ row: row[ROW], field, value: val, row_data: row }); return false; }
-    return true;
-  });
-  return { cleaned, outliers };
-}
-
-// ─── Data Cleaning Pipeline ──────────────────────────────────────────────────
-
+// ─── Cleaning rules (docs/data-cleaning-requirements.md) ─────────────────────
+// Nothing is invented and no genuine sale is removed:
+//   - a missing, non-numeric, zero, negative or fractional quantity rejects the row
+//     (whole-unit products only), with a reported anomaly;
+//   - a missing revenue stays empty; a missing price or stock level leaves the
+//     product's stored value unchanged (no median imputation);
+//   - unusually large orders are KEPT and flagged for review (flagLargeOrders).
 function cleanData(rawRows) {
-  let rows = normalizeKeys(rawRows);
-
-  const numericFields = ['price', 'current_price', 'quantity', 'revenue', 'stock_level', 'reorder_threshold'];
-  const presentNumeric = numericFields.filter((f) => rows.some((r) => r[f] !== undefined));
-  const imputed = fillMissingWithMedian(rows, presentNumeric);
-
-  const outliers = [];
-  for (const field of ['quantity', 'revenue']) {
-    if (rows.some((r) => r[field] !== undefined)) {
-      const result = detectOutliersIQR(rows, field);
-      rows = result.cleaned;
-      outliers.push(...result.outliers);
-    }
-  }
-
-  const report = {
-    total_records: rawRows.length,
-    clean_records: rows.length,
-    quality_score: rawRows.length > 0 ? parseFloat(((rows.length / rawRows.length) * 100).toFixed(2)) : 0,
-  };
-  return { cleanedRows: rows, report, imputed, outliers };
+  return { cleanedRows: normalizeKeys(rawRows), report: { total_records: rawRows.length } };
 }
+
+const LARGE_ORDER_MIN_ROWS = 8;   // per product in this import
+const quantile = (sorted, q) => sorted[Math.floor((sorted.length - 1) * q)];
+
+// Flags orders far above the product's usual order size in this import:
+// quantity > Q3 + 3 x max(IQR, 1). Flagged rows are still imported.
+function flagLargeOrders(rows) {
+  const byProduct = new Map();
+  for (const r of rows) {
+    if (!byProduct.has(r.productId)) byProduct.set(r.productId, []);
+    byProduct.get(r.productId).push(r);
+  }
+  const flagged = [];
+  for (const group of byProduct.values()) {
+    if (group.length < LARGE_ORDER_MIN_ROWS) continue;
+    const sorted = group.map(r => r.quantity).sort((a, b) => a - b);
+    const q1 = quantile(sorted, 0.25);
+    const q3 = quantile(sorted, 0.75);
+    const threshold = q3 + 3 * Math.max(q3 - q1, 1);
+    for (const r of group) if (r.quantity > threshold) flagged.push({ ...r, threshold });
+  }
+  return flagged;
+}
+
+const ACCEPTED_DATE_FORMATS = [
+  'YYYY-MM-DD (e.g. 2026-03-14)',
+  'YYYY-MM-DD HH:MM[:SS] — local time of the store',
+  'ISO timestamp with Z or ±HH:MM (e.g. 2026-03-14T18:30:00+05:00)',
+  'Excel date cells',
+];
 
 // ─── Per-Row Validation ──────────────────────────────────────────────────────
 // Sale dates are business-local days in the source timezone (lib/imports.js).
@@ -181,7 +152,9 @@ function validateRow(row, timezone) {
   const anomalies = [];
   const rowNumber   = row[ROW];
   const productName = row.product_name || row.name || null;
-  const quantity    = parseFloat(row.quantity);
+  const rawQuantity = row.quantity;
+  const quantityMissing = rawQuantity === undefined || rawQuantity === null || String(rawQuantity).trim() === '';
+  const quantity    = quantityMissing ? NaN : Number(String(rawQuantity).trim());
   const revenue     = parseFloat(row.revenue);
   const price       = parseFloat(row.current_price || row.price);
   const rawDate     = row.sale_date ?? row.date ?? null;
@@ -196,8 +169,11 @@ function validateRow(row, timezone) {
     push('product_name', 'missing_product_name', row.product_name || '', 'critical');
     return { valid: false, anomalies };
   }
-  if (isNaN(quantity) || quantity <= 0) {
-    push('quantity', quantity < 0 ? 'negative_value' : 'zero_quantity', row.quantity, 'critical');
+  if (quantityMissing || !Number.isFinite(quantity) || quantity <= 0) {
+    const type = quantityMissing ? 'missing_quantity'
+      : !Number.isFinite(quantity) ? 'invalid_quantity'
+      : quantity < 0 ? 'negative_value' : 'zero_quantity';
+    push('quantity', type, rawQuantity, 'critical');
     return { valid: false, anomalies };
   }
   if (!Number.isInteger(quantity)) {
@@ -244,11 +220,16 @@ function validateRow(row, timezone) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─── POST /api/data/upload ───────────────────────────────────────────────────
-// Multipart: file, optional operation_id (identity of THIS upload action) and
-// optional overlap_mode ('reject' default | 'append').
-// No operation_id: identity is the file's content fingerprint, so re-sending the
-// same file replays the original result. A new operation_id is a deliberate new
-// import; overlaps with earlier rows of the same source are then refused unless
+// Multipart: file, optional operation_id (identity of THIS upload action),
+// optional overlap_mode ('reject' default | 'append') and optional confirmed
+// coverage: coverage_start, coverage_end (YYYY-MM-DD, inclusive, business days of
+// the file source), coverage_scope ('all_products' | 'listed_products') and
+// coverage_confirmed = 'true'. With coverage, a file with no sales rows is a valid
+// "nothing was sold" export (scope all_products).
+// No operation_id: identity is the fingerprint of the file (and of the coverage
+// declaration, when one is sent), so re-sending the same upload replays the
+// original result. A new operation_id is a deliberate new import; overlaps with
+// earlier rows or confirmed periods of the same source are then refused unless
 // overlap_mode = 'append'.
 router.post('/data/upload', authMiddleware, upload.single('file'), async (req, res) => {
   const sellerId = req.user.id;
@@ -268,6 +249,11 @@ router.post('/data/upload', authMiddleware, upload.single('file'), async (req, r
     cleanup();
     return res.status(400).json({ error: 'overlap_mode must be "reject" or "append".' });
   }
+  const coverageInput = {
+    start: req.body?.coverage_start, end: req.body?.coverage_end,
+    scope: req.body?.coverage_scope, confirmed: req.body?.coverage_confirmed,
+  };
+  const coverageSent = Object.values(coverageInput).some(v => v !== undefined && v !== '');
 
   let rawData;
   let contentSha;
@@ -278,12 +264,16 @@ router.post('/data/upload', authMiddleware, upload.single('file'), async (req, r
     cleanup();
     return res.status(400).json({ error: 'File could not be parsed', details: err.message });
   }
-  if (!rawData || rawData.length === 0) {
+  if (!Array.isArray(rawData) || (rawData.length === 0 && !coverageSent)) {
     cleanup();
-    return res.status(400).json({ error: 'File is empty or could not be parsed' });
+    return res.status(400).json({
+      error: 'File is empty or could not be parsed',
+      message: 'A file without sales rows is accepted only with a confirmed period showing that nothing was sold.',
+    });
   }
+  if (coverageSent) contentSha = sha256(`${contentSha}|coverage:${stableStringify(coverageInput)}`);
 
-  const { cleanedRows, report, imputed, outliers } = cleanData(rawData);
+  const { cleanedRows, report } = cleanData(rawData);
   const ext = path.extname(req.file.originalname).toLowerCase().replace('.', '');
   const key = operationId ? `file-op:${operationId}` : `file-content:${contentSha}`;
 
@@ -294,6 +284,7 @@ router.post('/data/upload', authMiddleware, upload.single('file'), async (req, r
     const source = await ensureSource(client, sellerId, {
       kind: 'file', provider: 'file_upload', externalId: 'default', displayName: 'File uploads',
     });
+    const coverage = parseCoverage(coverageSent ? coverageInput : null, source.timezone);
 
     const uploadId = await claimImport(client, {
       sellerId, sourceId: source.id, source: 'file_upload', key, contentSha256: contentSha,
@@ -306,27 +297,36 @@ router.post('/data/upload', authMiddleware, upload.single('file'), async (req, r
     }
 
     const products = productResolver(client, sellerId, uploadId);
+    const productIds = new Set();
     const anomalies = [];
     const rows = [];
+    const invalidDates = [];
     let rejected = 0;
     let withoutDate = 0;
 
     for (const row of cleanedRows) {
       const v = validateRow(row, source.timezone);
       anomalies.push(...v.anomalies);
-      if (!v.valid) { rejected++; continue; }
+      if (!v.valid) {
+        rejected++;
+        const bad = v.anomalies.find(a => a.anomaly_type === 'invalid_date');
+        if (bad) invalidDates.push({ row: bad.row_number, value: bad.original_value });
+        continue;
+      }
 
       const productId = await products.resolve(v.productName, {
         category: v.category, price: v.price, updateDetails: true,
       });
+      productIds.add(productId);
       if (v.saleDate) {
-        rows.push({ productId, saleDate: v.saleDate, quantity: v.quantity, revenue: v.revenue,
-          lineId: v.lineId, rowNumber: v.rowNumber });
+        rows.push({ productId, productName: v.productName, saleDate: v.saleDate, quantity: v.quantity,
+          revenue: v.revenue, lineId: v.lineId, rowNumber: v.rowNumber });
       } else {
         withoutDate++;
       }
 
       // Inventory snapshot: the last row for a product wins (unchanged behaviour).
+      // A missing stock level leaves the stored one unchanged.
       const stockLevel = parseFloat(row.stock_level);
       if (!isNaN(stockLevel)) {
         const reorder = parseFloat(row.reorder_threshold) || 10;
@@ -343,16 +343,39 @@ router.post('/data/upload', authMiddleware, upload.single('file'), async (req, r
       }
     }
 
-    for (const o of outliers) {
-      anomalies.push({ product_name: o.row_data.product_name || o.row_data.name || '(empty)', field: o.field,
-        anomaly_type: 'statistical_outlier', original_value: String(o.value), row_number: o.row, severity: 'warning' });
+    // Large orders are kept; they are flagged for the seller to review.
+    const largeOrders = flagLargeOrders(rows);
+    for (const o of largeOrders) {
+      anomalies.push({ product_name: o.productName, field: 'quantity', anomaly_type: 'unusually_large_order',
+        original_value: `${o.quantity} (usual orders in this file up to ${o.threshold})`, row_number: o.rowNumber,
+        severity: 'warning' });
     }
-    for (const m of imputed) {
-      anomalies.push({ product_name: '(row)', field: m.field, anomaly_type: 'imputed_value',
-        original_value: `${m.original ?? ''} -> ${m.value}`, row_number: m.row, severity: 'info' });
+
+    const listed = [...productIds];
+    if (coverage) {
+      // A period confirmed as complete must not silently lose rows.
+      if (rejected) {
+        throw new CoverageError(400, {
+          error: 'coverage_with_rejected_rows',
+          message: `${rejected} row(s) could not be imported, so this file cannot be confirmed as complete for `
+            + `${coverage.start} to ${coverage.end}. Fix those rows, or upload without confirming the period. Nothing was imported.`,
+          rejected_rows: anomalies.filter(a => a.severity === 'critical').slice(0, 20)
+            .map(a => ({ row: a.row_number, problem: a.anomaly_type, value: a.original_value })),
+          date_help: invalidDates.length ? { accepted_formats: ACCEPTED_DATE_FORMATS } : undefined,
+        });
+      }
+      if (coverage.scope === 'listed_products' && !listed.length) {
+        throw new CoverageError(400, { error: 'invalid_coverage',
+          message: 'A period for the listed products needs at least one product in the file. Use all products for an export with no sales.' });
+      }
+      await checkCoverage(client, { sourceId: source.id, importId: uploadId, coverage, rows, productIds: listed });
     }
 
     const result = await insertSales(client, { importId: uploadId, sourceId: source.id, rows, overlapMode });
+    const coverageSummary = coverage
+      ? await recordCoverage(client, { sellerId, sourceId: source.id, importId: uploadId, coverage,
+          productIds: listed, evidence: 'seller_declaration' })
+      : null;
 
     for (const a of anomalies) {
       await client.query(
@@ -365,37 +388,72 @@ router.post('/data/upload', authMiddleware, upload.single('file'), async (req, r
     const versionNumber = await addVersion(client, {
       sellerId, importId: uploadId, added: result.inserted, skipped: result.alreadyImported, rejected,
     });
+    const total = report.total_records;
+    const qualityScore = total > 0 ? Number((((total - rejected) / total) * 100).toFixed(2)) : 100;
     const summary = {
       message:            'File uploaded and processed successfully',
-      total_rows:         report.total_records,
+      total_rows:         total,
       inserted:           result.inserted,
       skipped:            result.alreadyImported,
       rejected,
       identical_rows_kept: result.identicalRowsKept,
       rows_without_sale_date: withoutDate,
-      outliers_removed:   outliers.length,
-      values_imputed:     imputed.length,
-      quality_score:      report.quality_score,
+      large_orders_flagged: largeOrders.length,
+      quality_score:      qualityScore,
       version_number:     versionNumber,
       upload_id:          uploadId,
       anomaly_count:      anomalies.length,
       source_id:          source.id,
+      source_timezone:    source.timezone,
+      coverage:           coverageSummary,
+      date_help: invalidDates.length ? {
+        message: `${invalidDates.length} row(s) have dates that could not be read safely. Dates such as 03/04/2026 are `
+          + 'ambiguous (3 April or March 4?), so they are not guessed. Write dates as YYYY-MM-DD, for example 2026-04-03.',
+        accepted_formats: ACCEPTED_DATE_FORMATS,
+        examples: invalidDates.slice(0, 5),
+      } : null,
     };
     await client.query(
       'UPDATE data_uploads SET clean_records = $2, quality_score = $3, result_summary = $4 WHERE id = $1',
-      [uploadId, report.clean_records, report.quality_score, summary]);
+      [uploadId, total - rejected, qualityScore, summary]);
     await recomputeFreshness(client, sellerId);
     await client.query('COMMIT');
     res.status(200).json({ ...summary, replayed: false });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
-    if (err instanceof ImportConflict) return res.status(err.status).json(err.body);
+    if (err instanceof ImportConflict || err instanceof CoverageError) return res.status(err.status).json(err.body);
     console.error('Upload error:', err.message);
     res.status(500).json({ error: 'Error processing uploaded file', details: err.message });
   } finally {
     client.release();
     cleanup();
   }
+});
+
+// ─── GET /api/data/sources ───────────────────────────────────────────────────
+// The seller's import sources with their business timezone.
+router.get('/data/sources', authMiddleware, async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT id, kind, provider, external_id, display_name, timezone, created_at
+     FROM data_sources WHERE seller_id = $1 ORDER BY id`, [req.user.id]);
+  res.json({ sources: rows, default_timezone: defaultTimezone() });
+});
+
+// ─── PATCH /api/data/sources/:id ─────────────────────────────────────────────
+// Change a source's timezone. Applies to FUTURE imports only: stored sale dates
+// are business days and are never reinterpreted.
+router.patch('/data/sources/:id', authMiddleware, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const tz = req.body?.timezone;
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid source id' });
+  if (typeof tz !== 'string' || !isValidTimezone(tz)) {
+    return res.status(400).json({ error: 'timezone must be a valid IANA timezone, e.g. Asia/Karachi' });
+  }
+  const { rows } = await pool.query(
+    'UPDATE data_sources SET timezone = $1 WHERE id = $2 AND seller_id = $3 RETURNING id, kind, display_name, timezone',
+    [tz, id, req.user.id]);
+  if (!rows.length) return res.status(404).json({ error: 'Source not found' });
+  res.json({ ...rows[0], note: 'Applies to future imports; stored dates are unchanged.' });
 });
 
 // ─── GET /api/data/quality ───────────────────────────────────────────────────
@@ -547,10 +605,11 @@ router.post('/data/rollback/:uploadId', authMiddleware, async (req, res) => {
       `UPDATE upload_versions SET is_rolled_back = true, rollback_at = NOW()
        WHERE upload_id = $1 AND seller_id = $2`, [uploadId, sellerId]);
     await client.query(`UPDATE data_uploads SET status = 'rolled_back' WHERE id = $1`, [uploadId]);
+    const revoked = await revokeForImport(client, { sellerId, importId: uploadId }); // its coverage no longer holds
 
     await recomputeFreshness(client, sellerId);
     await client.query('COMMIT');
-    res.json({ status: 'success', rolled_back_rows: delSales.rows.length });
+    res.json({ status: 'success', rolled_back_rows: delSales.rows.length, coverage_revoked: revoked });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
     console.error('Rollback error:', err.message);

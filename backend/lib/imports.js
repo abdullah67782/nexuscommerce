@@ -82,9 +82,13 @@ function businessDate(value, tz) {
 const todayIn = (tz) => dayInZone(new Date(), tz);
 
 // ── Sources ──────────────────────────────────────────────────────────────────
+// New sources default to Asia/Karachi (architect decision, 2026-10); each source
+// keeps its own timezone and can be changed for future imports. Existing sources
+// (backfilled as UTC by migration 002) and stored dates are never reinterpreted.
+const FALLBACK_TIMEZONE = 'Asia/Karachi';
 const defaultTimezone = () => {
-  const tz = process.env.DEFAULT_BUSINESS_TIMEZONE || 'UTC';
-  return isValidTimezone(tz) ? tz : 'UTC';
+  const tz = process.env.DEFAULT_BUSINESS_TIMEZONE || FALLBACK_TIMEZONE;
+  return isValidTimezone(tz) ? tz : FALLBACK_TIMEZONE;
 };
 
 async function ensureSource(client, sellerId, { kind, provider, externalId, displayName = null, timezone = null }) {
@@ -197,23 +201,31 @@ async function insertSales(client, { importId, sourceId, rows, overlapMode }) {
   const noLine = rows.filter(r => !r.lineId);
   if (noLine.length && overlapMode !== 'append') {
     const pairs = [...new Map(noLine.map(r => [`${r.productId}|${r.saleDate}`, r])).values()];
-    const { rows: overlaps } = await client.query(
-      `SELECT p.name AS product, to_char(s.sale_date, 'YYYY-MM-DD') AS sale_date,
-              array_agg(DISTINCT s.upload_id) AS existing_import_ids
-       FROM sales s
-       JOIN products p ON p.id = s.product_id
-       JOIN unnest($2::int[], $3::date[]) AS want(product_id, sale_date)
-         ON want.product_id = s.product_id AND want.sale_date = s.sale_date
-       WHERE s.source_id = $1 AND s.upload_id IS DISTINCT FROM $4
-       GROUP BY p.name, s.sale_date
-       ORDER BY s.sale_date, p.name`,
+    // A day inside confirmed coverage of this source (migration 003) is already
+    // complete, so new rows there are treated like rows on an existing day.
+    const { rows: checked } = await client.query(
+      `SELECT p.name AS product, to_char(want.sale_date, 'YYYY-MM-DD') AS sale_date,
+              COALESCE((SELECT array_agg(DISTINCT s.upload_id) FROM sales s
+                        WHERE s.source_id = $1 AND s.product_id = want.product_id
+                          AND s.sale_date = want.sale_date AND s.upload_id IS DISTINCT FROM $4), '{}') AS existing_import_ids,
+              EXISTS (SELECT 1 FROM data_coverage c
+                      WHERE c.source_id = $1 AND c.status = 'confirmed'
+                        AND want.sale_date BETWEEN c.declared_start AND c.declared_end
+                        AND (c.scope = 'all_products' OR EXISTS (
+                             SELECT 1 FROM data_coverage_products cp
+                             WHERE cp.coverage_id = c.id AND cp.product_id = want.product_id))) AS inside_confirmed_coverage
+       FROM unnest($2::int[], $3::date[]) AS want(product_id, sale_date)
+       JOIN products p ON p.id = want.product_id
+       ORDER BY want.sale_date, p.name`,
       [sourceId, pairs.map(r => r.productId), pairs.map(r => r.saleDate), importId],
     );
+    const overlaps = checked.filter(o => o.existing_import_ids.length || o.inside_confirmed_coverage);
     if (overlaps.length) {
       throw new ImportConflict({
         error: 'overlap_requires_choice',
-        message: 'Some rows fall on product/dates already imported from this source and have no line ids, '
-          + 'so they cannot be matched to earlier rows. Nothing was imported. Re-send with '
+        message: 'Some rows fall on product/dates already imported from this source, or inside a period '
+          + 'confirmed as complete, and have no line ids, so they cannot be matched to earlier rows. '
+          + 'Nothing was imported. Re-send with '
           + 'overlap_mode = "append" if these are additional sales.',
         overlaps: overlaps.slice(0, MAX_REPORTED),
         overlap_count: overlaps.length,
