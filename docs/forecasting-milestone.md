@@ -184,6 +184,32 @@ These figures are WAPE (lower is better).
 - **Confirmed by the user (2026-10-08):** the serving and parity checks pass in the
   Windows venv.
 
+## Local verification on the development machine (2026-10-08)
+
+- **Migration:** `scripts/rehearse-migration.js` against a backup of the real development database
+  (`nexuscommerce`: 4 users, 7 products, 623 sales, 10,372 units).
+  - First attempt failed on the script's own check: that database predates the
+    `attributed_sales` view. The check now counts the rule directly (commit `d803e39`).
+  - Second attempt: **REHEARSAL PASSED**.
+  - Then `npm run migrate` applied 001, 002 and 003; `migrate:status` shows all applied.
+  - Backup kept in `backend/backups/`.
+- **Serving:** the Windows venv serving and parity checks pass (run by the user).
+- **Live flow:** the local app (backend, ML server, PostgreSQL 18, `FORECAST_V2_ENABLED=true`)
+  was run through the API with a separate test seller (`v2test@nexus.local`), using the demo
+  data. The results are identical to the cloud demo:
+  - Pashmina Shawl (store sync, unconfirmed): `needs_confirmation`, 0 usable days.
+  - Ceramic Mug Set (unconfirmed upload): 2 usable days, insufficient.
+  - After confirming both stored imports:
+    - Shawl: 180 days → shared model, 28.7 / 107.9.
+    - Mug: 48 days → average, 27.3 / 109.0.
+  - Lawn Suit: 240 days → shared model, 36.0 / 148.1.
+  - Bridal Clutch: 238 days → TSB, 0.1 / 0.6.
+  - Prayer Mat: 20 days → insufficient.
+  - Models release `nexus-v2-shared-20261008`, loaded by the Windows ML server.
+- **Not yet checked locally:** the UI pages in a normal browser on the local machine.
+  The browser panel used here blocks the page's calls to `localhost:5000`. The same pages
+  were verified end to end in the cloud demo.
+
 ## For review: findings and open questions
 
 1. **Resolved in revision 2:** with v2 on, the legacy daily chart, accuracy gauge,
