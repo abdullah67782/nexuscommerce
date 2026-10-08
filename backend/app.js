@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
 const { router: forecastRoutes, finetuneRouter } = require('./routes/forecast');
 const storeRoutes = require('./routes/store');
+const inventoryRoutes = require('./routes/inventory');
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/inventory', inventoryRoutes);
 app.use('/api', dataRoutes);
 app.use('/api/forecast', forecastRoutes);
 app.use('/api/finetune', finetuneRouter);

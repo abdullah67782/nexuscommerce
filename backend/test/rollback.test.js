@@ -34,9 +34,12 @@ test('only the most recent upload can be rolled back, and only once', async () =
   assert.equal(versions.body.versions.find(v => v.upload_id === v2.upload_id).is_rolled_back, true);
 });
 
-test('rollback works for uploads that also created inventory rows', async () => {
+test('rolling back a sales file with stock columns: no inventory was written, unreferenced products removed', async () => {
   const a = await registerSeller(ctx.api, 'a@test.com');
   const v1 = await upload(a.token, salesCsv(['Mouse'], 10, '2026-01-10', true));
+  assert.ok(v1.stock_columns_ignored, 'stock columns reported as ignored');
+  const stock = await ctx.pool.query('SELECT (SELECT COUNT(*) FROM inventory) + (SELECT COUNT(*) FROM stock_snapshots) AS n');
+  assert.equal(Number(stock.rows[0].n), 0, 'sales files never write stock');
   const res = await ctx.api('POST', `/data/rollback/${v1.upload_id}`, { token: a.token });
   assert.equal(res.status, 200, JSON.stringify(res.body));
   const { rows } = await ctx.pool.query('SELECT COUNT(*)::int AS n FROM products');

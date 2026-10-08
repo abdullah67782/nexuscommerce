@@ -273,10 +273,12 @@ function freshnessScore(lastUploadAt) {
   return 0;
 }
 
-// Recompute from committed imports and attributed sales (after imports AND rollbacks).
+// Recompute from committed SALES imports and attributed sales (after imports AND rollbacks).
+// Stock-count files are not sales data and never make sales look fresh.
 async function recomputeFreshness(client, sellerId) {
   const { rows } = await client.query(
-    `SELECT (SELECT MAX(uploaded_at) FROM data_uploads WHERE uploaded_by = $1 AND status = 'committed') AS last_upload_at,
+    `SELECT (SELECT MAX(uploaded_at) FROM data_uploads WHERE uploaded_by = $1 AND status = 'committed'
+               AND source <> 'stock_count') AS last_upload_at,
             (SELECT MAX(sale_date) FROM attributed_sales WHERE seller_id = $1) AS last_sale_date,
             (SELECT COUNT(*) FROM attributed_sales WHERE seller_id = $1)::int AS total`,
     [sellerId],
