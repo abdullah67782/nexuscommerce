@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef } from 'react';
 
-export default function Dialog({ children, onClose, labelledBy, describedBy, busy = false }) {
+export default function Dialog({ children, onClose, labelledBy, describedBy, busy = false, wide = false }) {
   const ref = useRef(null);
   useEffect(() => {
     const dialog = ref.current;
@@ -11,7 +11,7 @@ export default function Dialog({ children, onClose, labelledBy, describedBy, bus
   return (
     <dialog
       ref={ref}
-      className="product-dialog plate-ticks"
+      className={`product-dialog plate-ticks${wide ? ' is-wide' : ''}`}
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
       aria-busy={busy}

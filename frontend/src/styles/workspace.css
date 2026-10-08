@@ -119,6 +119,8 @@
   /* ── Inventory ──────────────────────────────────────────────────────── */
   .stock-cell-inline { display: grid; grid-template-columns: 34px minmax(60px, 1fr); gap: 10px; align-items: center; }
   .stock-cell-inline .num { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .product-dialog.is-wide { width: min(760px, calc(100vw - 32px)); }
+  .detail-grid em { display: block; margin-top: 4px; }
 
   /* ── Pricing ────────────────────────────────────────────────────────── */
   .detail-body { display: grid; gap: 16px; }
@@ -128,7 +130,7 @@
   .detail-grid > div { padding: 12px 14px; min-width: 0; }
   .detail-grid > div:nth-child(even) { border-left: 1px solid var(--border); }
   .detail-grid > div:nth-child(n+3) { border-top: 1px solid var(--border); }
-  .detail-grid span { display: block; font-size: 12.5px; font-weight: 500; color: var(--text-3); }
+  .detail-grid > div > span { display: block; font-size: 12.5px; font-weight: 500; color: var(--text-3); }
   .detail-grid strong { display: block; margin-top: 6px; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; color: var(--tone, var(--text)); }
   .reason { padding: 12px 14px; border-left: 2px solid var(--pricing); border-radius: 0 var(--r-md) var(--r-md) 0; background: rgba(214, 138, 192, .08); font-size: 13px; line-height: 1.6; color: var(--text-2); }
   .change-up { color: var(--success); }
