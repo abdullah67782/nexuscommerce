@@ -16,6 +16,7 @@ import Skeleton from '../../components/ui/Skeleton';
 import PipelineStatus from '../../components/ui/PipelineStatus';
 import { C, axisProps, gridProps, cursorProps } from '../../components/charts/chartTheme';
 import api from '../../services/api';
+import { useForecastV2Enabled } from '../../components/forecast/TotalsV2';
 import {
   HiOutlineArrowPath, HiArrowRight, HiOutlineChartBar, HiOutlineShieldCheck, HiOutlineSparkles,
   HiArrowTrendingUp, HiArrowTrendingDown, HiMinus, HiOutlineArrowUpTray,
@@ -126,6 +127,8 @@ export default function DashboardPage() {
 
   // ── Derived signals (all from the responses above) ──────────────────────
   const qualityScore = Math.round(quality.score || quality.quality_score || 0);
+  // With forecast v2 on, legacy model accuracy and training prompts are not shown.
+  const v2 = useForecastV2Enabled() === true;
   const accuracy = !Array.isArray(metrics) && metrics?.accuracy != null ? metrics.accuracy : null;
   const hasPersonalModel = accuracy != null;
   const alertList = useMemo(() => (Array.isArray(alerts) ? [...alerts].sort((a, b) => (RISK_ORDER[a.risk_level?.toLowerCase()] ?? 9) - (RISK_ORDER[b.risk_level?.toLowerCase()] ?? 9)) : []), [alerts]);
@@ -164,18 +167,20 @@ export default function DashboardPage() {
     if (qualityScore > 0 && qualityScore < 80) {
       items.push({ id: 'quality', severity: 'warning', title: `Data quality is ${qualityScore}/100`, why: 'Duplicates and rejected rows make totals and forecasts less reliable.', action: { label: 'See quality report', href: '/upload' } });
     }
-    if (!hasPersonalModel) {
+    if (!hasPersonalModel && !v2) {
       items.push({ id: 'model', severity: 'info', title: 'Forecasts use the general base model', why: 'Training on your own sales history adapts forecasts to your store’s patterns. It takes a few minutes.', action: { label: 'Train model', href: '/forecasting' } });
     }
     const rank = { critical: 0, warning: 1, info: 2 };
     return items.sort((a, b) => rank[a.severity] - rank[b.severity]);
-  }, [criticalAnomalies, criticalAlerts, highAlerts, momentum, freshScore, daysOld, qualityScore, hasPersonalModel, selectedProduct]);
+  }, [criticalAnomalies, criticalAlerts, highAlerts, momentum, freshScore, daysOld, qualityScore, hasPersonalModel, selectedProduct, v2]);
 
   const criticalCount = attention.filter(i => i.severity === 'critical').length;
 
   const pipeline = [
     { key: 'data', label: 'Data', href: '/upload', tone: freshScore == null ? 'idle' : freshScore >= 70 ? 'ok' : freshScore >= 40 ? 'warning' : 'critical', value: freshScore == null ? 'No uploads' : `${freshScore >= 70 ? 'Fresh' : freshScore >= 40 ? 'Aging' : 'Stale'}${daysOld != null ? ` · ${daysOld === 0 ? 'today' : `${daysOld}d ago`}` : ''}` },
-    { key: 'model', label: 'Model', href: '/forecasting', tone: hasPersonalModel ? 'ok' : 'idle', value: hasPersonalModel ? `Personalised · ${accuracy}%` : 'Base model' },
+    v2
+      ? { key: 'model', label: 'Forecast', href: '/forecasting', tone: 'ok', value: 'v2 · 7/28-day totals' }
+      : { key: 'model', label: 'Model', href: '/forecasting', tone: hasPersonalModel ? 'ok' : 'idle', value: hasPersonalModel ? `Personalised · ${accuracy}%` : 'Base model' },
     { key: 'decisions', label: 'Alerts', href: '/inventory', tone: criticalCount ? 'critical' : attention.length ? 'warning' : 'ok', value: attention.length ? `${attention.length} open${criticalCount ? ` · ${criticalCount} critical` : ''}` : 'All clear' },
   ];
 
@@ -279,7 +284,12 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="outlook-block outlook-model">
-                    {Array.isArray(metrics) && metrics.length > 0 ? (
+                    {v2 ? (
+                      <div style={{ minWidth: 0 }}>
+                        <p className="outlook-model-title">Forecast v2 · totals</p>
+                        <p className="outlook-note">7- and 28-day totals per product, built only from sales periods you confirmed as complete. No accuracy figure is shown until one has been validated.</p>
+                      </div>
+                    ) : Array.isArray(metrics) && metrics.length > 0 ? (
                       <ul className="row-list" style={{ width: '100%' }}>
                         {metrics.slice(0, 3).map((m, i) => (
                           <li key={i} className="list-row" style={{ padding: '10px 0' }}>
@@ -302,8 +312,8 @@ export default function DashboardPage() {
                     )}
                   </div>
 
-                  <Button variant={hasPersonalModel ? 'secondary' : 'primary'} href="/forecasting" block icon={<HiOutlineSparkles />}>
-                    {hasPersonalModel ? 'Open demand forecast' : 'Train your model'}
+                  <Button variant={hasPersonalModel || v2 ? 'secondary' : 'primary'} href="/forecasting" block icon={<HiOutlineSparkles />}>
+                    {hasPersonalModel || v2 ? 'Open demand forecast' : 'Train your model'}
                   </Button>
                 </>
               )}

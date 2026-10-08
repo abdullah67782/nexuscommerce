@@ -237,3 +237,9 @@
   .date-help { display: grid; gap: 8px; }
   @media (max-width: 560px) { .coverage-fields { grid-template-columns: 1fr; } }
 }
+
+/* Forecasting v2: single-control row and unconfirmed-day emphasis */
+@layer components {
+  .controls.controls-single { grid-template-columns: minmax(0, 420px); }
+  .history-facts div[data-warn] dd { color: var(--warning); }
+}

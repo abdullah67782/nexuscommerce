@@ -1,15 +1,16 @@
 'use client';
 // Forecast v2: total demand for the next 7 and 28 days for one product.
-// Shown only when the backend has v2 switched on (GET /forecast/v2/config).
-// Deliberately separate from the daily chart: totals only — no daily breakdown,
-// no accuracy figure and no confidence range, because none has been validated.
+// The forecasting experience when the backend has v2 switched on
+// (GET /forecast/v2/config). Totals only — no daily breakdown, no accuracy
+// figure and no confidence range, because none has been validated. History
+// counts only days the seller confirmed as complete.
 import { useEffect, useState } from 'react';
 import { Panel, PanelHeader } from '../ui/Panel';
 import Button from '../ui/Button';
 import Meter from '../ui/Meter';
 import StatusBadge from '../ui/StatusBadge';
 import api from '../../services/api';
-import { HiArrowUpTray, HiArrowPath } from 'react-icons/hi2';
+import { HiArrowUpTray, HiArrowPath, HiCheckBadge } from 'react-icons/hi2';
 
 const TIER = {
   model: { label: 'Full rule · 180+ days', tone: 'var(--forecast)' },
@@ -24,8 +25,9 @@ const fmtDay = (s, year = false) => new Date(`${s}T00:00:00Z`).toLocaleDateStrin
 // Whole units from 10 up; one decimal below, where rounding would hide the estimate.
 const fmtUnits = (v) => (v >= 10 ? Math.round(v).toLocaleString() : v.toFixed(1));
 
+// null while the server is asked; then true (v2) or false (legacy, the rollback path).
 export function useForecastV2Enabled() {
-  const [enabled, setEnabled] = useState(false);
+  const [enabled, setEnabled] = useState(null);
   useEffect(() => {
     api.get('/forecast/v2/config').then(r => setEnabled(r.data?.enabled === true)).catch(() => setEnabled(false));
   }, []);
@@ -48,13 +50,14 @@ export default function TotalsV2({ productId, productName }) {
   const { loading, data, error } = state;
   const tier = data?.history?.tier ? TIER[data.history.tier] : null;
   const usable = data?.history?.usable_days ?? 0;
+  const needsConfirmation = data?.status === 'needs_confirmation';
 
   return (
     <Panel tone="var(--forecast)" aria-labelledby="totals-title" aria-busy={loading}>
       <PanelHeader
         title="Total demand ahead"
         titleId="totals-title"
-        description={productName ? `${productName} · totals for the next 7 and 28 days after your latest data` : 'Totals for the next 7 and 28 days'}
+        description={productName ? `${productName} · totals for the 7 and 28 days after your confirmed history` : 'Totals for the next 7 and 28 days'}
       >
         <StatusBadge tone="neutral">Forecast v2 · in review</StatusBadge>
         <Button variant="secondary" size="sm" icon={<HiArrowPath />} onClick={load} disabled={loading}>Refresh</Button>
@@ -90,12 +93,19 @@ export default function TotalsV2({ productId, productName }) {
                   </div>
                 ))}
               </div>
+            ) : needsConfirmation ? (
+              <div className="status-callout">
+                <p className="callout-kicker" style={{ color: 'var(--warning)' }}>History needs confirmation</p>
+                <h3>{data.history.unconfirmed_days} days of sales are recorded, but none are confirmed complete.</h3>
+                <p>A day with some sales records can still be missing sales, so only periods you confirm count toward a forecast. Your records stay in your sales data either way.</p>
+                <Button href="/upload" icon={<HiCheckBadge />}>Confirm periods on Data Integration</Button>
+              </div>
             ) : (
               <div className="status-callout">
                 <p className="callout-kicker" style={{ color: 'var(--warning)' }}>More history needed</p>
-                <h3>No forecast yet: {usable} of 28 days.</h3>
-                <p>An estimate needs at least 28 complete days in a row; the model-based forecast needs 180.</p>
-                <Meter value={usable} max={28} tone="var(--warning)" tall label="Usable days of history" />
+                <h3>No forecast yet: {usable} of 28 confirmed days.</h3>
+                <p>An estimate needs at least 28 consecutive confirmed days; the model-based forecast needs 180.</p>
+                <Meter value={usable} max={28} tone="var(--warning)" tall label="Confirmed days of history" />
                 <Button href="/upload" icon={<HiArrowUpTray />}>Upload or confirm more history</Button>
               </div>
             )}
@@ -104,22 +114,23 @@ export default function TotalsV2({ productId, productName }) {
           <aside className="totals-side" aria-label="History used">
             <div className="history-head">
               <span className="side-label">History used</span>
-              <StatusBadge tone={data.history.tier === 'model' ? 'info' : 'warning'}>{tier.label}</StatusBadge>
+              <StatusBadge tone={data.history.tier === 'model' ? 'info' : 'warning'}>{needsConfirmation ? 'Not confirmed' : tier.label}</StatusBadge>
             </div>
-            <p className="history-days num">{usable}<em>consecutive days</em></p>
-            <Meter value={Math.min(usable, 180)} max={180} tone={tier.tone} label="Days of usable history out of 180" />
+            <p className="history-days num">{usable}<em>consecutive confirmed days</em></p>
+            <Meter value={Math.min(usable, 180)} max={180} tone={tier.tone} label="Confirmed days of history out of 180" />
             <p className="side-note">
               {data.history.first_day ? <>From {fmtDay(data.history.first_day, true)} to {fmtDay(data.history.last_day, true)}. </> : null}
-              28 days for an estimate, 180 for the model.
+              Only confirmed days count: 28 for an estimate, 180 for the model.
             </p>
             {data.pattern && (
               <p className="side-note">Sold on <strong>{data.pattern.selling_day_percent}%</strong> of the last {data.pattern.window_days} days ({GROUP[data.pattern.group]}).</p>
             )}
             <dl className="history-facts">
-              <div><dt>Confirmed days</dt><dd className="num">{data.history.covered_days}</dd></div>
-              <div><dt>Recorded days</dt><dd className="num">{data.history.recorded_days}</dd></div>
-              <div><dt>Unknown gaps</dt><dd className="num">{data.history.gaps.length}</dd></div>
+              <div><dt>Confirmed</dt><dd className="num">{data.history.confirmed_days}</dd></div>
+              <div data-warn={data.history.unconfirmed_days > 0 || undefined}><dt>Not confirmed</dt><dd className="num">{data.history.unconfirmed_days}</dd></div>
+              <div><dt>No records</dt><dd className="num">{data.history.missing_days}</dd></div>
             </dl>
+            <p className="side-note">Days since the first sale on {fmtDay(data.history.first_sale, true)}.</p>
           </aside>
         </div>
       )}
