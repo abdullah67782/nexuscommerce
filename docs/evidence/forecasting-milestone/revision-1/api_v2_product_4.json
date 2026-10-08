@@ -1,0 +1,61 @@
+{
+ "version": 2,
+ "product": {
+  "id": 4,
+  "name": "Prayer Mat",
+  "category": "Home"
+ },
+ "status": "insufficient_history",
+ "models_release": null,
+ "history": {
+  "usable_days": 20,
+  "first_day": "2026-09-18",
+  "last_day": "2026-10-07",
+  "tier": "insufficient",
+  "required_days": {
+   "average": 28,
+   "model": 180
+  },
+  "first_sale": "2026-09-18",
+  "gaps": [],
+  "day_counts": {
+   "covered": 20,
+   "recorded": 0,
+   "unknown": 0
+  },
+  "covered_days": 20,
+  "recorded_days": 0,
+  "sources": [
+   {
+    "id": 1,
+    "kind": "file",
+    "name": "File uploads",
+    "timezone": "Asia/Karachi",
+    "confirmed_periods": [
+     {
+      "start": "2026-02-10",
+      "end": "2026-08-07"
+     },
+     {
+      "start": "2026-08-08",
+      "end": "2026-10-05"
+     },
+     {
+      "start": "2026-10-06",
+      "end": "2026-10-07"
+     }
+    ]
+   }
+  ]
+ },
+ "pattern": null,
+ "forecasts": [],
+ "notes": [
+  {
+   "type": "tier",
+   "text": "Only 20 complete consecutive days of sales are available. At least 28 are needed for an estimate. Upload more history, or confirm the period your files cover so that days without sales count as zero."
+  }
+ ],
+ "today": "2026-10-08",
+ "timezone": "Asia/Karachi"
+}

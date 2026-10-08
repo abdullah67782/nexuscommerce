@@ -1,0 +1,48 @@
+{
+  "timezone": "Asia/Karachi",
+  "last_day": "2026-10-07",
+  "products": [
+    "Lawn Suit 3-Piece",
+    "Bridal Clutch",
+    "Ceramic Mug Set",
+    "Prayer Mat"
+  ],
+  "uploads": [
+    {
+      "file": "1_store_export_all_products.csv",
+      "coverage": {
+        "start": "2026-02-10",
+        "end": "2026-08-07",
+        "scope": "all_products"
+      },
+      "note": "Complete export for every product.",
+      "rows": 954
+    },
+    {
+      "file": "2_store_export_without_mugs.csv",
+      "coverage": {
+        "start": "2026-08-08",
+        "end": "2026-10-05",
+        "scope": "listed_products"
+      },
+      "note": "Complete for the products in the file; mug sales were left out of this export.",
+      "rows": 191
+    },
+    {
+      "file": "3_mug_sales_partial.csv",
+      "coverage": null,
+      "note": "Mug orders found later, only from day -47: no period confirmed, so the 13 days before stay unknown.",
+      "rows": 114
+    },
+    {
+      "file": "4_no_sales_last_two_days.csv",
+      "coverage": {
+        "start": "2026-10-06",
+        "end": "2026-10-07",
+        "scope": "all_products"
+      },
+      "note": "Zero-transaction export: the shop sold nothing on the last two days (confirmed).",
+      "rows": 0
+    }
+  ]
+}

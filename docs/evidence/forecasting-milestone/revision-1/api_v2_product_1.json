@@ -1,0 +1,82 @@
+{
+ "version": 2,
+ "product": {
+  "id": 1,
+  "name": "Lawn Suit 3-Piece",
+  "category": "Clothing"
+ },
+ "status": "ok",
+ "models_release": "nexus-v2-shared-20261008",
+ "history": {
+  "usable_days": 240,
+  "first_day": "2026-02-10",
+  "last_day": "2026-10-07",
+  "tier": "model",
+  "required_days": {
+   "average": 28,
+   "model": 180
+  },
+  "first_sale": "2026-02-10",
+  "gaps": [],
+  "day_counts": {
+   "covered": 240,
+   "recorded": 0,
+   "unknown": 0
+  },
+  "covered_days": 240,
+  "recorded_days": 0,
+  "sources": [
+   {
+    "id": 1,
+    "kind": "file",
+    "name": "File uploads",
+    "timezone": "Asia/Karachi",
+    "confirmed_periods": [
+     {
+      "start": "2026-02-10",
+      "end": "2026-08-07"
+     },
+     {
+      "start": "2026-08-08",
+      "end": "2026-10-05"
+     },
+     {
+      "start": "2026-10-06",
+      "end": "2026-10-07"
+     }
+    ]
+   }
+  ]
+ },
+ "pattern": {
+  "group": "regular",
+  "selling_day_percent": 91.1,
+  "window_days": 180
+ },
+ "forecasts": [
+  {
+   "horizon_days": 7,
+   "start": "2026-10-08",
+   "end": "2026-10-14",
+   "total_units": 23.32508087158203,
+   "method": "shared_model",
+   "method_label": "Shared forecasting model (v2)"
+  },
+  {
+   "horizon_days": 28,
+   "start": "2026-10-08",
+   "end": "2026-11-04",
+   "total_units": 96.6069564819336,
+   "method": "shared_model",
+   "method_label": "Shared forecasting model (v2)"
+  }
+ ],
+ "notes": [
+  {
+   "type": "method",
+   "text": "It has at least 180 days of history and does not sell rarely, so it uses the shared forecasting model."
+  }
+ ],
+ "today": "2026-10-08",
+ "timezone": "Asia/Karachi"
+}

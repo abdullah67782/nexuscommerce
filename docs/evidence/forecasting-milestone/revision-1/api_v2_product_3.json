@@ -1,0 +1,82 @@
+{
+ "version": 2,
+ "product": {
+  "id": 3,
+  "name": "Bridal Clutch",
+  "category": "Accessories"
+ },
+ "status": "ok",
+ "models_release": "nexus-v2-shared-20261008",
+ "history": {
+  "usable_days": 238,
+  "first_day": "2026-02-12",
+  "last_day": "2026-10-07",
+  "tier": "model",
+  "required_days": {
+   "average": 28,
+   "model": 180
+  },
+  "first_sale": "2026-02-12",
+  "gaps": [],
+  "day_counts": {
+   "covered": 238,
+   "recorded": 0,
+   "unknown": 0
+  },
+  "covered_days": 238,
+  "recorded_days": 0,
+  "sources": [
+   {
+    "id": 1,
+    "kind": "file",
+    "name": "File uploads",
+    "timezone": "Asia/Karachi",
+    "confirmed_periods": [
+     {
+      "start": "2026-02-10",
+      "end": "2026-08-07"
+     },
+     {
+      "start": "2026-08-08",
+      "end": "2026-10-05"
+     },
+     {
+      "start": "2026-10-06",
+      "end": "2026-10-07"
+     }
+    ]
+   }
+  ]
+ },
+ "pattern": {
+  "group": "rare",
+  "selling_day_percent": 8.3,
+  "window_days": 180
+ },
+ "forecasts": [
+  {
+   "horizon_days": 7,
+   "start": "2026-10-08",
+   "end": "2026-10-14",
+   "total_units": 0.60352707004134,
+   "method": "tsb",
+   "method_label": "Rare-sales method (TSB)"
+  },
+  {
+   "horizon_days": 28,
+   "start": "2026-10-08",
+   "end": "2026-11-04",
+   "total_units": 2.41410828016536,
+   "method": "tsb",
+   "method_label": "Rare-sales method (TSB)"
+  }
+ ],
+ "notes": [
+  {
+   "type": "method",
+   "text": "It sells on fewer than 20% of days, so it uses the rare-sales method (TSB), which follows how often it sells and how much per sale."
+  }
+ ],
+ "today": "2026-10-08",
+ "timezone": "Asia/Karachi"
+}

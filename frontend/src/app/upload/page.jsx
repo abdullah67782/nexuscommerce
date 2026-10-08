@@ -37,6 +37,10 @@ const ANOMALY_TYPE_LABELS = {
   invalid_date: 'Invalid date',
   old_date: 'Date >10 years old',
   missing_product_name: 'Missing product name',
+  missing_quantity: 'Missing quantity',
+  invalid_quantity: 'Quantity is not a number',
+  fractional_quantity: 'Fractional quantity',
+  unusually_large_order: 'Unusually large order (kept)',
 };
 
 const COLS = ['product_name', 'category', 'price', 'quantity', 'sale_date', 'revenue', 'stock_level', 'reorder_threshold'];
@@ -97,6 +101,7 @@ function ResultCard({ result, onViewAnomalies, onRollback }) {
           <div key={label} style={tone ? { '--tone': tone } : undefined}><span>{label}</span><strong className="num">{value}</strong></div>
         ))}
       </div>
+      <ResultNotes result={result} />
       {(result.anomaly_count > 0 || inserted > 0) && (
         <div className="panel-foot panel-foot-start">
           {result.anomaly_count > 0 && <Button variant="secondary" size="sm" icon={<HiExclamationTriangle />} onClick={onViewAnomalies}>View {result.anomaly_count} anomalies</Button>}
@@ -104,6 +109,129 @@ function ResultCard({ result, onViewAnomalies, onRollback }) {
         </div>
       )}
     </Panel>
+  );
+}
+
+// Optional declaration that the file holds EVERY sale for a period. Inside a
+// confirmed period, days without rows count as zero sales; elsewhere they stay
+// unknown. A file with no sales rows is accepted only with this confirmation.
+function CoverageForm({ value, onChange }) {
+  const set = (patch) => onChange({ ...value, ...patch });
+  return (
+    <fieldset className="coverage-form">
+      <label className="coverage-check">
+        <input type="checkbox" checked={value.enabled} onChange={(e) => set({ enabled: e.target.checked })} />
+        <span>
+          <strong>This file contains every sale for a period</strong>
+          <em>Only confirmed periods count toward forecasts. Confirm the dates it covers; days without sales then count as zero, not as missing data.</em>
+        </span>
+      </label>
+      {value.enabled && (
+        <div className="coverage-fields">
+          <div>
+            <label htmlFor="coverage-start" className="label-text">First day</label>
+            <input id="coverage-start" type="date" className="input-field" value={value.start} max={value.end || undefined} onChange={(e) => set({ start: e.target.value })} />
+          </div>
+          <div>
+            <label htmlFor="coverage-end" className="label-text">Last day</label>
+            <input id="coverage-end" type="date" className="input-field" value={value.end} min={value.start || undefined} onChange={(e) => set({ end: e.target.value })} />
+          </div>
+          <div className="coverage-scope">
+            <p className="label-text">Products</p>
+            <Segmented label="Products covered" value={value.scope} onChange={(scope) => set({ scope })} fill
+              options={[{ value: 'all_products', label: 'All my products' }, { value: 'listed_products', label: 'Only products in this file' }]} />
+          </div>
+          <p className="side-note coverage-statement">
+            {value.start && value.end
+              ? <>By uploading, you confirm that no sale of {value.scope === 'all_products' ? 'any of your products' : 'the products in this file'} from <strong>{value.start}</strong> to <strong>{value.end}</strong> is missing from this file.</>
+              : 'Choose the first and last day the file covers.'}
+          </p>
+        </div>
+      )}
+    </fieldset>
+  );
+}
+
+function ResultNotes({ result }) {
+  if (!result) return null;
+  const { coverage, large_orders_flagged: large, date_help: dateHelp, source_timezone: tz } = result;
+  const unconfirmed = !coverage && (result.inserted ?? 0) > 0;
+  if (!coverage && !large && !dateHelp && !unconfirmed) return null;
+  return (
+    <div className="panel-body result-notes">
+      {unconfirmed && (
+        <p><HiExclamationTriangle aria-hidden="true" style={{ color: 'var(--warning)' }} />
+          Saved, but not confirmed complete: these sales appear everywhere, yet they do not count toward forecasts until you confirm the period they cover (Upload history → Confirm period).</p>
+      )}
+      {coverage && (
+        <p><HiShieldCheck aria-hidden="true" style={{ color: 'var(--success)' }} />
+          Confirmed complete: {coverage.start} to {coverage.end} ({coverage.days} days, {coverage.products === 'all' ? 'all products' : `${coverage.products} product${coverage.products === 1 ? '' : 's'}`}){tz ? `, ${tz} business days` : ''}. Days without sales in this period count as zero.</p>
+      )}
+      {large > 0 && (
+        <p><HiExclamationTriangle aria-hidden="true" style={{ color: 'var(--warning)' }} />
+          {large} unusually large order{large === 1 ? ' was' : 's were'} kept and flagged for review — see Data anomalies.</p>
+      )}
+      {dateHelp && (
+        <div className="date-help">
+          <p><HiExclamationTriangle aria-hidden="true" style={{ color: 'var(--warning)' }} />{dateHelp.message}</p>
+          <ul className="overlap-list">{dateHelp.accepted_formats.map((f) => <li key={f}>{f}</li>)}</ul>
+          {dateHelp.examples?.length > 0 && <p className="side-note">Not read: {dateHelp.examples.map((e) => `row ${e.row} “${e.value}”`).join(', ')}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Confirm, after the fact, that a stored upload holds EVERY sale for a period.
+// Until then its sales stay visible everywhere but do not count as forecasting history.
+function ConfirmPeriodModal({ version, onClose, onDone }) {
+  const [form, setForm] = useState({
+    start: version.first_sale_date || '', end: version.last_sale_date || '', scope: 'listed_products',
+  });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+  const submit = async () => {
+    setBusy(true); setError(null);
+    try {
+      await api.post(`/data/uploads/${version.upload_id}/coverage`, { ...form, confirmed: true });
+      toast.success(`Version #${version.version_number} confirmed for ${form.start} to ${form.end}`);
+      onDone();
+    } catch (e) {
+      setError(e.response?.data?.message || e.response?.data?.error || 'Could not confirm this period');
+    } finally { setBusy(false); }
+  };
+  return (
+    <Dialog onClose={onClose} labelledBy="confirm-title" describedBy="confirm-description" busy={busy}>
+      <p className="dialog-kicker" style={{ color: 'var(--accent)' }}>Version #{version.version_number}</p>
+      <h2 id="confirm-title" className="dialog-title" style={{ marginTop: 10 }}>Confirm the period this upload covers</h2>
+      <p id="confirm-description" className="side-note" style={{ margin: '12px 0 16px' }}>
+        Forecasts only use days confirmed as complete. A day with some sales records could still be missing sales,
+        so confirm only if this upload contains <strong>every</strong> sale for these days. Days without sales then count as zero.
+      </p>
+      <div className="coverage-fields">
+        <div>
+          <label htmlFor="confirm-start" className="label-text">First day</label>
+          <input id="confirm-start" type="date" className="input-field" value={form.start} onChange={(e) => set({ start: e.target.value })} />
+        </div>
+        <div>
+          <label htmlFor="confirm-end" className="label-text">Last day</label>
+          <input id="confirm-end" type="date" className="input-field" value={form.end} onChange={(e) => set({ end: e.target.value })} />
+        </div>
+        <div className="coverage-scope">
+          <p className="label-text">Products</p>
+          <Segmented label="Products covered" value={form.scope} onChange={(scope) => set({ scope })} fill
+            options={[{ value: 'listed_products', label: 'Products in this upload' }, { value: 'all_products', label: 'All my products' }]} />
+        </div>
+      </div>
+      {error && <p className="side-note" role="alert" style={{ color: 'var(--danger)', marginTop: 12 }}>{error}</p>}
+      <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+        <button onClick={onClose} disabled={busy} className="btn-secondary" style={{ flex: 1 }}>Cancel</button>
+        <button onClick={submit} disabled={busy || !form.start || !form.end} className="btn-primary" style={{ flex: 1 }}>
+          {busy ? <span className="spinner" aria-label="Confirming" /> : <><HiShieldCheck />Confirm complete</>}
+        </button>
+      </div>
+    </Dialog>
   );
 }
 
@@ -152,11 +280,13 @@ export default function UploadPage() {
   const [anomalyFilter, setAnomalyFilter] = useState('all');
 
   const [rollbackTarget, setRollbackTarget] = useState(null);
+  const [confirmTarget, setConfirmTarget] = useState(null);
   const [rollbackLoading, setRollbackLoading] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   // Set when the server refuses a file because it overlaps sales already
   // imported for the same products and dates; the seller decides what it is.
   const [overlap, setOverlap] = useState(null);
+  const [coverage, setCoverage] = useState({ enabled: false, start: '', end: '', scope: 'all_products' });
 
   // ── Data fetch ─────────────────────────────────────────────────────────────
   const fetchPageData = useCallback(async () => {
@@ -203,6 +333,13 @@ export default function UploadPage() {
     fd.append('file', file);
     fd.append('operation_id', operationId);
     if (overlapMode === 'append') fd.append('overlap_mode', 'append');
+    if (coverage.enabled) {
+      if (!coverage.start || !coverage.end) { toast.error('Choose the first and last day the file covers'); return; }
+      fd.append('coverage_start', coverage.start);
+      fd.append('coverage_end', coverage.end);
+      fd.append('coverage_scope', coverage.scope);
+      fd.append('coverage_confirmed', 'true');
+    }
     setOverlap(null);
     setUploading(true); setStep(1);
     const timers = [setTimeout(() => setStep(2), 600), setTimeout(() => setStep(3), 1400), setTimeout(() => setStep(4), 2300)];
@@ -224,7 +361,7 @@ export default function UploadPage() {
           toast(`${fmtNum(d.skipped)} lines were already imported earlier (same line id) and were skipped.`, { duration: 5000 });
         }, 1200);
       }
-      setTimeout(() => { setUploading(false); setFile(null); setStep(0); fetchPageData(); }, 1500);
+      setTimeout(() => { setUploading(false); setFile(null); setStep(0); setCoverage((c) => ({ ...c, enabled: false })); fetchPageData(); }, 1500);
     } catch (err) {
       timers.forEach(clearTimeout);
       const body = err.response?.data;
@@ -355,6 +492,7 @@ Desk Mat,Accessories,19.99,100,2023-10-02,1999.00,300,50`;
                       </div>
                       <button aria-label="Remove selected file" onClick={() => setFile(null)} className="icon-button"><HiXMark /></button>
                     </div>
+                    <CoverageForm value={coverage} onChange={setCoverage} />
                     <Button block icon={<HiSparkles />} onClick={() => handleUpload()}>Process &amp; upload file</Button>
                   </div>
                 )}
@@ -365,7 +503,7 @@ Desk Mat,Accessories,19.99,100,2023-10-02,1999.00,300,50`;
               <div className="intake-side">
                 <p className="side-label">Required columns</p>
                 <div className="chip-row">{COLS.map((c) => <code key={c} className="code-chip">{c}</code>)}</div>
-                <p className="side-note">Each row is checked for missing names, invalid or future dates, negative values and duplicate transactions before anything is stored.</p>
+                <p className="side-note">Each row is checked before anything is stored. Rows with a missing, fractional or negative quantity, or an ambiguous or future date, are set aside — nothing is filled in by guessing. Unusually large orders are kept and flagged.</p>
                 <button
                   onClick={() => { setGuideOpen(true); requestAnimationFrame(() => guideRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })); }}
                   className="link-arrow" style={{ justifySelf: 'start' }} aria-controls="format-guide"
@@ -441,17 +579,17 @@ Desk Mat,Accessories,19.99,100,2023-10-02,1999.00,300,50`;
         </div>
 
         <Panel aria-labelledby="history-title">
-          <PanelHeader title="Upload history" titleId="history-title" description="Every import is kept as a version — the latest active one can be rolled back">
+          <PanelHeader title="Upload history" titleId="history-title" description="Every import is kept as a version. Only confirmed periods count toward forecasts; the latest active version can be rolled back">
             {versions.length > 0 && <span className="badge">{versions.length} versions</span>}
           </PanelHeader>
           <div className="table-scroll">
             <table className="data-table">
               <thead>
-                <tr>{['Version', 'Date', 'Rows added', 'Skipped', 'Rejected', 'Quality', 'Status', ''].map((h, i) => <th key={i} className={['Rows added', 'Skipped', 'Rejected'].includes(h) ? 'is-num' : ''}>{h || <span className="visually-hidden">Actions</span>}</th>)}</tr>
+                <tr>{['Version', 'Date', 'Rows added', 'Skipped', 'Rejected', 'Quality', 'Status', 'Forecast history', ''].map((h, i) => <th key={i} className={['Rows added', 'Skipped', 'Rejected'].includes(h) ? 'is-num' : ''}>{h || <span className="visually-hidden">Actions</span>}</th>)}</tr>
               </thead>
               <tbody>
                 {versionsLoading ? (
-                  [...Array(3)].map((_, i) => <tr key={i}><td colSpan={8}><Skeleton height={18} /></td></tr>)
+                  [...Array(3)].map((_, i) => <tr key={i}><td colSpan={9}><Skeleton height={18} /></td></tr>)
                 ) : versions.length > 0 ? (
                   versions.map((v, i) => {
                     const isLatestActive = i === 0 && !v.is_rolled_back;
@@ -465,12 +603,18 @@ Desk Mat,Accessories,19.99,100,2023-10-02,1999.00,300,50`;
                         <td className="is-num" style={{ color: 'var(--danger)' }}>{fmtNum(v.rows_rejected)}</td>
                         <td><span className={`status ${qStatus(q)}`}>{q.toFixed(0)}</span></td>
                         <td>{v.is_rolled_back ? <StatusBadge tone="critical">Rolled back</StatusBadge> : <StatusBadge tone="success">Active</StatusBadge>}</td>
+                        <td className="cell-note">
+                          {v.is_rolled_back ? '—'
+                            : v.coverage_start ? <span className="status status-success">Confirmed · {v.coverage_start} → {v.coverage_end}</span>
+                            : v.rows_rejected > 0 ? <span title="Rows were rejected, so this upload cannot be confirmed complete">Not confirmed · rejected rows</span>
+                            : <button onClick={() => setConfirmTarget(v)} className="btn-ghost btn-sm"><HiShieldCheck />Confirm period</button>}
+                        </td>
                         <td style={{ textAlign: 'right' }}>{isLatestActive && <button onClick={() => setRollbackTarget(v)} className="btn-ghost btn-sm text-critical"><HiTrash />Rollback</button>}</td>
                       </tr>
                     );
                   })
                 ) : (
-                  <tr><td colSpan={8}><EmptyState title="No uploads yet">Your first import will appear here as version #1.</EmptyState></td></tr>
+                  <tr><td colSpan={9}><EmptyState title="No uploads yet">Your first import will appear here as version #1.</EmptyState></td></tr>
                 )}
               </tbody>
             </table>
@@ -494,8 +638,8 @@ Desk Mat,Accessories,19.99,100,2023-10-02,1999.00,300,50`;
                     {[
                       ['product_name', 'String', 'Wireless Mouse', '(empty)'],
                       ['price', 'Float > 0', '29.99', '$29.99 or -5'],
-                      ['quantity', 'Integer > 0', '50', '-10 or zero'],
-                      ['sale_date', 'YYYY-MM-DD', '2023-10-01', '10/01/23 or future'],
+                      ['quantity', 'Whole number > 0', '50', 'empty, 1.5, -10 or zero'],
+                      ['sale_date', 'YYYY-MM-DD', '2023-10-01', '10/01/23 (ambiguous) or future'],
                       ['revenue', 'Float > 0', '1499.50', '0 or negative'],
                       ['line_id (optional)', 'Text, unique per sale line', 'ORD-1001-2', 'same id reused for a different sale'],
                     ].map(([c, t, g, b]) => (
@@ -514,6 +658,15 @@ Desk Mat,Accessories,19.99,100,2023-10-02,1999.00,300,50`;
           )}
         </Panel>
       </div>
+
+      {confirmTarget && (
+        <ConfirmPeriodModal
+          key={confirmTarget.upload_id}
+          version={confirmTarget}
+          onClose={() => setConfirmTarget(null)}
+          onDone={() => { setConfirmTarget(null); fetchPageData(); }}
+        />
+      )}
 
       <RollbackModal
         key={rollbackTarget?.upload_id ?? 'closed'}

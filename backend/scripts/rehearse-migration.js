@@ -42,7 +42,11 @@ const CHECKS = {
   sales: 'SELECT COUNT(*)::int AS n FROM sales',
   sales_units: 'SELECT COALESCE(SUM(quantity), 0)::bigint AS n FROM sales',
   imports: 'SELECT COUNT(*)::int AS n FROM data_uploads',
-  attributed_sales: 'SELECT COUNT(*)::int AS n FROM attributed_sales',
+  // The attributed_sales rule written out, so it can be counted on databases
+  // older than the view itself.
+  attributed_sales: `SELECT COUNT(*)::int AS n FROM sales s JOIN products p ON p.id = s.product_id
+                     LEFT JOIN data_uploads du ON du.id = s.upload_id
+                     WHERE p.user_id IS NOT NULL AND (s.upload_id IS NULL OR du.uploaded_by = p.user_id)`,
   upload_versions: 'SELECT COUNT(*)::int AS n FROM upload_versions',
 };
 async function counts(p) {
@@ -91,7 +95,11 @@ async function counts(p) {
 
       console.log('4. Verify');
       const after = await counts(copy);
-      const changed = Object.keys(CHECKS).filter(k => after[k] !== liveCounts[k]);
+      // 'n/a' before = that column/table did not exist yet in an old schema; it is
+      // reported, not treated as a change. Every count that existed must be equal.
+      const missingBefore = Object.keys(CHECKS).filter(k => liveCounts[k] === 'n/a');
+      if (missingBefore.length) console.log(`   not countable before migrating (older schema): ${missingBefore.map(k => `${k} -> ${after[k]}`).join(', ')}`);
+      const changed = Object.keys(CHECKS).filter(k => liveCounts[k] !== 'n/a' && after[k] !== liveCounts[k]);
       if (changed.length) throw new Error(`Rows changed during migration: ${changed.map(k => `${k} ${liveCounts[k]} -> ${after[k]}`).join('; ')}`);
       console.log('   row counts and quarantine unchanged; schema current');
       ok = true;

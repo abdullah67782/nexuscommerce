@@ -14,6 +14,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import HatchDefs from '../../components/charts/HatchDefs';
 import { C, axisProps, gridProps, cursorProps } from '../../components/charts/chartTheme';
 import api from '../../services/api';
+import TotalsV2, { useForecastV2Enabled } from '../../components/forecast/TotalsV2';
 import toast from 'react-hot-toast';
 import {
   HiChartBar, HiArrowDownTray, HiSparkles, HiArrowPath, HiArrowUpTray,
@@ -58,7 +59,66 @@ const accSubLabel = a => {
   return 'Base model not calibrated — fine-tune your model below';
 };
 
+// ─── Page: v2 when the server enables it, otherwise the legacy daily forecast ─
+// The legacy implementation below is kept unchanged for rollback
+// (FORECAST_V2_ENABLED unset). With v2 on, none of its daily predictions,
+// accuracy gauge, 95% ranges, horizon controls or exports are shown.
 export default function ForecastingPage() {
+  const v2Enabled = useForecastV2Enabled();
+  if (v2Enabled === null) {
+    return (
+      <ProtectedRoute>
+        <div className="page"><Skeleton height={120} /></div>
+      </ProtectedRoute>
+    );
+  }
+  return v2Enabled ? <ForecastingV2Page /> : <LegacyForecastingPage />;
+}
+
+function ForecastingV2Page() {
+  const [products, setProducts] = useState([]);
+  const [prodLoading, setProdLoading] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState('');
+
+  useEffect(() => {
+    api.get('/products').then(r => {
+      const p = r.data?.products || [];
+      setProducts(p);
+      if (p.length) setSelectedProduct(p[0].id.toString());
+    }).catch(() => setProducts([])).finally(() => setProdLoading(false));
+  }, []);
+
+  return (
+    <ProtectedRoute>
+      <div className="page">
+        <PageHeader
+          title="Demand Forecasting"
+          description="Total units each product is likely to sell over the next 7 and 28 days, built only from sales history you confirmed as complete."
+        />
+        <Panel aria-label="Forecast product">
+          <div className="controls controls-single">
+            <div>
+              <label htmlFor="forecast-product" className="label-text">Product</label>
+              <select id="forecast-product" value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)} disabled={prodLoading} className="select-field">
+                <option value="" disabled>{prodLoading ? 'Loading products…' : 'Select product…'}</option>
+                {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+          </div>
+        </Panel>
+        {selectedProduct ? (
+          <TotalsV2 productId={selectedProduct} productName={products.find(p => String(p.id) === selectedProduct)?.name} />
+        ) : !prodLoading && (
+          <Panel variant="subtle">
+            <EmptyState icon={<HiChartBar />} title="No products yet">Upload sales on Data Integration to see forecasts here.</EmptyState>
+          </Panel>
+        )}
+      </div>
+    </ProtectedRoute>
+  );
+}
+
+function LegacyForecastingPage() {
   // ── Product / forecast state ───────────────────────────────────────────────
   const [products, setProducts] = useState([]);
   const [prodLoading, setProdLoading] = useState(true);

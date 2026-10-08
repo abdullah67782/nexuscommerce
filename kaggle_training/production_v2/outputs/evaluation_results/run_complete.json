@@ -1,0 +1,15 @@
+{
+  "protocol_sha256": "9c30a3e4e9df2a1eb9c81e2e3c89a87f5e9bf1567c187707c1a8dc5f7f758267",
+  "models_release": "nexus-v2-shared-20261008",
+  "pairs": 600,
+  "eligible_pairs": 590,
+  "prediction_rows": 70800,
+  "versions": {
+    "python": "3.13.16",
+    "pandas": "3.0.5",
+    "numpy": "2.5.3",
+    "xgboost": "3.4.1"
+  },
+  "finished_at": "2026-10-07T19:28:07+00:00",
+  "no_tuning": true
+}

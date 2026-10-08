@@ -1,0 +1,88 @@
+{
+ "version": 2,
+ "product": {
+  "id": 2,
+  "name": "Ceramic Mug Set",
+  "category": "Home"
+ },
+ "status": "ok",
+ "models_release": null,
+ "history": {
+  "usable_days": 48,
+  "first_day": "2026-08-21",
+  "last_day": "2026-10-07",
+  "tier": "average",
+  "required_days": {
+   "average": 28,
+   "model": 180
+  },
+  "first_sale": "2026-02-10",
+  "gaps": [
+   {
+    "start": "2026-08-08",
+    "end": "2026-08-20",
+    "days": 13
+   }
+  ],
+  "day_counts": {
+   "covered": 181,
+   "recorded": 46,
+   "unknown": 13
+  },
+  "covered_days": 2,
+  "recorded_days": 46,
+  "sources": [
+   {
+    "id": 1,
+    "kind": "file",
+    "name": "File uploads",
+    "timezone": "Asia/Karachi",
+    "confirmed_periods": [
+     {
+      "start": "2026-02-10",
+      "end": "2026-08-07"
+     },
+     {
+      "start": "2026-10-06",
+      "end": "2026-10-07"
+     }
+    ]
+   }
+  ]
+ },
+ "pattern": null,
+ "forecasts": [
+  {
+   "horizon_days": 7,
+   "start": "2026-10-08",
+   "end": "2026-10-14",
+   "total_units": 31.25,
+   "method": "average_28",
+   "method_label": "Average-based estimate"
+  },
+  {
+   "horizon_days": 28,
+   "start": "2026-10-08",
+   "end": "2026-11-04",
+   "total_units": 125,
+   "method": "average_28",
+   "method_label": "Average-based estimate"
+  }
+ ],
+ "notes": [
+  {
+   "type": "gap",
+   "text": "Sales are missing for 13 days (2026-08-08 to 2026-08-20): there are no records and no confirmed period, so those days are unknown, not zero. Only the 48 days after that gap are used."
+  },
+  {
+   "type": "tier",
+   "text": "48 complete consecutive days of history (180 are needed for the model-based forecast). This is an average-based estimate: average daily sales over the last 28 days \u00d7 the number of days."
+  },
+  {
+   "type": "coverage",
+   "text": "2 days of the usable history are inside periods you confirmed as complete. Elsewhere, only days with recorded sales are used: a day without records outside a confirmed period is missing, not zero."
+  }
+ ],
+ "today": "2026-10-08",
+ "timezone": "Asia/Karachi"
+}

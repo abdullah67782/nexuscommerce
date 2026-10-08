@@ -19,6 +19,7 @@ from features import build_features, EXCLUDE_COLS
 from model_loader import get_model_for_seller
 from forecaster import forecast_future
 from sales_history import product_sales_history, seller_sales_history
+from v2_api import router as v2_router  # forecasting v2: approved models in ml/models_v2 only
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', 'backend', '.env'))
 
@@ -35,6 +36,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(v2_router)
 
 MODELS_DIR = os.path.join(os.path.dirname(__file__), "models")
 

@@ -4,6 +4,8 @@ const pool = require('../config/db');
 const authMiddleware = require('../middleware/auth');
 const { findOwnedProduct } = require('../lib/ownership');
 const { isManualTrainingEnabled, TRAINING_DISABLED } = require('../lib/training');
+const { productHistory, addDays } = require('../lib/coverage');
+const { todayIn, defaultTimezone } = require('../lib/imports');
 
 const router = express.Router();
 const finetuneRouter = express.Router();
@@ -32,6 +34,120 @@ async function callMLServer(method, endpoint, data = null, timeout = 30000) {
     throw new Error(`ML server request failed: ${err.message}`);
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Forecast v2 — 7- and 28-day TOTALS for one product (switchable for review).
+// Enabled only when FORECAST_V2_ENABLED=true; the existing daily forecast below
+// is unchanged and separate. The backend resolves the product's usable history
+// (lib/coverage.js: unknown days are never zero); the ML server's /v2/forecast
+// chooses the tier and method and loads only the approved ml/models_v2 files.
+// No daily breakdown, accuracy figure or confidence interval is returned.
+// ═══════════════════════════════════════════════════════════════════════════
+const isV2Enabled = () => process.env.FORECAST_V2_ENABLED === 'true';
+const V2_TIERS = { insufficient: 'fewer than 28 days', average: '28 to 179 days', model: '180 days or more' };
+
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+const listPeriods = (periods, max = 3) => periods.slice(-max).map(p => (p.start === p.end ? p.start : `${p.start} to ${p.end}`)).join(', ')
+  + (periods.length > max ? ` and ${periods.length - max} earlier period${periods.length - max === 1 ? '' : 's'}` : '');
+
+function explainV2(history, result, today) {
+  const notes = [];
+  const usable = history.usable;
+  const tier = result.history.tier;
+  const { counts } = history;
+
+  if (counts.unconfirmed > 0) {
+    notes.push({ type: 'confirmation', text: `${plural(counts.unconfirmed, 'day')} have sales records that are not confirmed complete `
+      + `(${listPeriods(history.unconfirmed_periods)}). The records stay in your sales data, but a day with some records can still be `
+      + 'missing sales, so these days do not count as forecasting history. Confirm the period each upload covers on the Data Integration page.' });
+  }
+  const before = history.before_usable;
+  if (usable && before) {
+    notes.push({ type: 'cut', text: before.state === 'unconfirmed'
+      ? `Forecasting history starts on ${usable.start}, right after the unconfirmed records of ${before.start} to ${before.end}.`
+      : `Forecasting history starts on ${usable.start}. The ${plural(before.days, 'day')} before it (${before.start} to ${before.end}) `
+        + 'have no records and no confirmed period, so they are unknown, not zero.' });
+  }
+  const after = history.after_usable;
+  if (usable && after && after.unconfirmed_days > 0) {
+    notes.push({ type: 'after', text: `Sales recorded after ${usable.end} (up to ${after.end}) are not confirmed yet, `
+      + `so forecasts start on ${addDays(usable.end, 1)}.` });
+  }
+  if (counts.missing > 0 && !(before && before.state === 'missing' && before.days === counts.missing)) {
+    notes.push({ type: 'missing', text: `${plural(counts.missing, 'day')} since the first sale on ${history.first_sale} have no records and no `
+      + 'confirmed period. They are unknown and are never treated as zero.' });
+  }
+  if (!usable) {
+    notes.push({ type: 'tier', text: 'No confirmed days yet, so there is no forecast. A forecast needs at least 28 consecutive confirmed days.' });
+  } else if (tier === 'insufficient') {
+    notes.push({ type: 'tier', text: `Only ${plural(usable.days, 'consecutive confirmed day')} are available; at least 28 are needed for an estimate.` });
+  } else if (tier === 'average') {
+    notes.push({ type: 'tier', text: `${plural(usable.days, 'consecutive confirmed day')} of history (180 are needed for the model-based forecast). `
+      + 'This is an average-based estimate: average daily sales over the last 28 days × the number of days.' });
+  } else if (result.pattern) {
+    const text = result.pattern.group === 'rare'
+      ? 'It sells on fewer than 20% of days, so it uses the rare-sales method (TSB), which follows how often it sells and how much per sale.'
+      : 'It has at least 180 confirmed days and does not sell rarely, so it uses the shared forecasting model.';
+    notes.push({ type: 'method', text });
+  }
+  const start = result.forecasts[0]?.start;
+  if (start && start < today) {
+    notes.push({ type: 'stale', text: `Confirmed history ends on ${usable.end}, so forecasts start on ${start}, not today (${today}). `
+      + 'Upload and confirm newer sales for a forecast from today.' });
+  }
+  return notes;
+}
+
+router.get('/v2/config', authMiddleware, (req, res) => {
+  res.json({ enabled: isV2Enabled(), horizons: [7, 28], tiers: V2_TIERS, history: 'confirmed days only' });
+});
+
+router.get('/v2/:productId', authMiddleware, async (req, res) => {
+  if (!isV2Enabled()) {
+    return res.status(404).json({ error: 'forecast_v2_disabled', message: 'Forecast v2 is switched off (FORECAST_V2_ENABLED).' });
+  }
+  const productId = Number(req.params.productId);
+  const product = await findOwnedProduct(productId, req.user.id);
+  if (!product) return res.status(404).json({ error: 'Product not found' });
+
+  const history = await productHistory(pool, req.user.id, productId);
+  const timezone = history.sources.find(s => s.timezone)?.timezone || defaultTimezone();
+  const today = todayIn(timezone);
+  if (!history.first_sale) {
+    return res.json({ version: 2, product, status: 'no_sales', history: null, forecasts: [], pattern: null,
+      notes: [{ type: 'tier', text: 'No sales are recorded for this product yet.' }], today, timezone });
+  }
+  let result;
+  if (!history.usable) {
+    result = { status: 'needs_confirmation', pattern: null, forecasts: [], models_release: null,
+      history: { usable_days: 0, first_day: null, last_day: null, tier: 'insufficient', required_days: { average: 28, model: 180 } } };
+  } else {
+    try {
+      result = await callMLServer('POST', '/v2/forecast',
+        { start: history.usable.start, quantities: history.usable.quantities }, 60000);
+    } catch (err) {
+      return res.status(503).json({ error: 'forecast_v2_unavailable', message: err.message });
+    }
+  }
+  res.json({
+    version: 2,
+    product,
+    status: result.status,
+    models_release: result.models_release || null,
+    history: {
+      ...result.history,
+      first_sale: history.first_sale, last_record: history.last_record,
+      confirmed_days: history.counts.confirmed, unconfirmed_days: history.counts.unconfirmed, missing_days: history.counts.missing,
+      unconfirmed_periods: history.unconfirmed_periods, missing_periods: history.missing_periods, sources: history.sources,
+    },
+    pattern: result.pattern,
+    forecasts: result.forecasts,
+    notes: explainV2(history, result, today),
+    today,
+    timezone,
+  });
+});
 
 // ─── GET /api/forecast/metrics ─────────────────────────────────────────────
 // Returns seller-specific model accuracy (no raw MAE/RMSE shown in UI)

@@ -1,14 +1,14 @@
 # Import identity and data coverage
 
-Status on branch `feature/import-identity`:
+Status (merged into `main`; coverage on `feature/forecast-v2`):
 
 | Part | State |
 |---|---|
 | A. Versioned migrations | implemented, tested on disposable databases |
-| B. Migration 002: sources, batch/line/row identity, ownership checks | implemented, tested on disposable databases, **not applied to the development database** |
+| B. Migration 002: sources, batch/line/row identity, ownership checks | implemented; rehearsed by backup/restore (`docs/migration-runbook.md`); apply to the development database with the runbook |
 | C. Overlap: reject (default) and explicit append | implemented |
 | D. `replace_period` | deferred — needs its own reviewed design (replacement chains, partial coverage, rollback restoration) |
-| E. Coverage (proposed 003) | design only: `docs/proposals/003_data_coverage.sql` |
+| E. Coverage (migration 003) | implemented: `backend/migrations/003_data_coverage.sql`, `backend/lib/coverage.js` |
 
 ## A. Versioned migrations
 
@@ -89,9 +89,11 @@ import and rollback:
 - **Future dates:** "future" means after today **in the source timezone**.
 - **API output:** DATE columns are returned as `YYYY-MM-DD` strings. The pg default
   shifted them by a day on servers east of UTC.
-- **Default timezone:** a source's default timezone is `DEFAULT_BUSINESS_TIMEZONE`,
-  falling back to `UTC`. Backfilled sources are `UTC`.
-  - **Decision needed:** should the default be `Asia/Karachi` for this deployment?
+- **Default timezone (decided 2026-10):** new sources default to `Asia/Karachi`
+  (override with `DEFAULT_BUSINESS_TIMEZONE`). Each source keeps its own timezone
+  (`PATCH /api/data/sources/:id`, or `connection.timezone`) and a change applies
+  to future imports only. Sources backfilled by 002 stay `UTC`; stored dates are
+  never reinterpreted.
 
 ## C. Overlap
 
@@ -114,36 +116,50 @@ Not implemented. A separate design must first cover:
 - partial coverage;
 - restoring superseded rows when a replacing import is rolled back.
 
-## E. Coverage (proposed 003 — corrected design, not implemented)
+## E. Coverage (migration 003 — implemented)
 
-See `docs/proposals/003_data_coverage.sql`.
+- **Schema:** `data_coverage` and `data_coverage_products`, with composite ownership
+  keys (source, import and products all belong to the declaring seller). There is one
+  declaration per import, with status `confirmed` or `revoked`. `attributed_sales`
+  gains a `source_id` column.
+- **Declaring:**
+  - File uploads send `coverage_start`, `coverage_end`, `coverage_scope`
+    (`all_products` | `listed_products`) and `coverage_confirmed=true`.
+  - Store connect sends `coverage: { start, end, scope, confirmed: true }`;
+    its evidence is recorded as `connector_full_export`.
+  - The declaration is part of the import fingerprint.
+- **Checks before anything is written:**
+  - the period is valid and ends no later than today in the source timezone;
+  - the seller explicitly confirmed it;
+  - no row was rejected;
+  - every row is inside the period;
+  - no earlier sales or confirmed period of the same source overlap it for the
+    same products (`409 coverage_overlaps_existing_data`).
+- **Zero-transaction imports:** with `all_products` coverage, an empty file or empty
+  `sales` array is valid. It creates an import record and a version with 0 rows.
+- **Later imports:** rows without line ids that fall inside a confirmed period of the
+  same source are refused like overlaps, unless `overlap_mode=append`.
+- **Revocation:** rollback revokes the import's coverage in the same transaction.
+  Revoked periods are ignored.
+- **Confirming afterwards:** `POST /api/data/uploads/:id/coverage`
+  `{ start, end, scope, confirmed: true }` confirms an import that is already stored
+  (e.g. uploaded before coverage existed, or a store sync). The same checks apply, using
+  that import's stored rows. A rolled-back import, an import that already has a period,
+  or one with rejected rows is refused. The upload page offers this per version
+  (Upload history → Confirm period).
+- **Resolution (`productHistory`) — confirmed days only (revised 2026-10-08):** each day
+  from the product's first sale onward is one of:
+  - `confirmed` — inside confirmed coverage of **every** source that has sold the
+    product; days without rows are 0;
+  - `unconfirmed` — sales records exist but the day is not confirmed. A day with some
+    records may still be missing sales, so it is **not** forecasting history. The
+    records stay visible everywhere else (sales, dashboard, inventory);
+  - `missing` — no records and no confirmation: unknown, never zero.
 
-1. **Scope.** A coverage record belongs to exactly **one source**, plus `all_products`
-   or a listed product set. Confirmed intervals are merged only within the same source
-   and product scope. A connected store's coverage never proves completeness for
-   another source, or for another product set.
-2. **Ownership consistency.** Composite FKs `(source_id, seller_id)`,
-   `(upload_id, seller_id)`, `(product_id, seller_id)` and `(coverage_id, seller_id)`,
-   so a coverage record, its import, its source and its products all belong to one
-   seller.
-3. **Dates.** Inclusive business-local days `[declared_start, declared_end]` in the
-   source timezone. `declared_end` must be on or before today in that zone.
-   Observed first and last dates are informational only.
-4. **Zero-transaction exports.** A confirmed complete export with **no rows** is valid
-   and establishes coverage (zero sales). It needs an import record with
-   `total_records = 0`, and is allowed only with confirmed coverage attached.
-5. **Revocation.**
-   - A rollback revokes the import's coverage in the same transaction (reason
-     `rollback`).
-   - A seller can revoke coverage (reason `seller_revoked`).
-   - Revoked periods are never used.
-6. **Resolution.**
-   - For one product and one source: the union of confirmed, non-revoked intervals
-     that apply to the product, starting no earlier than its first known sale.
-   - Inside coverage, a day with no rows is 0. Outside coverage, the day is unknown,
-     never zero.
-   - Across sources, a day is known only if **every** source that sells the product
-     is covered for it. Otherwise it is unknown.
+  Forecasting history is the run of consecutive confirmed days that ends on the last
+  confirmed day; with no confirmed day there is no forecast (`needs_confirmation`).
+  The response reports confirmed / unconfirmed / missing counts and periods, what
+  interrupts the confirmed run, and any unconfirmed records after it.
 
 ## Rollback strategy for migration 002
 

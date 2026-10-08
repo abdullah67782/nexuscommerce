@@ -1,4 +1,4 @@
-// Upgrade tests for migration 002 on a DISPOSABLE database (created and dropped
+// Upgrade tests for migrations 002 and 003 on a DISPOSABLE database (created and dropped
 // here; never the development database).
 //
 //  1. A database built the old way (initDb.js = 001 SQL run directly, no
@@ -70,7 +70,7 @@ test('migrating records the existing baseline and applies 002 without losing row
   const before = { sales: await count('sales'), products: await count('products'), imports: await count('data_uploads'),
     attributed: await count('attributed_sales') };
 
-  const ran = await migrate(db);
+  const ran = await migrate(db, { target: 2 });
   assert.deepEqual(ran, ['001_baseline', '002_import_identity']);
 
   assert.equal(await count('sales'), before.sales);
@@ -107,21 +107,55 @@ test('after 002: identical genuine rows are allowed, provenance violations are n
     /sale provenance/);
 });
 
-test('restarting cannot undo the migration', async () => {
+test('003 applies on top of 002 without changing rows, and restarting cannot undo either', async () => {
+  const before = { sales: await count('sales'), attributed: await count('attributed_sales') };
+  assert.deepEqual(await migrate(db), ['003_data_coverage']);
+  assert.equal(await count('sales'), before.sales);
+  assert.equal(await count('attributed_sales'), before.attributed, 'quarantine unchanged');
+  assert.equal((await one(`SELECT COUNT(*)::int AS n FROM attributed_sales WHERE source_id IS NOT NULL`)).n > 0, true,
+    'attributed_sales now carries the source');
   assert.deepEqual(await migrate(db), [], 'running migrate again is a no-op');
   await assertSchemaCurrent(db);
   assert.ok(!(await constraintExists('unique_sale_transaction')));
   const st = await status(db);
-  assert.deepEqual(st.applied.map(r => r.name), ['001_baseline', '002_import_identity']);
+  assert.deepEqual(st.applied.map(r => r.name), ['001_baseline', '002_import_identity', '003_data_coverage']);
 });
 
-test('reversal refuses while genuine identical rows exist, and changes nothing', async () => {
+test('003 enforces one seller across coverage, source, import and listed products', async () => {
+  const src = (await one(`SELECT id FROM data_sources WHERE seller_id = 1 AND kind = 'file'`)).id;
+  const ok = await one(`INSERT INTO data_coverage (seller_id, source_id, upload_id, scope, declared_start, declared_end, evidence, declared_by)
+                        VALUES (1, $1, 1, 'listed_products', '2026-01-01', '2026-01-31', 'seller_declaration', 1) RETURNING id`, [src]);
+  await db.query('INSERT INTO data_coverage_products (coverage_id, product_id, seller_id) VALUES ($1, 1, 1)', [ok.id]);
+  // seller 2's import on seller 1's source / declared by someone else / product of another owner
+  await assert.rejects(db.query(`INSERT INTO data_coverage (seller_id, source_id, upload_id, scope, declared_start, declared_end, evidence, declared_by)
+                                 VALUES (1, $1, 3, 'all_products', '2026-02-01', '2026-02-02', 'seller_declaration', 1)`, [src]), /data_coverage_upload_owner_fk/);
+  await assert.rejects(db.query(`INSERT INTO data_coverage (seller_id, source_id, upload_id, scope, declared_start, declared_end, evidence, declared_by)
+                                 VALUES (1, $1, 4, 'all_products', '2026-02-01', '2026-02-02', 'seller_declaration', 2)`, [src]), /check/);
+  await db.query(`INSERT INTO users (id, email, password) VALUES (3, 'c@x', 'p'); INSERT INTO products (id, name, user_id) VALUES (3, 'Theirs', 3)`);
+  await assert.rejects(db.query('INSERT INTO data_coverage_products (coverage_id, product_id, seller_id) VALUES ($1, 3, 1)', [ok.id]),
+    /data_coverage_products_product_fk/);
+  await assert.rejects(db.query(`INSERT INTO data_coverage (seller_id, source_id, upload_id, scope, declared_start, declared_end, evidence, declared_by)
+                                 VALUES (1, $1, 2, 'all_products', '2026-03-05', '2026-03-01', 'seller_declaration', 1)`, [src]), /check/);
+  await db.query('DELETE FROM data_coverage');
+});
+
+test('003 reverses cleanly (sales kept), and reversal stays latest-first', async () => {
+  const salesBefore = await count('sales');
+  await assert.rejects(down(db, 2), /Only the latest applied migration/);
+  await down(db, 3);
+  assert.equal((await one(`SELECT to_regclass('data_coverage') AS t`)).t, null);
+  assert.equal(await count('sales'), salesBefore);
+  assert.equal((await one(`SELECT COUNT(*)::int AS n FROM information_schema.columns
+                           WHERE table_name = 'attributed_sales' AND column_name = 'source_id'`)).n, 0);
+});
+
+test('reversal of 002 refuses while genuine identical rows exist, and changes nothing', async () => {
   await assert.rejects(down(db, 2), /cannot reverse 002/);
   assert.ok(await constraintExists('upload_versions_seller_version_uq'), 'still at 002');
   assert.deepEqual((await status(db)).applied.map(r => r.version), [1, 2]);
 });
 
-test('reversal works once the data allows it, and 002 can be re-applied', async () => {
+test('reversal of 002 works once the data allows it, and 002 + 003 can be re-applied', async () => {
   await db.query(`DELETE FROM sales WHERE sale_date = '2026-01-09'`);
   const salesBefore = await count('sales');
   await down(db, 2);
@@ -129,8 +163,9 @@ test('reversal works once the data allows it, and 002 can be re-applied', async 
   assert.equal((await one(`SELECT to_regclass('data_sources') AS t`)).t, null);
   assert.equal(await count('sales'), salesBefore, 'no sale lost by the reversal');
   await assert.rejects(assertSchemaCurrent(db), (err) => err.code === 'SCHEMA_NOT_CURRENT');
-  assert.deepEqual(await migrate(db), ['002_import_identity']);
+  assert.deepEqual(await migrate(db), ['002_import_identity', '003_data_coverage']);
   assert.equal(await count('sales'), salesBefore);
+  await assertSchemaCurrent(db);
 });
 
 test('an edited, already-applied migration is detected and blocks both migrate and startup', async () => {
