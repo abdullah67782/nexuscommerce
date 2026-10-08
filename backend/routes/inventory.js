@@ -371,7 +371,7 @@ router.post('/count-files', authMiddleware, upload.single('file'), async (req, r
       const rejectedRows = anomalies.length;
       if (!items.length) {
         throw new InventoryError(400, { error: 'no_valid_rows', message: 'No row of this file could be recorded. Nothing was imported.',
-          rejected_rows: anomalies.slice(0, MAX_REPORTED).map(a => ({ row: a.row_number, problem: a.anomaly_type, value: a.original_value })) });
+          rejected_rows: anomalies.slice(0, MAX_REPORTED).map(a => ({ row: a.row_number, product_name: a.product_name, problem: a.anomaly_type, value: a.original_value })) });
       }
 
       const location = await ledger.ensureDefaultLocation(client, sellerId);
@@ -392,7 +392,7 @@ router.post('/count-files', authMiddleware, upload.single('file'), async (req, r
         batch_id: counts.batch_id, counted_at: countedAt, total_rows: rows.length, products_counted: items.length,
         recorded: counts.recorded, already_recorded: counts.already_recorded, superseded: counts.superseded,
         identical_duplicate_rows: duplicateRows, rejected: rejectedRows,
-        rejected_rows: anomalies.slice(0, MAX_REPORTED).map(a => ({ row: a.row_number, problem: a.anomaly_type, value: a.original_value })),
+        rejected_rows: anomalies.slice(0, MAX_REPORTED).map(a => ({ row: a.row_number, product_name: a.product_name, problem: a.anomaly_type, value: a.original_value })),
         note: 'Products not listed in this file keep their previous counts.',
       };
       await client.query('UPDATE data_uploads SET clean_records = $2, result_summary = $3 WHERE id = $1',

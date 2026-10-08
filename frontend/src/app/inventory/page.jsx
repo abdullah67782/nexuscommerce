@@ -53,6 +53,11 @@ const RELATION = {
   after_count: 'after the count — applied', at_count_included: 'at the count time — inside the count',
   before_count_included: 'before the count — inside the count', no_count: 'no count to apply to',
 };
+// Movement tracking: a declared feed is configured coverage, not verified delivery.
+const TRACKING = {
+  absent: 'no shipment feed', partial: 'some sales have no shipment feed', declared_unverified: 'feed declared; completeness unverified',
+  complete: 'every shipment verified', not_applicable: 'no count yet',
+};
 const SOURCE_KIND = { manual_count: 'Count form', count_file: 'Count file', connector: 'Connected source', legacy_migration: 'Old stock column' };
 
 const fmtNum = (n) => (n == null ? '—' : Number(n).toLocaleString());
@@ -228,7 +233,7 @@ function ItemRow({ it, onOpen }) {
       <td>{s.last_count ? <>{fmtWhen(s.last_count.observed_at)}<span className="list-row-aside" style={{ display: 'block', fontSize: 12 }}>{ageText(s.last_count.observed_at)} · {SOURCE_KIND[s.last_count.source_kind] || s.last_count.source_kind}</span></> : <span className="text-faint">—</span>}</td>
       <td className="cell-note">{s.known
         ? <>{s.events_since_count ? `${s.events_since_count} movement${s.events_since_count === 1 ? '' : 's'}, net ${s.net_change_since_count > 0 ? '+' : ''}${s.net_change_since_count}` : 'No movements recorded'}
-            <span className="list-row-aside" style={{ display: 'block' }}>{s.movement_tracking === 'complete' ? 'every shipment is recorded' : s.movement_tracking === 'partial' ? 'some sales have no shipment record' : 'no shipment feed'}</span></>
+            <span className="list-row-aside" style={{ display: 'block' }}>{TRACKING[s.movement_tracking] || s.movement_tracking}</span></>
         : s.events_without_count ? `${s.events_without_count} movement(s) waiting for a count` : '—'}</td>
       <td className="is-num">{it.policy.reorder_threshold == null ? <span className="text-faint">not set</span> : fmtNum(it.policy.reorder_threshold)}
         {it.policy.reorder_threshold != null && <span style={{ display: 'block', marginTop: 4 }}><StatusBadge tone={al.tone}>{al.label}</StatusBadge></span>}</td>
@@ -270,7 +275,7 @@ function ProductDialog({ productId, onClose, onChanged }) {
           <div className="detail-grid">
             <div><span>On hand (physical)</span><strong>{s.known ? fmtNum(s.on_hand) : '—'}</strong><em className="side-note" style={{ fontStyle: 'normal' }}>{s.known ? (s.position_type === 'tracked' ? 'tracked position' : 'last-known position') : 'no verified count'}</em></div>
             <div><span>Last count</span><strong style={{ fontSize: 16 }}>{s.last_count ? `${fmtNum(s.last_count.quantity)} · ${ageText(s.last_count.observed_at)}` : '—'}</strong><em className="side-note" style={{ fontStyle: 'normal' }}>{s.last_count ? fmtWhen(s.last_count.observed_at) : 'record a count below'}</em></div>
-            <div><span>Since the count</span><strong style={{ fontSize: 16 }}>{s.known ? `${s.net_change_since_count > 0 ? '+' : ''}${s.net_change_since_count} (${plural(s.events_since_count, 'event')})` : '—'}</strong><em className="side-note" style={{ fontStyle: 'normal' }}>movement tracking: {s.movement_tracking.replace('_', ' ')}</em></div>
+            <div><span>Since the count</span><strong style={{ fontSize: 16 }}>{s.known ? `${s.net_change_since_count > 0 ? '+' : ''}${s.net_change_since_count} (${plural(s.events_since_count, 'event')})` : '—'}</strong><em className="side-note" style={{ fontStyle: 'normal' }}>{TRACKING[s.movement_tracking] || s.movement_tracking}</em></div>
             <div><span>Stock status</span><div style={{ marginTop: 8 }}><StatusBadge tone={st.tone}>{st.label}</StatusBadge></div><em className="side-note" style={{ fontStyle: 'normal' }}>available to sell: not tracked</em></div>
           </div>
           <p className="side-note">{item.readiness.stock.reason}{item.readiness.reconciliation.state === 'needs_review' ? ` ${item.readiness.reconciliation.reason}` : ''}
@@ -446,7 +451,7 @@ function History({ item, onDone }) {
           </div>
         ) : <p className="side-note">No movements recorded.</p>}
       </div>
-      <p className="side-note">Stock-count files are undone with Rollback on the Data Integration page.</p>
+      <p className="side-note">Stock-count files are undone with Rollback on the Data Integration page, while the file is the latest version there (sales imports and count files share one version history).</p>
     </div>
   );
 }
@@ -488,7 +493,7 @@ function CountFileDialog({ onClose, onDone }) {
           {result.rejected > 0 && (
             <div className="result-notes" style={{ paddingTop: 10 }}>
               <p><HiExclamationTriangle style={{ color: 'var(--warning)' }} /> {result.rejected} row{result.rejected === 1 ? ' was' : 's were'} not recorded:</p>
-              <ul className="overlap-list">{result.rejected_rows.map(r => <li key={r.row}>Row {r.row}: {r.problem.replace(/_/g, ' ')}{r.value ? ` (${r.value})` : ''}</li>)}</ul>
+              <ul className="overlap-list">{result.rejected_rows.map(r => <li key={r.row}>Row {r.row}{r.product_name ? <> · <strong>{r.product_name}</strong></> : ''}: {r.problem.replace(/_/g, ' ')}{r.value && r.value !== r.product_name ? ` (${r.value})` : ''}</li>)}</ul>
             </div>
           )}
           <Button onClick={onClose}>Done</Button>

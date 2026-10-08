@@ -6,6 +6,19 @@ Stage 1b (suppliers, purchase orders, receipts) has not been started.
 The forecasting models (`nexus-v2-shared-20261008`), the routing rule, manual training
 (still disabled) and the ownership repair (still dry-run) are unchanged.
 
+## 0. Review corrections, round 1 (2026-10-08)
+
+Codex found two reliability issues and approved the judgement calls in §7. Both issues are fixed, each with a regression test that fails on the previous code and passes now. The rest of the Stage 1a design is unchanged.
+
+| Finding | Fix |
+|---|---|
+| **P1: feed configuration was treated as complete tracking.** A declared feed made tracking `complete` without any evidence that synchronisation had delivered. Feed coverage was also checked per source, not per interval: if feed A started before the count and feed B after it, B's earlier sales were treated as covered. | `shipment_feed_since` is now treated as **configured** coverage only. Tracking is `absent` (no feed), `partial` or `declared_unverified`. `complete` is reserved for verified synchronisation coverage, which Stage 1a does not record, so it is never returned and the position stays **last-known**. The UI shows "feed declared; completeness unverified". Coverage is evaluated per source interval: a sale on or after the count date is covered only if its own source has a feed that started at or before the start of that sale's business day (location timezone). A feed that starts after the count is a gap and gives `partial`. (`lib/stockLedger.js → trackingFor`, the coverage query in `positions`.) |
+| **P2: manual same-instant movements were not flagged.** With a connector count and a manual movement (`source_id` NULL) at the same instant, the old `NOT (... = NULL)` comparison evaluated to NULL, so the movement was not counted for review. | The comparison is now NULL-safe: only an event from the same **non-null** connector source as the count is exempt. Manual events and events from any other source trigger `needs_review`. Stock is still unchanged, per the cutoff rule. |
+| Local activation blocked by line endings | On Windows, the merge checked `003_data_coverage.sql` out with CRLF line endings (`* text=auto`). Its bytes changed, so the migration runner reported "modified" and refused to run. The file content is identical. The checksum is now taken over LF-normalised text; a checksum recorded from raw bytes is still accepted. A real edit is still detected (`db/migrate.js`, plus a regression test in `upgrade.test.js`). |
+| Approved conditions | A rollback blocked by a newer version of the other kind now explains the shared version history (`message`, `latest_version`), and the Upload history panel states it. Rejected count-file rows now carry the product name, shown in the result list. |
+
+Tests: backend **117/117** in UTC, Los Angeles and Tokyo (4 new regression tests); ML 23/23. The browser run was repeated on the fixed code: every figure is unchanged, and positions with a declared feed now show "Last known". Evidence was refreshed in `docs/evidence/inventory-stage1a/`.
+
 ## 1. Accounting rules as implemented
 
 `on_hand = selected count + Σ movements effective strictly after it`. This is computed at read time
@@ -14,7 +27,7 @@ The forecasting models (`nexus-v2-shared-20261008`), the routing rule, manual tr
 | Review requirement | Implementation |
 |---|---|
 | **1. Snapshot selection** | The selected count is the **active, verified** count with the latest `observed_at`. Unverified legacy values have no time, so they can never be selected and never enter the arithmetic. A partial unique index allows only one active count per seller/product/location/instant. The same value at the same instant is `already_recorded` and creates no new row. A different value returns 409 `conflicting_count` and writes nothing, unless the request sends `supersede: true`: the old count is then marked `superseded_by` the new one. Insertion order is never used. A connector can submit counts only if its source is declared `reports_physical_on_hand` for the location (`PUT /inventory/sources/:id`); a channel's "available" quantity is refused (422). A replay with the same id and content returns the original result; the same id with different content returns 409. |
-| **2. Count age vs completeness** | Returned separately. `last_count.observed_at` and `age_days` give the age. `movement_tracking` is `complete`, `partial`, `absent` or `not_applicable`, alongside `events_since_count` and `untracked_sales_since_count`. **Complete** requires a source declared to send every shipment for the location since a time at or before the count, and no sales from any other source on or after the count's business date (location timezone). Otherwise tracking is `partial`, or `absent` when no feed exists. `position_type` is `tracked` only when tracking is complete; otherwise it is `last_known`. A count from an hour ago with no feed is still `last_known`. |
+| **2. Count age vs completeness** | Returned separately. `last_count.observed_at` and `age_days` give the age. `movement_tracking` is `absent`, `partial`, `declared_unverified` or `not_applicable`, alongside `events_since_count` and `untracked_sales_since_count`. A declared feed is configured coverage, not verified delivery (see §0). `complete` and `position_type: tracked` are reserved for verified synchronisation coverage, so every Stage 1a position is `last_known`. A count from an hour ago with no feed is still `last_known`. |
 | **3. Stable, auditable ledger** | Movements are append-only. Their relation to the count (`before_count_included`, `at_count_included`, `after_count`, `no_count`) is computed at read time against the currently selected count. A count includes events at its exact instant (`effective_at <= observed_at`). An event at exactly the count instant from any source other than the connector that reported the count is flagged `reconciliation: needs_review`. Movements recorded with no count are kept and also flagged. Instants must carry an offset; local or date-only times are refused, never guessed. |
 | **4. Rollback** | Sales rollback deletes only products created by that import that have no sales **and** no counts, movements, settings or legacy inventory rows. Foreign keys from the ledger to `products (id, user_id)` also block deletion. A stock-count file is its own import kind (`data_uploads.source = 'stock_count'`): rollback revokes its counts (kept as evidence), counts it had superseded become active again, and no sales or products are touched. Count files cannot be confirmed as sales coverage (400), never move sales freshness, and are excluded from data-quality figures. |
 | **5. Constraints** | The seller default policy is unique through a partial index (`product_id IS NULL`), as are product policies. Each product/location appears once per submission (`UNIQUE (batch_id, product_id, location_id)`). The API refuses duplicate products, and a count file rejects conflicting duplicate rows (identical duplicates are collapsed and reported). Every legacy row is kept in `inventory_legacy_rows` with an outcome: `migrated`, `duplicate_not_selected`, `ownerless_not_migrated`, `missing_product` or `negative_not_migrated`. The legacy `inventory` table is not modified. `004 down` **refuses and changes nothing** once any count, movement, seller setting, source mapping or stock-count import exists; the preservation path is the pre-migration backup (runbook). |
@@ -62,9 +75,9 @@ Other API changes:
 
 | Suite | Result |
 |---|---|
-| Backend, `TZ=UTC` | 113/113 (previously 92) |
-| Backend, `TZ=America/Los_Angeles` | 113/113 |
-| Backend, `TZ=Asia/Tokyo` | 113/113 |
+| Backend, `TZ=UTC` | 117/117 (previously 92) |
+| Backend, `TZ=America/Los_Angeles` | 117/117 |
+| Backend, `TZ=Asia/Tokyo` | 117/117 |
 | ML (`ml/tests`) | 23/23, unchanged |
 
 Logs are in `docs/evidence/inventory-stage1a/`.
@@ -78,7 +91,10 @@ New tests cover:
 - count identity: replay, already recorded, conflict, supersede and its undo;
 - sales uploads with stock columns;
 - seller isolation on every route;
-- movement tracking absent → complete → partial;
+- movement tracking absent → declared_unverified → partial, never complete;
+- per-interval feed coverage (a later-starting feed cannot cover earlier sales);
+- same-instant manual and other-source events flagged, same connector exempt;
+- the cross-type rollback explanation;
 - stale and inconsistent states, and per-product tolerance;
 - adjustment signs, reasons and refused kinds;
 - count validation (offsets, future, negative, fractional, duplicates, physical-stock sources, unmapped source);
@@ -102,10 +118,10 @@ The demo seller's database was migrated, then seeded with `demo-inventory-data.j
 | # | Acceptance case | Result | Screenshots |
 |---|---|---|---|
 | 1 | Missing, measured zero and unverified legacy are distinct | Pashmina Shawl: "— no count, old value 12, unverified", state `unverified_only`, overall blocked. Prayer Mat: **0**, a counted zero, below threshold. Silk Dupatta: "— no count", `missing`. | 01, 18, 09 |
-| 2 | Count → shipment → newer count, no double deduction | Lawn Suit: count 64, shipments −3 −2 −4 gives 55 (tracked). A newer UI count of 54 gives **54** (not 45); the three shipments show "before the count — inside the count". | 02, 03, 04 |
+| 2 | Count → shipment → newer count, no double deduction | Lawn Suit: count 64, shipments −3 −2 −4 gives 55 (last-known: feed declared, unverified). A newer UI count of 54 gives **54** (not 45); the three shipments show "before the count — inside the count". | 02, 03, 04 |
 | 3 | Rolling back the newer count recomputes | After a later shipment of −4 (50), revoking the newer count in History gives **51** = 64 − 9 − 4. | 05a, 05b |
 | 4 | Replay changes nothing; conflicting replay refused | Replay: 200, recorded 0, replayed 1, on-hand still 50. A conflicting replay plus a new event: 409 `event_conflict`; the new event was not recorded and the tables were unchanged. A same-instant count conflict prompts for explicit replacement (6 superseded by 5). | 06, 07 |
-| 5 | Historical sales uploads leave inventory unchanged | A sales CSV with `stock_level` and `reorder_threshold` shows the "Stock columns ignored" notice. Snapshot, movement and legacy-table counts and every on-hand figure are identical before and after. Ceramic Mug's tracking changed `complete` → `partial`, because new mug sales came from a source without shipments; its on-hand is unchanged. | 08, 09 |
+| 5 | Historical sales uploads leave inventory unchanged | A sales CSV with `stock_level` and `reorder_threshold` shows the "Stock columns ignored" notice. Snapshot, movement and legacy-table counts and every on-hand figure are identical before and after. Ceramic Mug's tracking changed `declared_unverified` → `partial`, because new mug sales came from a source without shipments; its on-hand is unchanged. | 08, 09 |
 | 6 | Another seller cannot read or modify | Item, policy, revoke, movement, shipment and source: 404. Counts by A's id or name: 400 `product_not_found`. B's lists are empty and the tables are unchanged. B's page shows "No products yet". | 13 |
 | 7 | Empty and failed API responses show real states | A simulated 500 on `/inventory/items` shows the error panel with Retry and no sample figures. A 500 on alerts shows a dashboard error panel ("does not mean stock is healthy"). The no-match filter and the empty seller are shown. | 14, 15, 16, 13 |
 | 8 | Migration rehearsal preserves data | See §5. | text files |
@@ -118,19 +134,19 @@ Also shown:
 
 Console: the only errors are the expected 409 (conflict demonstration) and the simulated 500s.
 
-## 7. Judgement calls to review
+## 7. Judgement calls (decided by Codex)
 
-1. **Completeness rule.** Sales on the count's business date count as untracked even if they happened before the count time. This is conservative: the system cannot tell. A sales file uploaded later can turn `complete` into `partial` after the fact; this is intended.
-2. **Same-instant events.** Treated as included, and flagged unless they come from the same connector that reported the count.
-3. **Negative latest legacy row.** It is not migrated, and an older non-negative duplicate is not used in its place. Both rows are kept as evidence.
-4. **One version sequence.** Count files share the import version sequence, so "only the latest import can be rolled back" applies across sales imports and count files.
-5. **Revoke.** Any active count-form or connector count can be revoked, not only the latest. Revoking restores the count it superseded.
-6. **Legacy thresholds.** These are copied with provenance `legacy_migration`. The old upload wrote 10 when a file had no threshold, and that cannot be told apart; the UI says so.
-7. **Count-file rejected rows.** These are recorded as `warning` anomalies, not `critical` ones, because they do not affect sales or forecasts.
+1. **Completeness rule.** Sales on the count's business date count as untracked even if they happened before the count time. This is conservative: the system cannot tell. A sales file uploaded later can turn `declared_unverified` into `partial` after the fact; this is intended. *Approved.*
+2. **Same-instant events.** Treated as included, and flagged unless they come from the same non-null connector that reported the count. *Approved with the NULL-source fix (§0).*
+3. **Negative latest legacy row.** It is not migrated, and an older non-negative duplicate is not used in its place. Both rows are kept as evidence. *Approved: no substitution.*
+4. **One version sequence.** Count files share the import version sequence, so "only the latest import can be rolled back" applies across sales imports and count files. *Approved; the refusal now explains this (§0).*
+5. **Revoke.** Any active count-form or connector count can be revoked, not only the latest. Revoking restores the count it superseded. *Approved.*
+6. **Legacy thresholds.** These are copied with provenance `legacy_migration`. The old upload wrote 10 when a file had no threshold, and that cannot be told apart; the UI says so. *Approved with the provenance notice.*
+7. **Count-file rejected rows.** These are recorded as `warning` anomalies, not `critical` ones, because they do not affect sales or forecasts. *Approved; rejected products are now named (§0).*
 8. **Untouched on purpose.**
    - `seeder.js` still writes the legacy table; the app ignores it after 004.
    - `ownership_repair_dryrun.sql` still reads legacy `inventory`, which remains valid because the table is unchanged.
-   - The pricing page's mock fallback is out of scope.
+   - The pricing page's mock fallback is out of scope. *Accepted.*
 
 ## 8. Stage 1b decisions recorded
 

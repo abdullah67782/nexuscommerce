@@ -9,7 +9,8 @@
 // Expects the forecasting demo products (scripts/demo-forecast-data.js). It shows
 // every stock state side by side:
 //   Lawn Suit 3-Piece  counted yesterday; the connected store sends shipments
-//                      → tracked position (count − shipments since)
+//                      → count − shipments since; still a last-known position,
+//                      because a declared feed is not verified delivery
 //   Ceramic Mug Set    counted 2 days ago, one damaged set recorded; becomes a
 //                      last-known position as soon as a sales file (which sends
 //                      no shipments) records mug sales on/after the count day

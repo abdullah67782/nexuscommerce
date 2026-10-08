@@ -16,10 +16,11 @@
 //     No selected count → on_hand is unknown (null), never zero.
 //   * on_hand is physical stock at the location. Reservations are not tracked,
 //     so it is NOT available-to-sell stock.
-//   * Movement-tracking completeness is reported separately from count age:
-//     'complete' only when a source declared to send every shipment for the
-//     location since before the count exists and no other source recorded sales
-//     on or after the count date; otherwise 'partial', or 'absent' with no feed.
+//   * Movement tracking is reported separately from count age (trackingFor).
+//     A declared feed is configured coverage, not verified delivery, so Stage 1a
+//     reports at best 'declared_unverified' and the position stays last-known.
+//   * Same-instant movements are inside the count; all of them need review
+//     except events from the same (non-null) connector source as the count.
 const crypto = require('node:crypto');
 const { stableStringify, lockSeller } = require('./imports');
 
@@ -238,6 +239,22 @@ async function recordMovements(client, { sellerId, userId, location, events }) {
   return result;
 }
 
+// ── Movement tracking ────────────────────────────────────────────────────────
+//   absent              no source is declared to send shipments for the location
+//   partial             evidence of a gap: a declared feed starts after the count,
+//                       or sales on/after the count date came from a source (or a
+//                       day) that no declared feed covers
+//   declared_unverified feeds are declared to cover the count and every later sale,
+//                       but delivery has not been verified → still a last-known position
+//   complete            reserved: requires VERIFIED synchronisation coverage through
+//                       now, which Stage 1a does not record. Never returned in 1a.
+function trackingFor(observedMs, feeds, uncoveredSales) {
+  if (!feeds.length) return 'absent';
+  if (uncoveredSales > 0) return 'partial';
+  if (!feeds.some(f => new Date(f.shipment_feed_since).getTime() <= observedMs)) return 'partial';
+  return 'declared_unverified';
+}
+
 // ── Positions ────────────────────────────────────────────────────────────────
 // Returns Map(product_id → position) for the seller's products at a location.
 async function positions(db, sellerId, location, productIds = null) {
@@ -268,8 +285,11 @@ async function positions(db, sellerId, location, productIds = null) {
               COUNT(*) FILTER (WHERE base.observed_at IS NOT NULL AND m.effective_at <= base.observed_at)::int AS events_included,
               -- An event at exactly the count's instant is inside the count. Only the same
               -- connector that reported the count establishes that ordering itself.
+              -- Manual movements (source NULL) and other sources always need review:
+              -- written NULL-safe, since NOT (... = NULL) would silently drop them.
               COUNT(*) FILTER (WHERE m.effective_at = base.observed_at
-                               AND NOT (base.source_id IS NOT NULL AND m.source_id = base.source_id))::int AS same_instant_other_source,
+                               AND (base.source_id IS NULL OR m.source_id IS NULL
+                                    OR m.source_id <> base.source_id))::int AS same_instant_other_source,
               MAX(m.effective_at) AS last_event_at
        FROM stock_movements m LEFT JOIN base ON base.product_id = m.product_id
        WHERE m.seller_id = $1 AND m.location_id = $2 AND m.product_id IN (SELECT id FROM prods)
@@ -290,42 +310,45 @@ async function positions(db, sellerId, location, productIds = null) {
      LEFT JOIN mv ON mv.product_id = p.id`,
     [sellerId, location.id, productIds, location.timezone]);
 
-  // Movement-tracking completeness (separate from count age).
+  // Movement tracking (separate from count age). See trackingFor() below.
+  // A feed's shipment_feed_since is CONFIGURED coverage: what the seller says the
+  // source will send. It is not evidence that synchronisation actually delivered
+  // every event up to now, so Stage 1a never reports 'complete'.
   const { rows: feeds } = await db.query(
     `SELECT source_id, shipment_feed_since FROM inventory_source_mappings
      WHERE seller_id = $1 AND location_id = $2 AND shipment_feed_since IS NOT NULL`, [sellerId, location.id]);
-  const feedIds = feeds.map(f => f.source_id);
   const counted = rows.filter(r => r.snapshot_id);
-  const untrackedSales = new Map();
-  if (counted.length && feeds.length) {
+  const uncoveredSales = new Map();
+  if (counted.length) {
+    // Sales on/after the count's business date whose shipments no feed is declared
+    // to send: the source has no feed, or its feed starts after the start of that
+    // sale's business day (a later-starting feed cannot cover earlier sales).
     const { rows: sales } = await db.query(
       `SELECT a.product_id, COUNT(*)::int AS n
        FROM attributed_sales a
        JOIN unnest($2::int[], $3::date[]) AS c(product_id, count_date) ON c.product_id = a.product_id
        WHERE a.seller_id = $1 AND a.sale_date >= c.count_date
-         AND (a.source_id IS NULL OR NOT (a.source_id = ANY($4::int[])))
+         AND NOT EXISTS (
+           SELECT 1 FROM inventory_source_mappings f
+           WHERE f.seller_id = $1 AND f.location_id = $4 AND f.source_id = a.source_id
+             AND f.shipment_feed_since IS NOT NULL
+             AND f.shipment_feed_since <= (a.sale_date::timestamp AT TIME ZONE $5))
        GROUP BY a.product_id`,
-      [sellerId, counted.map(r => r.product_id), counted.map(r => r.count_business_date), feedIds]);
-    sales.forEach(s => untrackedSales.set(s.product_id, s.n));
+      [sellerId, counted.map(r => r.product_id), counted.map(r => r.count_business_date), location.id, location.timezone]);
+    sales.forEach(s => uncoveredSales.set(s.product_id, s.n));
   }
 
   const now = Date.now();
   const out = new Map();
   for (const r of rows) {
     const has = Boolean(r.snapshot_id);
-    let tracking = 'not_applicable';
-    if (has) {
-      const observed = new Date(r.observed_at).getTime();
-      const covering = feeds.filter(f => new Date(f.shipment_feed_since).getTime() <= observed);
-      if (!feeds.length) tracking = 'absent';
-      else if (covering.length && !untrackedSales.get(r.product_id)) tracking = 'complete';
-      else tracking = 'partial';
-    }
+    const tracking = has ? trackingFor(new Date(r.observed_at).getTime(), feeds, uncoveredSales.get(r.product_id) || 0)
+      : 'not_applicable';
     out.set(r.product_id, {
       product_id: r.product_id,
       known: has,
       on_hand: has ? r.count_quantity + r.delta_after : null,
-      basis: has ? (tracking === 'complete' ? 'tracked_position' : 'last_known_count') : null,
+      basis: has ? (tracking === 'complete' ? 'tracked_position' : 'last_known_count') : null, // 'complete' needs verified sync (not in 1a)
       last_count: has ? {
         snapshot_id: r.snapshot_id, batch_id: r.batch_id, quantity: r.count_quantity,
         observed_at: new Date(r.observed_at).toISOString(), business_date: r.count_business_date,
@@ -337,7 +360,7 @@ async function positions(db, sellerId, location, productIds = null) {
       events_included_in_count: has ? r.events_included : 0,
       events_without_count: has ? 0 : r.events_total,
       same_instant_events: r.same_instant_other_source,
-      untracked_sales_since_count: untrackedSales.get(r.product_id) || 0,
+      untracked_sales_since_count: uncoveredSales.get(r.product_id) || 0,
       legacy: r.legacy_quantity === null || r.legacy_quantity === undefined ? null : {
         quantity: r.legacy_quantity, written_at_server_time: r.legacy_recorded_at, verification: 'unverified',
       },
@@ -373,5 +396,5 @@ async function policies(db, sellerId, location, productIds = null) {
 module.exports = {
   InventoryError, DEFAULT_STALE_DAYS, MANUAL_KINDS, EVENT_KINDS, NEGATIVE_KINDS,
   parseInstant, wholeQuantity, ensureDefaultLocation, resolveProducts,
-  recordCounts, revokeBatch, recordMovements, positions, policies, lockSeller, sha,
+  recordCounts, revokeBatch, recordMovements, positions, policies, lockSeller, sha, trackingFor,
 };

@@ -88,7 +88,7 @@ test('2–3. count → shipment → newer count: no double deduction; revoking t
   const sh = await ship(a, src, [{ external_event_id: 'o-1', kind: 'shipment', product_id: a.p.Mouse, quantity: 3, effective_at: ago(5) }]);
   assert.equal(sh.status, 201, JSON.stringify(sh.body));
   let m = await item(a, a.p.Mouse);
-  assert.deepEqual([m.stock.on_hand, m.stock.events_since_count, m.stock.movement_tracking, m.stock.position_type], [17, 1, 'complete', 'tracked']);
+  assert.deepEqual([m.stock.on_hand, m.stock.events_since_count, m.stock.movement_tracking, m.stock.position_type], [17, 1, 'declared_unverified', 'last_known']);
 
   const newer = await count(a, [{ product_id: a.p.Mouse, quantity: 16 }], ago(2)); // includes the shipment
   m = await item(a, a.p.Mouse);
@@ -224,13 +224,93 @@ test('movement tracking is reported separately from count age', async () => {
 
   const src = await feedSource(a);
   m = await item(a, a.p.Mouse);
-  assert.equal(m.stock.movement_tracking, 'complete');
+  // A declared feed is configured coverage, not verified delivery: never 'complete'.
+  assert.deepEqual([m.stock.movement_tracking, m.stock.position_type, m.readiness.stock.state],
+    ['declared_unverified', 'last_known', 'last_known']);
+  assert.match(m.readiness.stock.reason, /not verified/);
   // Sales recorded on/after the count day by a source that sends no shipments.
   const today = new Date().toISOString().slice(0, 10);
   await ctx.api('POST', '/data/upload', { token: a.token, form: csvForm(salesCsv(['Mouse'], 1, today, false)) });
   m = await item(a, a.p.Mouse);
   assert.deepEqual([m.stock.movement_tracking, m.stock.position_type, m.stock.untracked_sales_since_count >= 1], ['partial', 'last_known', true]);
   assert.ok(src);
+});
+
+// Regression (architect review 1a, P1): a later-starting feed cannot cover earlier sales.
+const karachiToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Karachi' }).format(new Date());
+async function storeSale(s, sourceId, productId, day) {
+  const { rows: [u] } = await ctx.pool.query(
+    `INSERT INTO data_uploads (uploaded_by, file_format, total_records, clean_records, source, source_id, idempotency_key)
+     VALUES ($1, 'api', 1, 1, 'store_connect', $2, $3) RETURNING id`, [s.id, sourceId, key()]);
+  await ctx.pool.query(
+    `INSERT INTO sales (product_id, quantity, sale_date, revenue, upload_id, source_id, source_row_number)
+     VALUES ($1, 1, $2, 10, $3, $4, 1)`, [productId, day, u.id, sourceId]);
+}
+
+test('feed coverage is evaluated per source interval; no feed declaration makes tracking complete', async () => {
+  const a = await seller('a@test.com');
+  await count(a, [{ product_id: a.p.Mouse, quantity: 30 }], ago(30));
+  const feedA = await feedSource(a, { since: ago(1000) });          // starts before the count
+  const feedB = await feedSource(a, { since: ago(1000) });
+  await storeSale(a, feedB, a.p.Mouse, karachiToday());              // sold today through B
+  let m = await item(a, a.p.Mouse);
+  assert.deepEqual([m.stock.movement_tracking, m.stock.untracked_sales_since_count], ['declared_unverified', 0],
+    'B is declared to cover today: unverified, but no gap');
+
+  // B's feed actually starts AFTER the count (and after the start of today): its
+  // earlier sales are not covered, even though feed A covers the count.
+  await ctx.api('PUT', `/inventory/sources/${feedB}`, { token: a.token,
+    json: { reports_physical_on_hand: false, shipment_feed_since: ago(0.05) } });
+  m = await item(a, a.p.Mouse);
+  assert.deepEqual([m.stock.movement_tracking, m.stock.untracked_sales_since_count, m.stock.position_type], ['partial', 1, 'last_known']);
+
+  // Only feeds that start after the count: a gap right after the count.
+  await ctx.api('PUT', `/inventory/sources/${feedA}`, { token: a.token,
+    json: { reports_physical_on_hand: false, shipment_feed_since: ago(1) } });
+  await ctx.pool.query('DELETE FROM sales WHERE source_id = $1', [feedB]);
+  m = await item(a, a.p.Mouse);
+  assert.equal(m.stock.movement_tracking, 'partial');
+
+  const list = await ctx.api('GET', '/inventory/items', { token: a.token });
+  assert.equal(list.body.counts.tracked, 0, 'no position is reported as tracked without verified synchronisation');
+});
+
+// Regression (architect review 1a, P2): same-instant movements with a NULL source.
+test('same-instant movements: manual and other-source events need review; only the same connector is exempt', async () => {
+  const a = await seller('a@test.com');
+  const conn = await feedSource(a, { physical: true });
+  const other = await feedSource(a);
+  const t = ago(2);
+  const c = await count(a, ['Mouse', 'Cable', 'Lamp'].map(n => ({ product_id: a.p[n], quantity: 10 })), t, { body: { source_id: conn } });
+  assert.equal(c.status, 201, JSON.stringify(c.body));
+  const manual = await ctx.api('POST', '/inventory/movements', { token: a.token,
+    json: { idempotency_key: key(), product_id: a.p.Mouse, kind: 'damage', quantity: 2, effective_at: t, reason: 'broken' } });
+  assert.equal(manual.status, 201);
+  await ship(a, conn, [{ external_event_id: 'same-src', kind: 'shipment', product_id: a.p.Cable, quantity: 2, effective_at: t }]);
+  await ship(a, other, [{ external_event_id: 'other-src', kind: 'shipment', product_id: a.p.Lamp, quantity: 2, effective_at: t }]);
+
+  const mouse = await item(a, a.p.Mouse);
+  assert.deepEqual([mouse.stock.on_hand, mouse.readiness.reconciliation.state], [10, 'needs_review'],
+    'manual event at the count instant: inside the count, but flagged');
+  const cable = await item(a, a.p.Cable);
+  assert.deepEqual([cable.stock.on_hand, cable.readiness.reconciliation.state], [10, 'none'],
+    'the connector that reported the count establishes its own ordering');
+  const lamp = await item(a, a.p.Lamp);
+  assert.deepEqual([lamp.stock.on_hand, lamp.readiness.reconciliation.state], [10, 'needs_review']);
+  const list = await ctx.api('GET', '/inventory/items', { token: a.token });
+  assert.equal(list.body.counts.needs_review, 2);
+});
+
+test('rolling back across import kinds explains the shared version history', async () => {
+  const a = await seller('a@test.com');
+  const form = csvForm('product_name,quantity\nMouse,4', 'count.csv');
+  form.append('counted_at', ago(1));
+  const cf = await ctx.api('POST', '/inventory/count-files', { token: a.token, form });
+  assert.equal(cf.status, 201);
+  const rb = await ctx.api('POST', `/data/rollback/${a.uploadId}`, { token: a.token });
+  assert.equal(rb.status, 400);
+  assert.equal(rb.body.latest_version.kind, 'stock-count file');
+  assert.match(rb.body.message, /share one version history/);
 });
 
 test('stale and inconsistent positions; per-product tolerance', async () => {

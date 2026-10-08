@@ -175,3 +175,18 @@ test('an edited, already-applied migration is detected and blocks both migrate a
   await assert.rejects(assertSchemaCurrent(db, dir), /modified migration files: 001_baseline/);
   fs.rmSync(dir, { recursive: true });
 });
+
+test('a checkout with CRLF line endings is not an edited migration', async () => {
+  // git (`* text=auto`) writes CRLF on Windows: same migration, different bytes.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nexus-migrations-crlf-'));
+  for (const f of fs.readdirSync(MIGRATIONS_DIR).filter(x => x.endsWith('.sql'))) {
+    fs.writeFileSync(path.join(dir, f), fs.readFileSync(path.join(MIGRATIONS_DIR, f), 'utf8').replace(/\r?\n/g, '\r\n'));
+  }
+  assert.deepEqual((await status(db, dir)).changed, []);
+  await assertSchemaCurrent(db, dir);
+  assert.deepEqual(await migrate(db, { dir }), [], 'nothing re-applied');
+  // A real edit is still detected under CRLF.
+  fs.appendFileSync(path.join(dir, '003_data_coverage.sql'), '\r\n-- edited\r\n');
+  await assert.rejects(assertSchemaCurrent(db, dir), /modified migration files: 003_data_coverage/);
+  fs.rmSync(dir, { recursive: true });
+});

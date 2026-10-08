@@ -391,7 +391,7 @@ export default function UploadPage() {
       setRollbackTarget(null);
       fetchPageData();
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Rollback failed');
+      toast.error(err.response?.data?.message || err.response?.data?.error || 'Rollback failed');
     } finally {
       setRollbackLoading(false);
     }
@@ -586,7 +586,7 @@ Desk Mat,Accessories,19.99,100,2023-10-02,1999.00`;
         </div>
 
         <Panel aria-labelledby="history-title">
-          <PanelHeader title="Upload history" titleId="history-title" description="Every import is kept as a version. Only confirmed periods count toward forecasts; the latest active version can be rolled back">
+          <PanelHeader title="Upload history" titleId="history-title" description="Every import is kept as a version. Only confirmed periods count toward forecasts. Sales imports and stock-count files share one version history: only the latest active version can be rolled back, so newer versions of either kind must be rolled back first">
             {versions.length > 0 && <span className="badge">{versions.length} versions</span>}
           </PanelHeader>
           <div className="table-scroll">

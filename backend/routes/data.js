@@ -533,14 +533,26 @@ router.post('/data/rollback/:uploadId', authMiddleware, async (req, res) => {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: 'This upload is already rolled back' });
     }
+    // Sales imports and stock-count files share ONE version sequence, so a newer
+    // version of either kind must be rolled back first.
     const mostRecent = await client.query(
-      `SELECT upload_id FROM upload_versions
-       WHERE seller_id = $1 AND is_rolled_back = false
-       ORDER BY version_number DESC LIMIT 1`,
+      `SELECT uv.upload_id, uv.version_number, du.source FROM upload_versions uv
+       JOIN data_uploads du ON du.id = uv.upload_id
+       WHERE uv.seller_id = $1 AND uv.is_rolled_back = false
+       ORDER BY uv.version_number DESC LIMIT 1`,
       [sellerId]);
     if (!mostRecent.rows.length || mostRecent.rows[0].upload_id !== uploadId) {
       await client.query('ROLLBACK');
-      return res.status(400).json({ error: 'Only the most recent upload can be rolled back' });
+      const latest = mostRecent.rows[0];
+      const kind = (src) => (src === 'stock_count' ? 'stock-count file' : 'sales import');
+      return res.status(400).json({
+        error: 'Only the most recent upload can be rolled back',
+        message: latest
+          ? `Version #${latest.version_number} (a ${kind(latest.source)}) is newer. Sales imports and stock-count files `
+            + 'share one version history, and only the latest active version can be rolled back. Roll back newer versions first.'
+          : 'Only the most recent upload can be rolled back.',
+        latest_version: latest ? { version_number: latest.version_number, upload_id: latest.upload_id, kind: kind(latest.source) } : null,
+      });
     }
 
     const { rows: kindRows } = await client.query('SELECT source FROM data_uploads WHERE id = $1', [uploadId]);

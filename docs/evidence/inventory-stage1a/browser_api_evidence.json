@@ -5,23 +5,23 @@
         "on_hand": 6,
         "known": true,
         "state": "stale",
-        "tracking": "complete",
+        "tracking": "declared_unverified",
         "alert": "above",
         "legacy": null
       },
       "Ceramic Mug Set": {
         "on_hand": 21,
         "known": true,
-        "state": "tracked",
-        "tracking": "complete",
+        "state": "last_known",
+        "tracking": "declared_unverified",
         "alert": "above",
         "legacy": 25
       },
       "Lawn Suit 3-Piece": {
         "on_hand": 55,
         "known": true,
-        "state": "tracked",
-        "tracking": "complete",
+        "state": "last_known",
+        "tracking": "declared_unverified",
         "alert": "above",
         "legacy": 80
       },
@@ -36,8 +36,8 @@
       "Prayer Mat": {
         "on_hand": 0,
         "known": true,
-        "state": "tracked",
-        "tracking": "complete",
+        "state": "last_known",
+        "tracking": "declared_unverified",
         "alert": "below",
         "legacy": null
       }
@@ -141,7 +141,7 @@
       "Silk Dupatta": null
     },
     "mug_tracking_before_after": [
-      "complete",
+      "declared_unverified",
       "partial"
     ],
     "new_product": {
@@ -196,7 +196,7 @@
         "on_hand": 5,
         "known": true,
         "state": "stale",
-        "tracking": "complete",
+        "tracking": "declared_unverified",
         "alert": "above",
         "legacy": null
       },
@@ -211,8 +211,8 @@
       "Lawn Suit 3-Piece": {
         "on_hand": 51,
         "known": true,
-        "state": "tracked",
-        "tracking": "complete",
+        "state": "last_known",
+        "tracking": "declared_unverified",
         "alert": "above",
         "legacy": 80
       },
@@ -227,8 +227,8 @@
       "Prayer Mat": {
         "on_hand": 0,
         "known": true,
-        "state": "tracked",
-        "tracking": "complete",
+        "state": "last_known",
+        "tracking": "declared_unverified",
         "alert": "below",
         "legacy": null
       },

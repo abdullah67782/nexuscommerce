@@ -5,7 +5,8 @@
 // Two things are reported separately (architect review 1a, item 2):
 //   * measurement age   — when the selected count was taken (last_count.age_days);
 //   * position coverage — whether every movement since that count is known
-//     (movement_tracking: complete | partial | absent).
+//     (movement_tracking: absent | partial | declared_unverified; 'complete' is
+//     reserved for verified synchronisation coverage, which Stage 1a does not record).
 // A count from yesterday with no shipment feed is a LAST-KNOWN position, not a
 // current one, however recent it is.
 const { productHistory, addDays, daysBetween } = require('./coverage');
@@ -32,13 +33,16 @@ function stockDimension(pos, policy) {
       `The last count is ${pos.last_count.age_days} days old; your tolerance is ${policy.stale_after_days} days.`,
       'Record a new stock count.');
   }
-  if (pos.movement_tracking === 'complete') {
+  if (pos.movement_tracking === 'complete') { // reserved: verified sync coverage (not recorded in Stage 1a)
     return dim('tracked', 'Counted, and every shipment since the count is recorded by a connected source.');
   }
-  const why = pos.movement_tracking === 'absent'
-    ? 'No source sends shipments for this location, so sales since the count are not subtracted.'
-    : 'Some sales since the count came from a source that does not send shipments, so not every movement is recorded.';
-  return dim('last_known', `Last-known count position. ${why}`, 'Recount before relying on this figure, or connect a shipment feed.');
+  const why = {
+    absent: 'No source is declared to send shipments for this location, so sales since the count are not subtracted.',
+    partial: 'Some sales since the count came from a source, or a day, that no declared shipment feed covers.',
+    declared_unverified: 'A shipment feed is declared for this location, but its delivery is not verified, so missing shipments cannot be ruled out.',
+  }[pos.movement_tracking] || 'Not every movement since the count is known to be recorded.';
+  return dim('last_known', `Last-known count position. ${why}`,
+    pos.movement_tracking === 'absent' ? 'Recount before relying on this figure, or connect a shipment feed.' : 'Recount before relying on this figure.');
 }
 
 function reconciliationDimension(pos) {
