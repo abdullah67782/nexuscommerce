@@ -1,0 +1,7 @@
+count  Lawn Suit 3-Piece   64  recorded
+count  Ceramic Mug Set     22  recorded
+count  Prayer Mat           0  recorded
+count  Bridal Clutch        6  recorded
+shipments from "Daraz store": 3 recorded, 0 replayed
+damage Ceramic Mug Set 1: recorded
+Pashmina Shawl: intentionally not counted (missing stock).
