@@ -74,9 +74,12 @@ removal.
 ## Confirmed coverage (completeness)
 
 A seller can confirm that a file contains **every** sale for a date range: for
-all products, or only for the products in the file. Inside a confirmed period, a
-day with no rows is a real zero. Outside it, a day with no rows is **unknown**, and
-forecasting never treats it as zero.
+all products, or only for the products in the file, either while uploading or
+later from Upload history. Inside a confirmed period, a day with no rows is a real
+zero. **Only confirmed days count as forecasting history.** Outside confirmation,
+sales records are kept and shown everywhere, but a day with some records may still
+be missing sales, so it does not count toward forecasting; a day with no records is
+unknown and never treated as zero.
 
 - **With rejections:** a file with rejected rows cannot be confirmed as complete.
   The import is refused, and the rejected rows are listed.

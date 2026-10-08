@@ -11,7 +11,7 @@ const {
   replayOf, insertSales, addVersion, recomputeFreshness, productResolver, freshnessScore,
   defaultTimezone, isValidTimezone,
 } = require('../lib/imports');
-const { CoverageError, parseCoverage, checkCoverage, recordCoverage, revokeForImport } = require('../lib/coverage');
+const { CoverageError, parseCoverage, checkCoverage, recordCoverage, revokeForImport, confirmExistingImport } = require('../lib/coverage');
 
 const router = express.Router();
 
@@ -430,6 +430,31 @@ router.post('/data/upload', authMiddleware, upload.single('file'), async (req, r
   }
 });
 
+// ─── POST /api/data/uploads/:uploadId/coverage ───────────────────────────────
+// Confirm that an upload already stored contains EVERY sale of its source for
+// { start, end, scope, confirmed: true }. Until a period is confirmed, its days
+// stay visible as sales but do not count as forecasting history.
+router.post('/data/uploads/:uploadId/coverage', authMiddleware, async (req, res) => {
+  const sellerId = req.user.id;
+  const importId = parseInt(req.params.uploadId, 10);
+  if (!Number.isInteger(importId)) return res.status(400).json({ error: 'Invalid upload id' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await lockSeller(client, sellerId);
+    const coverage = await confirmExistingImport(client, { sellerId, importId, input: req.body || {} });
+    await client.query('COMMIT');
+    res.json({ status: 'confirmed', upload_id: importId, coverage });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    if (err instanceof CoverageError) return res.status(err.status).json(err.body);
+    console.error('Confirm coverage error:', err.message);
+    res.status(500).json({ error: 'Error confirming coverage' });
+  } finally {
+    client.release();
+  }
+});
+
 // ─── GET /api/data/sources ───────────────────────────────────────────────────
 // The seller's import sources with their business timezone.
 router.get('/data/sources', authMiddleware, async (req, res) => {
@@ -500,9 +525,14 @@ router.get('/data/versions', authMiddleware, async (req, res) => {
       `SELECT uv.id, uv.upload_id, uv.version_number,
               uv.rows_added, uv.rows_skipped, uv.rows_rejected,
               uv.is_rolled_back, uv.rollback_at, uv.created_at,
-              du.quality_score, du.file_format, du.total_records
+              du.quality_score, du.file_format, du.total_records, du.source,
+              to_char(dc.declared_start, 'YYYY-MM-DD') AS coverage_start,
+              to_char(dc.declared_end, 'YYYY-MM-DD') AS coverage_end, dc.scope AS coverage_scope,
+              (SELECT to_char(MIN(s.sale_date), 'YYYY-MM-DD') FROM sales s WHERE s.upload_id = du.id) AS first_sale_date,
+              (SELECT to_char(MAX(s.sale_date), 'YYYY-MM-DD') FROM sales s WHERE s.upload_id = du.id) AS last_sale_date
        FROM upload_versions uv
        JOIN data_uploads du ON du.id = uv.upload_id
+       LEFT JOIN data_coverage dc ON dc.upload_id = du.id AND dc.status = 'confirmed'
        WHERE uv.seller_id = $1
        ORDER BY uv.version_number DESC`,
       [req.user.id]

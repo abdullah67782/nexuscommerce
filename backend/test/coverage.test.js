@@ -192,8 +192,8 @@ test('store connect: confirmed coverage, including an empty delivery', async () 
 });
 
 // ── History resolution ───────────────────────────────────────────────────────
-test('history: recorded days are used, unknown gaps are kept, zeros only inside confirmed periods', async () => {
-  // Jan 1-10 recorded on alternate days (no coverage), then Jan 11-20 confirmed with sales on 3 days.
+test('history: only confirmed days count; records outside confirmation stay visible but unconfirmed', async () => {
+  // Jan 1-10 recorded on alternate days (no confirmation), then Jan 11-20 confirmed with sales on 3 days.
   const early = [HEADER];
   for (let i = 0; i < 10; i += 2) early.push(`Mouse,2,${day('2026-01-01', i)},10`);
   await upload(a.token, early.join('\n'));
@@ -201,25 +201,82 @@ test('history: recorded days are used, unknown gaps are kept, zeros only inside 
     covered('2026-01-11', '2026-01-20'));
   const h = await productHistory(ctx.pool, a.id, await productId('Mouse'));
   assert.equal(h.first_sale, '2026-01-01');
-  assert.deepEqual(h.counts, { covered: 10, recorded: 5, unknown: 5 });
-  // Jan 2, 4, 6, 8 and 10 have no rows and no confirmed period: unknown, not zero.
-  assert.deepEqual(h.gaps.map(g => g.start), ['2026-01-02', '2026-01-04', '2026-01-06', '2026-01-08', '2026-01-10']);
-  assert.equal(h.usable.start, '2026-01-11');
-  assert.equal(h.usable.end, '2026-01-20');
+  assert.deepEqual(h.counts, { confirmed: 10, unconfirmed: 5, missing: 5 });
+  assert.deepEqual(h.unconfirmed_periods.map(p => p.start), ['2026-01-01', '2026-01-03', '2026-01-05', '2026-01-07', '2026-01-09']);
+  assert.deepEqual(h.missing_periods.map(p => p.start), ['2026-01-02', '2026-01-04', '2026-01-06', '2026-01-08', '2026-01-10']);
+  assert.deepEqual({ start: h.usable.start, end: h.usable.end, days: h.usable.days }, { start: '2026-01-11', end: '2026-01-20', days: 10 });
   assert.deepEqual(h.usable.quantities, [0, 5, 0, 0, 5, 0, 0, 0, 0, 0]);
-  assert.equal(h.usable.covered_days, 10);
-  assert.equal(h.usable.recorded_days, 0);
+  assert.deepEqual(h.before_usable, { state: 'missing', start: '2026-01-10', end: '2026-01-10', days: 1 });
+  // The unconfirmed records are still sales: the sales API shows all of them.
+  const sales = await ctx.api('GET', '/sales', { token: a.token });
+  assert.equal(sales.body.sales.reduce((n, r) => n + r.quantity, 0), 5 * 2 + 10);
 });
 
-test('history: a revoked period turns its empty days back into unknown', async () => {
+test('history: 180 days with records but no confirmation give 0 usable days (reported case)', async () => {
+  const lines = [HEADER];
+  for (let i = 0; i < 180; i++) lines.push(`Mouse,4,${day('2025-06-01', i)},10`);
+  await upload(a.token, lines.join('\n'));
+  const h = await productHistory(ctx.pool, a.id, await productId('Mouse'));
+  assert.deepEqual(h.counts, { confirmed: 0, unconfirmed: 180, missing: 0 });
+  assert.equal(h.usable, null);
+  assert.deepEqual(h.unconfirmed_periods, [{ start: '2025-06-01', end: '2025-11-27', days: 180 }]);
+
+  process.env.FORECAST_V2_ENABLED = 'true';
+  const res = await ctx.api('GET', `/forecast/v2/${await productId('Mouse')}`, { token: a.token });
+  assert.equal(res.body.status, 'needs_confirmation');
+  assert.equal(res.body.history.usable_days, 0);
+  assert.equal(res.body.history.unconfirmed_days, 180);
+  assert.deepEqual(res.body.forecasts, []);
+  assert.equal(ctx.ml.calls.filter(c => c.url === '/v2/forecast').length, 0, 'nothing unconfirmed is sent to the model');
+  assert.match(res.body.notes.find(n => n.type === 'confirmation').text, /not confirmed complete.*Confirm the period/);
+});
+
+test('history: records after the last confirmed day do not extend it', async () => {
+  await upload(a.token, `${HEADER}\nMouse,3,2026-01-01,10\nMouse,3,2026-01-05,10`, covered('2026-01-01', '2026-01-05'));
+  await upload(a.token, `${HEADER}\nMouse,9,2026-01-06,10\nMouse,9,2026-01-07,10`, { operation_id: 'later' });
+  const h = await productHistory(ctx.pool, a.id, await productId('Mouse'));
+  assert.deepEqual([h.usable.start, h.usable.end], ['2026-01-01', '2026-01-05']);
+  assert.deepEqual(h.after_usable, { start: '2026-01-06', end: '2026-01-07', days: 2, unconfirmed_days: 2 });
+});
+
+test('history: a revoked period no longer counts', async () => {
   const res = await upload(a.token, `${HEADER}\nMouse,3,2026-01-01,10\nMouse,3,2026-01-05,10`, covered('2026-01-01', '2026-01-05'));
   let h = await productHistory(ctx.pool, a.id, await productId('Mouse'));
   assert.equal(h.usable.days, 5);
   await ctx.api('POST', `/data/rollback/${res.body.upload_id}`, { token: a.token });
   await upload(a.token, `${HEADER}\nMouse,3,2026-01-01,10\nMouse,3,2026-01-05,10`, { operation_id: 'plain' });
   h = await productHistory(ctx.pool, a.id, await productId('Mouse'));
-  assert.equal(h.usable.days, 1);
-  assert.deepEqual(h.gaps, [{ start: '2026-01-02', end: '2026-01-04', days: 3 }]);
+  assert.equal(h.usable, null);
+  assert.deepEqual(h.counts, { confirmed: 0, unconfirmed: 2, missing: 3 });
+});
+
+test('an upload already stored can be confirmed afterwards, under the same rules', async () => {
+  const lines = [HEADER];
+  for (let i = 0; i < 30; i += 2) lines.push(`Mouse,2,${day('2026-01-01', i)},10`);
+  const up = await upload(a.token, lines.join('\n'));
+  const id = up.body.upload_id;
+  const path = `/data/uploads/${id}/coverage`;
+  const confirm = (json, token = a.token) => ctx.api('POST', path, { token, json });
+  const base = { start: '2026-01-01', end: '2026-01-30', scope: 'all_products', confirmed: true };
+
+  assert.equal((await confirm(base, b.token)).status, 404, 'only the owner');
+  assert.equal((await confirm({ ...base, confirmed: false })).status, 400);
+  assert.equal((await confirm({ ...base, end: '2026-01-20' })).body.error, 'rows_outside_coverage');
+  const ok = await confirm(base);
+  assert.equal(ok.status, 200, JSON.stringify(ok.body));
+  assert.equal(ok.body.coverage.days, 30);
+  assert.equal((await confirm(base)).body.error, 'already_confirmed');
+
+  const h = await productHistory(ctx.pool, a.id, await productId('Mouse'));
+  assert.deepEqual([h.usable.start, h.usable.end, h.usable.days], ['2026-01-01', '2026-01-30', 30], 'days without rows inside the period are zeros');
+  const versions = await ctx.api('GET', '/data/versions', { token: a.token });
+  assert.deepEqual([versions.body.versions[0].coverage_start, versions.body.versions[0].coverage_end], ['2026-01-01', '2026-01-30']);
+
+  // An upload with rejected rows cannot be confirmed afterwards either.
+  const bad = await upload(a.token, `${HEADER}\nPad,1,2026-02-01,10\nPad,,2026-02-02,10`);
+  const refused = await ctx.api('POST', `/data/uploads/${bad.body.upload_id}/coverage`, { token: a.token,
+    json: { start: '2026-02-01', end: '2026-02-02', scope: 'listed_products', confirmed: true } });
+  assert.equal(refused.body.error, 'coverage_with_rejected_rows');
 });
 
 // ── v2 endpoint ──────────────────────────────────────────────────────────────
@@ -235,9 +292,9 @@ test('v2 endpoint is off unless switched on, and only serves the owner', async (
   assert.equal((await ctx.api('GET', `/forecast/v2/${id}`, { token: a.token })).status, 200);
 });
 
-test('v2 endpoint sends only the usable history and explains gaps and tiers', async () => {
+test('v2 endpoint sends only confirmed history and explains what is excluded', async () => {
   process.env.FORECAST_V2_ENABLED = 'true';
-  // 40 recorded days, a 5-day hole, then 30 days inside a confirmed period.
+  // 40 unconfirmed recorded days, a 5-day hole, then 30 confirmed days.
   const lines = [HEADER];
   for (let i = 0; i < 40; i++) lines.push(`Mouse,3,${day('2025-10-01', i)},10`);
   await upload(a.token, lines.join('\n'));
@@ -252,10 +309,12 @@ test('v2 endpoint sends only the usable history and explains gaps and tiers', as
   assert.equal(sent.quantities.length, 30);
   assert.equal(sent.quantities.filter(q => q === 0).length, 20, 'zeros only inside the confirmed period');
   assert.equal(res.body.history.tier, 'average');
-  assert.deepEqual(res.body.history.gaps, [{ start: '2025-11-10', end: '2025-11-14', days: 5 }]);
+  assert.equal(res.body.history.confirmed_days, 30);
+  assert.equal(res.body.history.unconfirmed_days, 40);
+  assert.deepEqual(res.body.history.missing_periods, [{ start: '2025-11-10', end: '2025-11-14', days: 5 }]);
   const types = res.body.notes.map(n => n.type);
-  assert.ok(types.includes('gap') && types.includes('tier') && types.includes('stale'), types.join());
-  assert.match(res.body.notes.find(n => n.type === 'gap').text, /unknown, not zero/);
+  for (const t of ['confirmation', 'cut', 'tier', 'stale']) assert.ok(types.includes(t), `${t} in ${types.join()}`);
+  assert.match(res.body.notes.find(n => n.type === 'cut').text, /unknown, not zero/);
   assert.equal(res.body.forecasts.length, 2);
   assert.deepEqual(res.body.forecasts.map(f => [f.start, f.end]), [['2025-12-15', '2025-12-21'], ['2025-12-15', '2026-01-11']]);
   for (const f of res.body.forecasts) {
@@ -265,7 +324,7 @@ test('v2 endpoint sends only the usable history and explains gaps and tiers', as
 
 test('v2 endpoint: insufficient history returns no forecast; the ML server being down is a clear 503', async () => {
   process.env.FORECAST_V2_ENABLED = 'true';
-  await upload(a.token, `${HEADER}\nMouse,1,2026-01-01,10\nMouse,1,2026-01-02,10`);
+  await upload(a.token, `${HEADER}\nMouse,1,2026-01-01,10\nMouse,1,2026-01-02,10`, covered('2026-01-01', '2026-01-02'));
   const id = await productId('Mouse');
   const res = await ctx.api('GET', `/forecast/v2/${id}`, { token: a.token });
   assert.equal(res.body.status, 'insufficient_history');

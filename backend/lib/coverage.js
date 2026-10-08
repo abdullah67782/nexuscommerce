@@ -4,14 +4,16 @@
 // the inclusive business-local days [start, end], for all products
 // ('all_products') or for the products named in the import ('listed_products').
 //
-// Day status for one product (sources = every source that has sold it):
-//   covered  — inside a confirmed (not revoked) declaration of EVERY such source
-//   recorded — not fully covered, but sales rows exist that day; the rows are
-//              taken as that day's sales (the behaviour for all data before 003)
-//   unknown  — neither: missing data, never treated as zero
-// A day is KNOWN when it is covered or recorded; its value is the sum of the
-// rows (0 only on covered days). Days before the product's first sale are not
-// history. Unknown days are never filled with zero.
+// Day status for one product (sources = every source that has sold it), from
+// its first recorded sale onward:
+//   confirmed   — inside a confirmed (not revoked) period of EVERY such source;
+//                 a day without rows is a real zero
+//   unconfirmed — sales records exist but the day is not confirmed complete; the
+//                 records stay visible everywhere else, but a day with SOME records
+//                 may still be missing sales, so it is not forecasting history
+//   missing     — no records and no confirmation: unknown, never zero
+// Forecasting history is the run of consecutive confirmed days that ends on the
+// last confirmed day.
 const { businessDate, todayIn } = require('./imports');
 
 const SCOPES = ['all_products', 'listed_products'];
@@ -118,9 +120,53 @@ async function revokeForImport(client, { sellerId, importId, reason = 'rollback'
   return rowCount;
 }
 
+// Confirm a period for an import that is already stored (e.g. uploaded before
+// coverage existed). Same rules as declaring it at upload time; the caller holds
+// the seller lock inside a transaction.
+async function confirmExistingImport(client, { sellerId, importId, input }) {
+  const { rows } = await client.query(
+    `SELECT du.id, du.status, du.source_id, ds.timezone, uv.rows_rejected,
+            EXISTS (SELECT 1 FROM data_coverage c WHERE c.upload_id = du.id AND c.status = 'confirmed') AS has_coverage
+     FROM data_uploads du
+     JOIN data_sources ds ON ds.id = du.source_id
+     LEFT JOIN upload_versions uv ON uv.upload_id = du.id
+     WHERE du.id = $1 AND du.uploaded_by = $2`,
+    [importId, sellerId],
+  );
+  const upload = rows[0];
+  if (!upload) throw new CoverageError(404, { error: 'not_found', message: 'Upload not found.' });
+  if (upload.status !== 'committed') {
+    throw new CoverageError(400, { error: 'rolled_back', message: 'A rolled-back upload cannot be confirmed.' });
+  }
+  if (upload.has_coverage) {
+    throw new CoverageError(409, { error: 'already_confirmed', message: 'This upload already has a confirmed period.' });
+  }
+  if (Number(upload.rows_rejected) > 0) {
+    throw new CoverageError(400, { error: 'coverage_with_rejected_rows',
+      message: `${upload.rows_rejected} row(s) of this upload were rejected, so it cannot be confirmed as complete. `
+        + 'Fix those rows and upload the period again.' });
+  }
+  const coverage = parseCoverage(input, upload.timezone);
+  if (!coverage) throw new CoverageError(400, { error: 'invalid_coverage', message: 'Send start, end, scope and confirmed = true.' });
+  const { rows: sales } = await client.query(
+    `SELECT product_id, to_char(sale_date, 'YYYY-MM-DD') AS sale_date, source_row_number
+     FROM sales WHERE upload_id = $1`, [importId]);
+  const { rows: created } = await client.query('SELECT id FROM products WHERE upload_id = $1 AND user_id = $2', [importId, sellerId]);
+  const productIds = [...new Set([...sales.map(r => r.product_id), ...created.map(r => r.id)])];
+  if (coverage.scope === 'listed_products' && !productIds.length) {
+    throw new CoverageError(400, { error: 'invalid_coverage', message: 'This upload has no products; use all products.' });
+  }
+  await checkCoverage(client, {
+    sourceId: upload.source_id, importId, coverage, productIds,
+    rows: sales.map(r => ({ saleDate: r.sale_date, rowNumber: r.source_row_number })),
+  });
+  return recordCoverage(client, { sellerId, sourceId: upload.source_id, importId, coverage, productIds,
+    evidence: 'seller_declaration' });
+}
+
 // ── History resolution ───────────────────────────────────────────────────────
 // Returns the product's day-by-day status and its usable history: the run of
-// consecutive known days that ends on the last known day.
+// consecutive CONFIRMED days that ends on the last confirmed day (null if none).
 async function productHistory(db, sellerId, productId) {
   const { rows: sales } = await db.query(
     `SELECT to_char(sale_date, 'YYYY-MM-DD') AS day, source_id, SUM(quantity)::bigint AS quantity
@@ -128,7 +174,10 @@ async function productHistory(db, sellerId, productId) {
      GROUP BY sale_date, source_id ORDER BY sale_date`,
     [sellerId, productId],
   );
-  if (!sales.length) return { first_sale: null, usable: null, gaps: [], counts: { covered: 0, recorded: 0, unknown: 0 }, sources: [] };
+  if (!sales.length) {
+    return { first_sale: null, last_record: null, usable: null, before_usable: null, after_usable: null,
+      counts: { confirmed: 0, unconfirmed: 0, missing: 0 }, unconfirmed_periods: [], missing_periods: [], sources: [] };
+  }
 
   const sourceKey = (id) => (id === null ? 'legacy' : String(id));
   const sourceIds = [...new Set(sales.map(r => r.source_id))];
@@ -166,41 +215,64 @@ async function productHistory(db, sellerId, productId) {
     for (let i = from; i <= to; i++) mask[i] = 1;
   }
 
+  // Only confirmed days count as forecasting history. A day with some records
+  // but no confirmation may still be missing sales, so it stays 'unconfirmed'.
   const status = new Array(length);
-  const counts = { covered: 0, recorded: 0, unknown: 0 };
+  const counts = { confirmed: 0, unconfirmed: 0, missing: 0 };
   const hasRows = new Uint8Array(length);
   for (const set of recorded.values()) for (const i of set) hasRows[i] = 1;
   for (let i = 0; i < length; i++) {
     const allCovered = sourceIds.every(id => covered.get(sourceKey(id))[i]);
-    const state = allCovered ? 'covered' : hasRows[i] ? 'recorded' : 'unknown';
+    const state = allCovered ? 'confirmed' : hasRows[i] ? 'unconfirmed' : 'missing';
     status[i] = state;
     counts[state]++;
   }
 
-  let last = length - 1;
-  while (last >= 0 && status[last] === 'unknown') last--;
-  let first = last;
-  while (first > 0 && status[first - 1] !== 'unknown') first--;
+  const periods = (state) => {
+    const out = [];
+    for (let i = 0; i < length; i++) {
+      if (status[i] !== state) continue;
+      let j = i;
+      while (j + 1 < length && status[j + 1] === state) j++;
+      out.push({ start: addDays(firstSale, i), end: addDays(firstSale, j), days: j - i + 1 });
+      i = j;
+    }
+    return out;
+  };
 
-  const gaps = [];
-  for (let i = 0; i <= last; i++) {
-    if (status[i] !== 'unknown') continue;
-    let j = i;
-    while (j + 1 <= last && status[j + 1] === 'unknown') j++;
-    gaps.push({ start: addDays(firstSale, i), end: addDays(firstSale, j), days: j - i + 1 });
-    i = j;
-  }
-  const run = status.slice(first, last + 1);
-  return {
-    first_sale: firstSale,
-    usable: {
+  let last = length - 1;
+  while (last >= 0 && status[last] !== 'confirmed') last--;
+  let usable = null;
+  let before = null;
+  let after = null;
+  if (last >= 0) {
+    let first = last;
+    while (first > 0 && status[first - 1] === 'confirmed') first--;
+    usable = {
       start: addDays(firstSale, first), end: addDays(firstSale, last), days: last - first + 1,
       quantities: totals.slice(first, last + 1),
-      covered_days: run.filter(s => s === 'covered').length,
-      recorded_days: run.filter(s => s === 'recorded').length,
-    },
-    gaps,
+    };
+    if (first > 0) {                     // what interrupts the confirmed run
+      let k = first - 1;
+      const state = status[k];
+      while (k > 0 && status[k - 1] === state) k--;
+      before = { state, start: addDays(firstSale, k), end: addDays(firstSale, first - 1), days: first - k };
+    }
+    if (last < length - 1) {             // records after the last confirmed day
+      const tail = status.slice(last + 1);
+      after = { start: addDays(firstSale, last + 1), end: addDays(firstSale, length - 1), days: tail.length,
+        unconfirmed_days: tail.filter(x => x === 'unconfirmed').length };
+    }
+  }
+  return {
+    first_sale: firstSale,
+    last_record: lastRecorded,
+    usable,
+    before_usable: before,
+    after_usable: after,
     counts,
+    unconfirmed_periods: periods('unconfirmed'),
+    missing_periods: periods('missing'),
     sources: sourceIds.map(id => {
       const meta = sourceRows.find(s => s.id === id);
       return {
@@ -214,5 +286,6 @@ async function productHistory(db, sellerId, productId) {
 
 module.exports = {
   CoverageError, SCOPES, parseCoverage, checkCoverage, recordCoverage, revokeForImport, productHistory,
+  confirmExistingImport,
   addDays, daysBetween, isDay,
 };

@@ -48,47 +48,59 @@ const V2_TIERS = { insufficient: 'fewer than 28 days', average: '28 to 179 days'
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
+const listPeriods = (periods, max = 3) => periods.slice(-max).map(p => (p.start === p.end ? p.start : `${p.start} to ${p.end}`)).join(', ')
+  + (periods.length > max ? ` and ${periods.length - max} earlier period${periods.length - max === 1 ? '' : 's'}` : '');
+
 function explainV2(history, result, today) {
   const notes = [];
   const usable = history.usable;
   const tier = result.history.tier;
-  const cut = history.gaps.find(g => g.end === addDays(usable.start, -1));
-  if (cut) {
-    notes.push({ type: 'gap', text: `Sales are missing for ${plural(cut.days, 'day')} (${cut.start} to ${cut.end}): `
-      + 'there are no records and no confirmed period, so those days are unknown, not zero. Only the '
-      + `${plural(usable.days, 'day')} after that gap are used.` });
+  const { counts } = history;
+
+  if (counts.unconfirmed > 0) {
+    notes.push({ type: 'confirmation', text: `${plural(counts.unconfirmed, 'day')} have sales records that are not confirmed complete `
+      + `(${listPeriods(history.unconfirmed_periods)}). The records stay in your sales data, but a day with some records can still be `
+      + 'missing sales, so these days do not count as forecasting history. Confirm the period each upload covers on the Data Integration page.' });
   }
-  const earlier = history.gaps.filter(g => g !== cut);
-  if (earlier.length) {
-    const unknown = earlier.reduce((n, g) => n + g.days, 0);
-    notes.push({ type: 'gaps', text: `${cut ? 'Earlier, there are' : 'There are'} ${plural(earlier.length, 'other gap')} `
-      + `(${plural(unknown, 'unknown day')}) since the first sale on ${history.first_sale}; they are not used.` });
+  const before = history.before_usable;
+  if (usable && before) {
+    notes.push({ type: 'cut', text: before.state === 'unconfirmed'
+      ? `Forecasting history starts on ${usable.start}, right after the unconfirmed records of ${before.start} to ${before.end}.`
+      : `Forecasting history starts on ${usable.start}. The ${plural(before.days, 'day')} before it (${before.start} to ${before.end}) `
+        + 'have no records and no confirmed period, so they are unknown, not zero.' });
   }
-  if (tier === 'insufficient') {
-    notes.push({ type: 'tier', text: `Only ${plural(usable.days, 'complete consecutive day')} of sales are available. `
-      + 'At least 28 are needed for an estimate. Upload more history, or confirm the period your files cover so that days without sales count as zero.' });
+  const after = history.after_usable;
+  if (usable && after && after.unconfirmed_days > 0) {
+    notes.push({ type: 'after', text: `Sales recorded after ${usable.end} (up to ${after.end}) are not confirmed yet, `
+      + `so forecasts start on ${addDays(usable.end, 1)}.` });
+  }
+  if (counts.missing > 0 && !(before && before.state === 'missing' && before.days === counts.missing)) {
+    notes.push({ type: 'missing', text: `${plural(counts.missing, 'day')} since the first sale on ${history.first_sale} have no records and no `
+      + 'confirmed period. They are unknown and are never treated as zero.' });
+  }
+  if (!usable) {
+    notes.push({ type: 'tier', text: 'No confirmed days yet, so there is no forecast. A forecast needs at least 28 consecutive confirmed days.' });
+  } else if (tier === 'insufficient') {
+    notes.push({ type: 'tier', text: `Only ${plural(usable.days, 'consecutive confirmed day')} are available; at least 28 are needed for an estimate.` });
   } else if (tier === 'average') {
-    notes.push({ type: 'tier', text: `${plural(usable.days, 'complete consecutive day')} of history (180 are needed for the model-based forecast). `
+    notes.push({ type: 'tier', text: `${plural(usable.days, 'consecutive confirmed day')} of history (180 are needed for the model-based forecast). `
       + 'This is an average-based estimate: average daily sales over the last 28 days × the number of days.' });
   } else if (result.pattern) {
     const text = result.pattern.group === 'rare'
       ? 'It sells on fewer than 20% of days, so it uses the rare-sales method (TSB), which follows how often it sells and how much per sale.'
-      : 'It has at least 180 days of history and does not sell rarely, so it uses the shared forecasting model.';
+      : 'It has at least 180 confirmed days and does not sell rarely, so it uses the shared forecasting model.';
     notes.push({ type: 'method', text });
   }
-  if (usable.covered_days < usable.days) {
-    notes.push({ type: 'coverage', text: `${plural(usable.covered_days, 'day')} of the usable history are inside periods you confirmed as complete. `
-      + 'Elsewhere, only days with recorded sales are used: a day without records outside a confirmed period is missing, not zero.' });
-  }
-  const start = result.forecasts[0]?.start || addDays(usable.end, 1);
-  if (start < today) {
-    notes.push({ type: 'stale', text: `Your sales data ends on ${usable.end}, so forecasts start on ${start}, not today (${today}). Upload newer sales for a forecast from today.` });
+  const start = result.forecasts[0]?.start;
+  if (start && start < today) {
+    notes.push({ type: 'stale', text: `Confirmed history ends on ${usable.end}, so forecasts start on ${start}, not today (${today}). `
+      + 'Upload and confirm newer sales for a forecast from today.' });
   }
   return notes;
 }
 
 router.get('/v2/config', authMiddleware, (req, res) => {
-  res.json({ enabled: isV2Enabled(), horizons: [7, 28], tiers: V2_TIERS });
+  res.json({ enabled: isV2Enabled(), horizons: [7, 28], tiers: V2_TIERS, history: 'confirmed days only' });
 });
 
 router.get('/v2/:productId', authMiddleware, async (req, res) => {
@@ -107,21 +119,27 @@ router.get('/v2/:productId', authMiddleware, async (req, res) => {
       notes: [{ type: 'tier', text: 'No sales are recorded for this product yet.' }], today, timezone });
   }
   let result;
-  try {
-    result = await callMLServer('POST', '/v2/forecast',
-      { start: history.usable.start, quantities: history.usable.quantities }, 60000);
-  } catch (err) {
-    return res.status(503).json({ error: 'forecast_v2_unavailable', message: err.message });
+  if (!history.usable) {
+    result = { status: 'needs_confirmation', pattern: null, forecasts: [], models_release: null,
+      history: { usable_days: 0, first_day: null, last_day: null, tier: 'insufficient', required_days: { average: 28, model: 180 } } };
+  } else {
+    try {
+      result = await callMLServer('POST', '/v2/forecast',
+        { start: history.usable.start, quantities: history.usable.quantities }, 60000);
+    } catch (err) {
+      return res.status(503).json({ error: 'forecast_v2_unavailable', message: err.message });
+    }
   }
-  const { quantities, ...usable } = history.usable;
   res.json({
     version: 2,
     product,
     status: result.status,
     models_release: result.models_release || null,
     history: {
-      ...result.history, first_sale: history.first_sale, gaps: history.gaps, day_counts: history.counts,
-      covered_days: usable.covered_days, recorded_days: usable.recorded_days, sources: history.sources,
+      ...result.history,
+      first_sale: history.first_sale, last_record: history.last_record,
+      confirmed_days: history.counts.confirmed, unconfirmed_days: history.counts.unconfirmed, missing_days: history.counts.missing,
+      unconfirmed_periods: history.unconfirmed_periods, missing_periods: history.missing_periods, sources: history.sources,
     },
     pattern: result.pattern,
     forecasts: result.forecasts,

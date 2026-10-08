@@ -141,16 +141,25 @@ Not implemented. A separate design must first cover:
   same source are refused like overlaps, unless `overlap_mode=append`.
 - **Revocation:** rollback revokes the import's coverage in the same transaction.
   Revoked periods are ignored.
-- **Resolution (`productHistory`):** each day from the product's first sale onward is
-  one of:
-  - `covered` — inside confirmed coverage of **every** source that has sold the
+- **Confirming afterwards:** `POST /api/data/uploads/:id/coverage`
+  `{ start, end, scope, confirmed: true }` confirms an import that is already stored
+  (e.g. uploaded before coverage existed, or a store sync). The same checks apply, using
+  that import's stored rows. A rolled-back import, an import that already has a period,
+  or one with rejected rows is refused. The upload page offers this per version
+  (Upload history → Confirm period).
+- **Resolution (`productHistory`) — confirmed days only (revised 2026-10-08):** each day
+  from the product's first sale onward is one of:
+  - `confirmed` — inside confirmed coverage of **every** source that has sold the
     product; days without rows are 0;
-  - `recorded` — not fully covered, but rows exist. The rows are taken as that
-    day's sales, which is how all data worked before 003;
-  - `unknown` — neither. It is never filled with zero.
+  - `unconfirmed` — sales records exist but the day is not confirmed. A day with some
+    records may still be missing sales, so it is **not** forecasting history. The
+    records stay visible everywhere else (sales, dashboard, inventory);
+  - `missing` — no records and no confirmation: unknown, never zero.
 
-  The usable history is the run of known days that ends on the last known day.
-  Gaps are reported.
+  Forecasting history is the run of consecutive confirmed days that ends on the last
+  confirmed day; with no confirmed day there is no forecast (`needs_confirmation`).
+  The response reports confirmed / unconfirmed / missing counts and periods, what
+  interrupts the confirmed run, and any unconfirmed records after it.
 
 ## Rollback strategy for migration 002
 
