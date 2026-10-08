@@ -1,4 +1,4 @@
-// Upgrade tests for migrations 002 and 003 on a DISPOSABLE database (created and dropped
+// Upgrade tests for migrations 002 and 003 (004: upgrade004.test.js) on a DISPOSABLE database (created and dropped
 // here; never the development database).
 //
 //  1. A database built the old way (initDb.js = 001 SQL run directly, no
@@ -109,13 +109,12 @@ test('after 002: identical genuine rows are allowed, provenance violations are n
 
 test('003 applies on top of 002 without changing rows, and restarting cannot undo either', async () => {
   const before = { sales: await count('sales'), attributed: await count('attributed_sales') };
-  assert.deepEqual(await migrate(db), ['003_data_coverage']);
+  assert.deepEqual(await migrate(db, { target: 3 }), ['003_data_coverage']);
   assert.equal(await count('sales'), before.sales);
   assert.equal(await count('attributed_sales'), before.attributed, 'quarantine unchanged');
   assert.equal((await one(`SELECT COUNT(*)::int AS n FROM attributed_sales WHERE source_id IS NOT NULL`)).n > 0, true,
     'attributed_sales now carries the source');
-  assert.deepEqual(await migrate(db), [], 'running migrate again is a no-op');
-  await assertSchemaCurrent(db);
+  assert.deepEqual(await migrate(db, { target: 3 }), [], 'running migrate again is a no-op');
   assert.ok(!(await constraintExists('unique_sale_transaction')));
   const st = await status(db);
   assert.deepEqual(st.applied.map(r => r.name), ['001_baseline', '002_import_identity', '003_data_coverage']);
@@ -163,7 +162,7 @@ test('reversal of 002 works once the data allows it, and 002 + 003 can be re-app
   assert.equal((await one(`SELECT to_regclass('data_sources') AS t`)).t, null);
   assert.equal(await count('sales'), salesBefore, 'no sale lost by the reversal');
   await assert.rejects(assertSchemaCurrent(db), (err) => err.code === 'SCHEMA_NOT_CURRENT');
-  assert.deepEqual(await migrate(db), ['002_import_identity', '003_data_coverage']);
+  assert.deepEqual(await migrate(db), ['002_import_identity', '003_data_coverage', '004_inventory_ledger']);
   assert.equal(await count('sales'), salesBefore);
   await assertSchemaCurrent(db);
 });

@@ -20,7 +20,8 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
 const TABLES = [
   'anomalies_detected', 'upload_versions', 'data_freshness', 'finetune_jobs', 'forecasts',
-  'model_metrics', 'inventory', 'data_coverage_products', 'data_coverage', 'sales', 'products',
+  'model_metrics', 'inventory', 'inventory_legacy_rows', 'inventory_policies', 'stock_movements', 'stock_snapshots',
+  'stock_snapshot_batches', 'inventory_source_mappings', 'inventory_locations', 'data_coverage_products', 'data_coverage', 'sales', 'products',
   'data_uploads', 'data_sources', 'users',
 ];
 
