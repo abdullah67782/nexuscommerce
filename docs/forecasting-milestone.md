@@ -3,63 +3,91 @@
 **Branch:** `feature/forecast-v2`, built on `main` with import identity merged.
 **Status:** working milestone for architectural review.
 
+**Revision 2 (2026-10-08), after review:**
+
+1. With v2 on, v2 is the whole forecasting experience. The legacy daily predictions,
+   accuracy gauge, "95%" ranges, horizon control, Generate button, CSV exports,
+   forecast-vs-actual and training card are not rendered, and the legacy endpoints are
+   not called. The overview shows "Forecast v2" instead of model accuracy.
+2. Only **confirmed** days count as forecasting history. Records outside confirmation
+   stay visible but are reported as "not confirmed". Sellers can confirm stored uploads
+   afterwards (Upload history → Confirm period).
+
+The trained models, the routing rule and the evaluation are unchanged; the frozen file
+hashes still verify.
+
 **The switch:** v2 is off unless the backend has `FORECAST_V2_ENABLED=true`. When it
 is off:
 
 - `/api/forecast/v2/*` returns 404;
-- the forecasting page looks exactly as before.
-
-The existing daily chart is unchanged and is shown separately from v2.
+- the forecasting page is the unchanged legacy implementation (kept for rollback;
+  `f1-flag-off-legacy-page.png`).
 
 ## What a seller can do
 
-1. **Upload sales and confirm what the file covers.** The upload page has a
-   "This file contains every sale for a period" option, with first and last day,
-   and a product scope: all my products, or only the products in this file.
+1. **Upload sales and confirm what the file covers** — while uploading ("This file
+   contains every sale for a period"), or later for a stored upload or store sync
+   (Upload history → Confirm period). Scope: all my products, or only the products in
+   the upload.
 2. **Select a product** on Demand Forecasting.
-3. **Get 7-day and 28-day totals** for it in the "Total demand ahead" panel. They are
-   built from the product's usable history.
-4. **See how each total was made:** the dates it covers, the method, how much
-   history was used and which tier that falls in, and why any data counts as missing.
-   - The panel shows no daily breakdown, no accuracy figure and no confidence range.
+3. **Get 7-day and 28-day totals**, built only from the product's consecutive
+   **confirmed** days.
+4. **See how each total was made:** dates, method, confirmed history and tier, and
+   which days are not confirmed or have no records, and why they don't count.
+   - No daily breakdown, accuracy figure or confidence range anywhere on the page.
 
-## End-to-end demo (real API, real ML server, real PostgreSQL, real pages)
+## End-to-end demo of the corrected flow (real API, ML server, PostgreSQL, pages)
 
-`backend/scripts/demo-forecast-data.js` generates four files for a Lahore store
-(Asia/Karachi days). The data ends yesterday. The four files were uploaded through the
-actual upload page, in a browser:
+`backend/scripts/demo-forecast-data.js` generates the data for a Lahore store
+(Asia/Karachi days, ending yesterday). The four files were uploaded through the
+upload page in a browser, then a connected store sync was sent to
+`POST /api/store/connect`:
 
-| # | File | Coverage confirmed | Result |
+| # | Upload | Confirmed at upload | Rows |
+|---|---|---|---:|
+| 1 | All products, 10 Feb – 7 Aug | all products | 991 (one 60-suit order kept and flagged) |
+| 2 | Without mugs, 8 Aug – 5 Oct | products in the file | 219 |
+| 3 | Mug orders, 21 Aug – 5 Oct | **no** | 102 |
+| 4 | No sales, 6–7 Oct | all products | **0** (zero-transaction import) |
+| 5 | Daraz store sync: Pashmina Shawl, 9 Apr – 5 Oct (180 days) | **no** | 371 |
+
+**Before confirming** (`b1`, `b2`):
+
+| Product | Records | Confirmed history | Result |
 |---|---|---|---|
-| 1 | All products, 10 Feb – 7 Aug | all products | 954 rows. One wholesale order of 60 suits was **kept and flagged**. |
-| 2 | Without mugs, 8 Aug – 5 Oct | products in the file | 191 rows. |
-| 3 | Mug orders, 21 Aug – 5 Oct | none | 114 rows, as recorded days. |
-| 4 | No sales, 6–7 Oct | all products | **0 rows**: a zero-transaction import. |
+| Pashmina Shawl | 180 days with sales | **0** | "History needs confirmation" — no forecast; nothing sent to the model. Its 737 units still show in sales. |
+| Ceramic Mug Set | 46 recent days not confirmed | 2 (6–7 Oct) | insufficient; notes list the unconfirmed period |
 
-Forecasts as served (`docs/evidence/forecasting-milestone/api_v2_product_*.json`):
+**The seller confirms versions #5 and #3** from Upload history (`c1`–`c4`).
 
-| Case | Product | Usable history | Tier / method | 7 days (8–14 Oct) | 28 days (8 Oct – 4 Nov) |
+**After** (`docs/evidence/forecasting-milestone/api_results.json`):
+
+| Case | Product | Confirmed history | Tier / method | 7 days | 28 days |
 |---|---|---|---|---:|---:|
-| Regular | Lawn Suit 3-Piece | 240 confirmed days, sold on 91.1% of them | rule → shared model | 23.3 | 96.6 |
-| Rare | Bridal Clutch | 238 confirmed days, sold on 8.3% of them | rule → TSB | 0.60 | 2.41 |
-| Missing gap | Ceramic Mug Set | 48 days (46 recorded + 2 confirmed). 8–20 Aug are **unknown** (13 days) and are not filled with zero | average-based | 31.3 | 125.0 |
-| Insufficient | Prayer Mat | 20 days | none; "20 of 28 days" | — | — |
+| Regular | Lawn Suit 3-Piece | 240 days (10 Feb – 7 Oct), sold on 94.4% | rule → shared model | 36.0 | 148.1 |
+| Rare | Bridal Clutch | 238 days, sold on 7.2% | rule → TSB | 0.1 | 0.6 |
+| Missing gap | Ceramic Mug Set | 48 days after a 13-day gap with no records (unknown, not zero) | average-based | 27.2 | 109.0 |
+| Insufficient | Prayer Mat | 20 days | none ("20 of 28") | — | — |
+| Confirmed later | Pashmina Shawl | 180 days (to 5 Oct; the store did not confirm 6–7 Oct) | rule → shared model | 28.7 | 107.9 |
 
-Screenshots are in `docs/evidence/forecasting-milestone/`:
+Forecast dates start the day after the confirmed history (8 Oct; 6 Oct for the shawl,
+with a note saying why).
 
-- `upload1-coverage-form.png`, `upload2-coverage-form.png`, `upload4-coverage-form.png`;
-- `upload1-result.png` … `upload4-result.png`;
-- `forecast-regular.png`, `forecast-rare.png`, `forecast-missing-gap.png`, `forecast-insufficient.png`;
-- `forecasting-page-regular-with-daily-chart.png`, `m-forecast-rare.png` (mobile);
-- `upload-page-after-imports.png`.
+Screenshots in `docs/evidence/forecasting-milestone/`: `a1`–`a4` upload results,
+`b1`/`b2` before confirmation, `c1`–`c4` confirming from Upload history, `d1`–`d5` the
+five cases after, `e1` the full v2 forecasting page, `e2` mobile, `e3` overview, `f1`
+the legacy page with the flag off. `v2_page_legacy_absent.txt` records that, with v2 on,
+none of "Generate forecast", "95%", "Export CSV", "Accuracy", "Horizon" appear and no
+legacy forecast endpoint is called.
 
-To reproduce the demo:
+To reproduce:
 
 ```
 node backend/scripts/demo-forecast-data.js <folder>
 ```
 
-Then upload the files in order with the coverage listed in `manifest.json`.
+Then upload files 1–4 with the coverage in `manifest.json`, send file 5 to
+`POST /api/store/connect`, and confirm versions #5 and #3 from Upload history.
 
 ## Decisions implemented
 
@@ -77,8 +105,10 @@ Then upload the files in order with the coverage listed in `manifest.json`.
 
 Migration 003 is in `lib/coverage.js`. See `docs/import-identity-and-coverage.md`, section E.
 
-- Unknown gaps are kept.
+- Forecasting history = consecutive **confirmed** days only (revision 2). Unconfirmed
+  records stay visible but do not count; days with no records are unknown, never zero.
 - Zeros are filled only inside confirmed coverage of every source that sold the product.
+- Stored uploads can be confirmed afterwards: `POST /api/data/uploads/:id/coverage`.
 - A rollback revokes coverage.
 - A file with rejected rows cannot be confirmed as complete.
 
@@ -134,9 +164,11 @@ These figures are WAPE (lower is better).
   difference is 2.2e-7, from pandas rolling rounding.
 - **ML suite:** 23 tests (`python -m unittest discover -s tests`): parity, tiers, registry
   refusals and serving fixture. Output in `docs/evidence/forecasting-milestone/ml_tests.txt`.
-- **Backend:** **89 / 89** under TZ=UTC, America/Los_Angeles and Asia/Tokyo. There are
-  no TODO tests. The suite includes:
-  - 15 new coverage, cleaning and v2 tests;
+- **Backend:** **92 / 92** under TZ=UTC, America/Los_Angeles and Asia/Tokyo (revision 2).
+  There are no TODO tests. The suite includes:
+  - 18 coverage, cleaning and v2 tests, among them the reported case (180 unconfirmed
+    recorded days → 0 usable days, `needs_confirmation`, nothing sent to the model) and
+    confirming a stored upload;
   - upgrade tests for 001 → 002 → 003, the reversals and re-applying.
 - **Migration rehearsal:** `scripts/rehearse-migration.js` was run on an old-style
   seeded database: backup → restore → 001+002+003 on the copy → counts and quarantine
@@ -149,35 +181,29 @@ These figures are WAPE (lower is better).
   PyPI is blocked there; Python was 3.13.
 - **Serving:** the app serves from the Windows venv (Python 3.12.4, numpy 1.26.4,
   xgboost 3.4.1). The model files are portable JSON.
-- **Not yet confirmed:** `ml/tests/test_v2_serving.py` has not been run in that venv,
-  so the venv's output has not yet been checked against the fixture.
+- **Confirmed by the user (2026-10-08):** the serving and parity checks pass in the
+  Windows venv.
 
 ## For review: findings and open questions
 
-1. **The old daily chart contradicts v2 on the same page.**
-   - For the demo suit, the legacy UK model predicts about 194 units a day, about
-     5,800 over 30 days. Actual sales are about 4 a day, and v2 forecasts 97 over
-     28 days.
-   - The legacy chart also still shows a "95% range" and an accuracy gauge.
-   - It is kept separate, as instructed. A decision is needed: hide or relabel it while
-     v2 is on?
-2. **The legacy daily path can still serve an untrusted model.** It may still load
-   `xgb_finetuned_3.pkl` for seller 3. v2 never does. Gating the legacy loader was not
-   in scope.
+1. **Resolved in revision 2:** with v2 on, the legacy daily chart, accuracy gauge,
+   95% ranges, controls and exports are no longer shown.
+2. **The legacy daily path can still serve an untrusted model** when the flag is off
+   (rollback). It may still load `xgb_finetuned_3.pkl` for seller 3. v2 never does.
 3. **Under-forecasting and dormant products.**
    - Bias is negative at both horizons.
    - Dormant products have very high percentage error on tiny volume, because they are
      routed to the shared model under the frozen rule.
    - These were reported, not tuned. Any change needs another fresh holdout.
-4. **"Recorded" days.** Outside confirmed coverage, a day that has rows is taken as
-   complete. This is how all data worked before 003. Days with no rows are unknown.
-   Please confirm this is acceptable.
+4. **Resolved in revision 2:** records without confirmation no longer count as
+   history. Legacy rows with no import record (seeded data) cannot be confirmed; their
+   sellers need to re-upload those periods with confirmation.
 5. **Strict rule across sources.** Zeros are filled only when **every** source that ever
    sold the product covers the day. A product with old file history plus a new connector
    therefore gets no zero-filled days until both sources are covered.
 6. **Large-order rule.** The rule (Q3 + 3 × max(IQR, 1), at least 8 rows per product per
    file) is a simple heuristic. It only flags; it never removes.
-7. **Forecast start date.** Forecasts start the day after the last known day. If the
+7. **Forecast start date.** Forecasts start the day after the last confirmed day. If the
    data is stale, the panel says so instead of moving the dates.
 
 ## Deferred, as instructed
@@ -191,6 +217,6 @@ These figures are WAPE (lower is better).
 
 1. Run `node scripts/rehearse-migration.js`, then `npm run migrate`. See
    `docs/migration-runbook.md`.
-2. Verify the serving environment: in `ml/`, run `venv\Scripts\python -m unittest tests.test_v2_serving tests.test_v2_parity`.
+2. (Done.) Serving check in the Windows venv.
 3. To review v2, add `FORECAST_V2_ENABLED=true` to `backend/.env` and restart the
    backend and ML server.

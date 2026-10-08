@@ -23,6 +23,6 @@ test_v2_code_never_references_legacy_artifacts (test_v2_serving.Registry.test_v2
 test_reproduces_fixture_forecasts (test_v2_serving.ServingFixture.test_reproduces_fixture_forecasts) ... ok
 
 ----------------------------------------------------------------------
-Ran 23 tests in 43.909s
+Ran 23 tests in 45.468s
 
 OK

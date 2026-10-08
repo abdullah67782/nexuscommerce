@@ -4,12 +4,18 @@
 //
 //   node scripts/demo-forecast-data.js <out-dir> [last-day YYYY-MM-DD]
 //
-// Upload them in order on the Data Integration page, with the coverage shown in
-// manifest.json. The four products then show the four history cases:
-//   Lawn Suit 3-Piece  regular seller, 240 confirmed days  -> shared model
-//   Bridal Clutch      sells on ~9% of days, 240 days      -> rare-sales method (TSB)
-//   Ceramic Mug Set    13 days missing (no file covers them) -> 48 days after the gap, average-based
-//   Prayer Mat         new, first sold 20 days ago         -> insufficient history
+// Upload files 1-4 in order on the Data Integration page with the coverage shown
+// in manifest.json, and send 5 to POST /api/store/connect (a connected store).
+// Only CONFIRMED days count as forecasting history:
+//   Lawn Suit 3-Piece  regular seller, 240 confirmed days   -> shared model
+//   Bridal Clutch      sells on ~9% of days, 238 days       -> rare-sales method (TSB)
+//   Prayer Mat         new, first sold 20 days ago          -> insufficient history
+//   Ceramic Mug Set    file 3 is uploaded without confirmation: its 46 days stay
+//                      visible but do not count until the seller confirms them
+//                      (Upload history -> Confirm period); then 48 days after a
+//                      13-day missing gap -> average-based
+//   Pashmina Shawl     180 days from the connected store, not confirmed
+//                      -> "needs confirmation" until confirmed, then the full rule
 // One wholesale order of 60 suits is included: it is kept and flagged, not removed.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -30,6 +36,7 @@ const PRODUCTS = {
   clutch: { name: 'Bridal Clutch', category: 'Accessories', price: 7800 },
   mug: { name: 'Ceramic Mug Set', category: 'Home', price: 1800 },
   mat: { name: 'Prayer Mat', category: 'Home', price: 2200 },
+  shawl: { name: 'Pashmina Shawl', category: 'Clothing', price: 9500 },
 };
 const first = add(end, -239);
 const matLaunch = add(end, -19);
@@ -41,6 +48,7 @@ function ordersFor(key, day) {
   if (key === 'clutch') return rand() < 0.09 ? 1 : 0;
   if (key === 'mug') return 1 + poisson(1.4);                              // sells every day
   if (key === 'mat') return day >= matLaunch ? poisson(1.6) : 0;
+  if (key === 'shawl') return day >= add(end, -181) && day <= add(end, -2) ? 1 + poisson(1.2) : 0;
   return 0;
 }
 const rows = [];
@@ -53,6 +61,7 @@ rows.push({ key: 'lawn', day: add(first, 100), qty: 60 });  // wholesale order: 
 const recent = add(end, -60);
 if (!rows.some(r => r.key === 'clutch' && r.day >= recent && r.day <= add(end, -2))) rows.push({ key: 'clutch', day: add(end, -30), qty: 1 });
 
+const fileRows = rows.filter(r => r.key !== 'shawl');
 const csv = (list) => ['product_name,category,price,quantity,sale_date,revenue',
   ...list.sort((a, b) => a.day.localeCompare(b.day)).map(r => {
     const p = PRODUCTS[r.key];
@@ -60,20 +69,34 @@ const csv = (list) => ['product_name,category,price,quantity,sale_date,revenue',
   })].join('\n') + '\n';
 
 const files = [
-  { file: '1_store_export_all_products.csv', rows: rows.filter(r => r.day <= add(end, -61)),
+  { file: '1_store_export_all_products.csv', rows: fileRows.filter(r => r.day <= add(end, -61)),
     coverage: { start: first, end: add(end, -61), scope: 'all_products' },
     note: 'Complete export for every product.' },
-  { file: '2_store_export_without_mugs.csv', rows: rows.filter(r => r.key !== 'mug' && r.day >= recent && r.day <= add(end, -2)),
+  { file: '2_store_export_without_mugs.csv', rows: fileRows.filter(r => r.key !== 'mug' && r.day >= recent && r.day <= add(end, -2)),
     coverage: { start: recent, end: add(end, -2), scope: 'listed_products' },
     note: 'Complete for the products in the file; mug sales were left out of this export.' },
-  { file: '3_mug_sales_partial.csv', rows: rows.filter(r => r.key === 'mug' && r.day >= add(end, -47) && r.day <= add(end, -2)),
-    coverage: null, note: 'Mug orders found later, only from day -47: no period confirmed, so the 13 days before stay unknown.' },
+  { file: '3_mug_sales_partial.csv', rows: fileRows.filter(r => r.key === 'mug' && r.day >= add(end, -47) && r.day <= add(end, -2)),
+    coverage: null, confirm_later: { start: add(end, -47), end: add(end, -2), scope: 'listed_products' },
+    note: 'Mug orders found later, from day -47 only. Uploaded without confirmation, then confirmed from Upload history; the 13 days before stay missing.' },
   { file: '4_no_sales_last_two_days.csv', rows: [],
     coverage: { start: add(end, -1), end, scope: 'all_products' },
     note: 'Zero-transaction export: the shop sold nothing on the last two days (confirmed).' },
 ];
 fs.mkdirSync(outDir, { recursive: true });
 for (const f of files) fs.writeFileSync(path.join(outDir, f.file), csv(f.rows));
+// 5. A connected store (separate source) delivers 180 days of shawl sales without confirming completeness.
+const shawl = rows.filter(r => r.key === 'shawl').sort((a, b) => a.day.localeCompare(b.day));
+const storePayload = {
+  import_id: 'daraz-sync-1',
+  connection: { provider: 'daraz', external_store_id: 'lahore-01', display_name: 'Daraz store', timezone: 'Asia/Karachi' },
+  products: [{ name: PRODUCTS.shawl.name, category: PRODUCTS.shawl.category, price: PRODUCTS.shawl.price }],
+  sales: shawl.map((r, i) => ({ product_name: PRODUCTS.shawl.name, quantity: r.qty, sale_date: r.day,
+    revenue: PRODUCTS.shawl.price * r.qty, line_id: `DZ-${i + 1}` })),
+};
+fs.writeFileSync(path.join(outDir, '5_store_connect_shawls.json'), JSON.stringify(storePayload) + '\n');
+files.push({ file: '5_store_connect_shawls.json', rows: shawl, coverage: null,
+  confirm_later: { start: add(end, -181), end: add(end, -2), scope: 'listed_products' },
+  note: 'Connected store (POST /api/store/connect): 180 days, no completeness confirmation; confirmed later.' });
 fs.writeFileSync(path.join(outDir, 'manifest.json'), JSON.stringify({
   timezone: 'Asia/Karachi', last_day: end, products: Object.values(PRODUCTS).map(p => p.name),
   uploads: files.map(({ rows: r, ...f }) => ({ ...f, rows: r.length })),

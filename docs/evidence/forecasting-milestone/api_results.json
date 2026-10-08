@@ -1,0 +1,525 @@
+{
+ "store_connect": {
+  "status": "imported",
+  "records_imported": 371,
+  "import_record_id": 5,
+  "coverage": null
+ },
+ "before:Pashmina Shawl": {
+  "version": 2,
+  "product": {
+   "id": 5,
+   "name": "Pashmina Shawl",
+   "category": "Clothing"
+  },
+  "status": "needs_confirmation",
+  "models_release": null,
+  "history": {
+   "usable_days": 0,
+   "first_day": null,
+   "last_day": null,
+   "tier": "insufficient",
+   "required_days": {
+    "average": 28,
+    "model": 180
+   },
+   "first_sale": "2026-04-09",
+   "last_record": "2026-10-05",
+   "confirmed_days": 0,
+   "unconfirmed_days": 180,
+   "missing_days": 0,
+   "unconfirmed_periods": [
+    {
+     "start": "2026-04-09",
+     "end": "2026-10-05",
+     "days": 180
+    }
+   ],
+   "missing_periods": [],
+   "sources": [
+    {
+     "id": 5,
+     "kind": "api",
+     "name": "Daraz store",
+     "timezone": "Asia/Karachi",
+     "confirmed_periods": []
+    }
+   ]
+  },
+  "pattern": null,
+  "forecasts": [],
+  "notes": [
+   {
+    "type": "confirmation",
+    "text": "180 days have sales records that are not confirmed complete (2026-04-09 to 2026-10-05). The records stay in your sales data, but a day with some records can still be missing sales, so these days do not count as forecasting history. Confirm the period each upload covers on the Data Integration page."
+   },
+   {
+    "type": "tier",
+    "text": "No confirmed days yet, so there is no forecast. A forecast needs at least 28 consecutive confirmed days."
+   }
+  ],
+  "today": "2026-10-08",
+  "timezone": "Asia/Karachi"
+ },
+ "before:Ceramic Mug Set": {
+  "version": 2,
+  "product": {
+   "id": 2,
+   "name": "Ceramic Mug Set",
+   "category": "Home"
+  },
+  "status": "insufficient_history",
+  "models_release": null,
+  "history": {
+   "usable_days": 2,
+   "first_day": "2026-10-06",
+   "last_day": "2026-10-07",
+   "tier": "insufficient",
+   "required_days": {
+    "average": 28,
+    "model": 180
+   },
+   "first_sale": "2026-02-10",
+   "last_record": "2026-10-05",
+   "confirmed_days": 181,
+   "unconfirmed_days": 46,
+   "missing_days": 13,
+   "unconfirmed_periods": [
+    {
+     "start": "2026-08-21",
+     "end": "2026-10-05",
+     "days": 46
+    }
+   ],
+   "missing_periods": [
+    {
+     "start": "2026-08-08",
+     "end": "2026-08-20",
+     "days": 13
+    }
+   ],
+   "sources": [
+    {
+     "id": 1,
+     "kind": "file",
+     "name": "File uploads",
+     "timezone": "Asia/Karachi",
+     "confirmed_periods": [
+      {
+       "start": "2026-02-10",
+       "end": "2026-08-07"
+      },
+      {
+       "start": "2026-10-06",
+       "end": "2026-10-07"
+      }
+     ]
+    }
+   ]
+  },
+  "pattern": null,
+  "forecasts": [],
+  "notes": [
+   {
+    "type": "confirmation",
+    "text": "46 days have sales records that are not confirmed complete (2026-08-21 to 2026-10-05). The records stay in your sales data, but a day with some records can still be missing sales, so these days do not count as forecasting history. Confirm the period each upload covers on the Data Integration page."
+   },
+   {
+    "type": "cut",
+    "text": "Forecasting history starts on 2026-10-06, right after the unconfirmed records of 2026-08-21 to 2026-10-05."
+   },
+   {
+    "type": "missing",
+    "text": "13 days since the first sale on 2026-02-10 have no records and no confirmed period. They are unknown and are never treated as zero."
+   },
+   {
+    "type": "tier",
+    "text": "Only 2 consecutive confirmed days are available; at least 28 are needed for an estimate."
+   }
+  ],
+  "today": "2026-10-08",
+  "timezone": "Asia/Karachi"
+ },
+ "sales_still_visible:Pashmina Shawl": 737,
+ "after:Lawn Suit 3-Piece": {
+  "version": 2,
+  "product": {
+   "id": 1,
+   "name": "Lawn Suit 3-Piece",
+   "category": "Clothing"
+  },
+  "status": "ok",
+  "models_release": "nexus-v2-shared-20261008",
+  "history": {
+   "usable_days": 240,
+   "first_day": "2026-02-10",
+   "last_day": "2026-10-07",
+   "tier": "model",
+   "required_days": {
+    "average": 28,
+    "model": 180
+   },
+   "first_sale": "2026-02-10",
+   "last_record": "2026-10-05",
+   "confirmed_days": 240,
+   "unconfirmed_days": 0,
+   "missing_days": 0,
+   "unconfirmed_periods": [],
+   "missing_periods": [],
+   "sources": [
+    {
+     "id": 1,
+     "kind": "file",
+     "name": "File uploads",
+     "timezone": "Asia/Karachi",
+     "confirmed_periods": [
+      {
+       "start": "2026-02-10",
+       "end": "2026-08-07"
+      },
+      {
+       "start": "2026-08-08",
+       "end": "2026-10-05"
+      },
+      {
+       "start": "2026-10-06",
+       "end": "2026-10-07"
+      }
+     ]
+    }
+   ]
+  },
+  "pattern": {
+   "group": "regular",
+   "selling_day_percent": 94.4,
+   "window_days": 180
+  },
+  "forecasts": [
+   {
+    "horizon_days": 7,
+    "start": "2026-10-08",
+    "end": "2026-10-14",
+    "total_units": 35.98336410522461,
+    "method": "shared_model",
+    "method_label": "Shared forecasting model (v2)"
+   },
+   {
+    "horizon_days": 28,
+    "start": "2026-10-08",
+    "end": "2026-11-04",
+    "total_units": 148.05638122558594,
+    "method": "shared_model",
+    "method_label": "Shared forecasting model (v2)"
+   }
+  ],
+  "notes": [
+   {
+    "type": "method",
+    "text": "It has at least 180 confirmed days and does not sell rarely, so it uses the shared forecasting model."
+   }
+  ],
+  "today": "2026-10-08",
+  "timezone": "Asia/Karachi"
+ },
+ "after:Ceramic Mug Set": {
+  "version": 2,
+  "product": {
+   "id": 2,
+   "name": "Ceramic Mug Set",
+   "category": "Home"
+  },
+  "status": "ok",
+  "models_release": null,
+  "history": {
+   "usable_days": 48,
+   "first_day": "2026-08-21",
+   "last_day": "2026-10-07",
+   "tier": "average",
+   "required_days": {
+    "average": 28,
+    "model": 180
+   },
+   "first_sale": "2026-02-10",
+   "last_record": "2026-10-05",
+   "confirmed_days": 227,
+   "unconfirmed_days": 0,
+   "missing_days": 13,
+   "unconfirmed_periods": [],
+   "missing_periods": [
+    {
+     "start": "2026-08-08",
+     "end": "2026-08-20",
+     "days": 13
+    }
+   ],
+   "sources": [
+    {
+     "id": 1,
+     "kind": "file",
+     "name": "File uploads",
+     "timezone": "Asia/Karachi",
+     "confirmed_periods": [
+      {
+       "start": "2026-02-10",
+       "end": "2026-08-07"
+      },
+      {
+       "start": "2026-08-21",
+       "end": "2026-10-05"
+      },
+      {
+       "start": "2026-10-06",
+       "end": "2026-10-07"
+      }
+     ]
+    }
+   ]
+  },
+  "pattern": null,
+  "forecasts": [
+   {
+    "horizon_days": 7,
+    "start": "2026-10-08",
+    "end": "2026-10-14",
+    "total_units": 27.25,
+    "method": "average_28",
+    "method_label": "Average-based estimate"
+   },
+   {
+    "horizon_days": 28,
+    "start": "2026-10-08",
+    "end": "2026-11-04",
+    "total_units": 109,
+    "method": "average_28",
+    "method_label": "Average-based estimate"
+   }
+  ],
+  "notes": [
+   {
+    "type": "cut",
+    "text": "Forecasting history starts on 2026-08-21. The 13 days before it (2026-08-08 to 2026-08-20) have no records and no confirmed period, so they are unknown, not zero."
+   },
+   {
+    "type": "tier",
+    "text": "48 consecutive confirmed days of history (180 are needed for the model-based forecast). This is an average-based estimate: average daily sales over the last 28 days \u00d7 the number of days."
+   }
+  ],
+  "today": "2026-10-08",
+  "timezone": "Asia/Karachi"
+ },
+ "after:Bridal Clutch": {
+  "version": 2,
+  "product": {
+   "id": 3,
+   "name": "Bridal Clutch",
+   "category": "Accessories"
+  },
+  "status": "ok",
+  "models_release": "nexus-v2-shared-20261008",
+  "history": {
+   "usable_days": 238,
+   "first_day": "2026-02-12",
+   "last_day": "2026-10-07",
+   "tier": "model",
+   "required_days": {
+    "average": 28,
+    "model": 180
+   },
+   "first_sale": "2026-02-12",
+   "last_record": "2026-09-16",
+   "confirmed_days": 238,
+   "unconfirmed_days": 0,
+   "missing_days": 0,
+   "unconfirmed_periods": [],
+   "missing_periods": [],
+   "sources": [
+    {
+     "id": 1,
+     "kind": "file",
+     "name": "File uploads",
+     "timezone": "Asia/Karachi",
+     "confirmed_periods": [
+      {
+       "start": "2026-02-10",
+       "end": "2026-08-07"
+      },
+      {
+       "start": "2026-08-08",
+       "end": "2026-10-05"
+      },
+      {
+       "start": "2026-10-06",
+       "end": "2026-10-07"
+      }
+     ]
+    }
+   ]
+  },
+  "pattern": {
+   "group": "rare",
+   "selling_day_percent": 7.2,
+   "window_days": 180
+  },
+  "forecasts": [
+   {
+    "horizon_days": 7,
+    "start": "2026-10-08",
+    "end": "2026-10-14",
+    "total_units": 0.14991486736496287,
+    "method": "tsb",
+    "method_label": "Rare-sales method (TSB)"
+   },
+   {
+    "horizon_days": 28,
+    "start": "2026-10-08",
+    "end": "2026-11-04",
+    "total_units": 0.5996594694598515,
+    "method": "tsb",
+    "method_label": "Rare-sales method (TSB)"
+   }
+  ],
+  "notes": [
+   {
+    "type": "method",
+    "text": "It sells on fewer than 20% of days, so it uses the rare-sales method (TSB), which follows how often it sells and how much per sale."
+   }
+  ],
+  "today": "2026-10-08",
+  "timezone": "Asia/Karachi"
+ },
+ "after:Prayer Mat": {
+  "version": 2,
+  "product": {
+   "id": 4,
+   "name": "Prayer Mat",
+   "category": "Home"
+  },
+  "status": "insufficient_history",
+  "models_release": null,
+  "history": {
+   "usable_days": 20,
+   "first_day": "2026-09-18",
+   "last_day": "2026-10-07",
+   "tier": "insufficient",
+   "required_days": {
+    "average": 28,
+    "model": 180
+   },
+   "first_sale": "2026-09-18",
+   "last_record": "2026-10-04",
+   "confirmed_days": 20,
+   "unconfirmed_days": 0,
+   "missing_days": 0,
+   "unconfirmed_periods": [],
+   "missing_periods": [],
+   "sources": [
+    {
+     "id": 1,
+     "kind": "file",
+     "name": "File uploads",
+     "timezone": "Asia/Karachi",
+     "confirmed_periods": [
+      {
+       "start": "2026-02-10",
+       "end": "2026-08-07"
+      },
+      {
+       "start": "2026-08-08",
+       "end": "2026-10-05"
+      },
+      {
+       "start": "2026-10-06",
+       "end": "2026-10-07"
+      }
+     ]
+    }
+   ]
+  },
+  "pattern": null,
+  "forecasts": [],
+  "notes": [
+   {
+    "type": "tier",
+    "text": "Only 20 consecutive confirmed days are available; at least 28 are needed for an estimate."
+   }
+  ],
+  "today": "2026-10-08",
+  "timezone": "Asia/Karachi"
+ },
+ "after:Pashmina Shawl": {
+  "version": 2,
+  "product": {
+   "id": 5,
+   "name": "Pashmina Shawl",
+   "category": "Clothing"
+  },
+  "status": "ok",
+  "models_release": "nexus-v2-shared-20261008",
+  "history": {
+   "usable_days": 180,
+   "first_day": "2026-04-09",
+   "last_day": "2026-10-05",
+   "tier": "model",
+   "required_days": {
+    "average": 28,
+    "model": 180
+   },
+   "first_sale": "2026-04-09",
+   "last_record": "2026-10-05",
+   "confirmed_days": 180,
+   "unconfirmed_days": 0,
+   "missing_days": 0,
+   "unconfirmed_periods": [],
+   "missing_periods": [],
+   "sources": [
+    {
+     "id": 5,
+     "kind": "api",
+     "name": "Daraz store",
+     "timezone": "Asia/Karachi",
+     "confirmed_periods": [
+      {
+       "start": "2026-04-09",
+       "end": "2026-10-05"
+      }
+     ]
+    }
+   ]
+  },
+  "pattern": {
+   "group": "regular",
+   "selling_day_percent": 100,
+   "window_days": 180
+  },
+  "forecasts": [
+   {
+    "horizon_days": 7,
+    "start": "2026-10-06",
+    "end": "2026-10-12",
+    "total_units": 28.73151206970215,
+    "method": "shared_model",
+    "method_label": "Shared forecasting model (v2)"
+   },
+   {
+    "horizon_days": 28,
+    "start": "2026-10-06",
+    "end": "2026-11-02",
+    "total_units": 107.91663360595703,
+    "method": "shared_model",
+    "method_label": "Shared forecasting model (v2)"
+   }
+  ],
+  "notes": [
+   {
+    "type": "method",
+    "text": "It has at least 180 confirmed days and does not sell rarely, so it uses the shared forecasting model."
+   },
+   {
+    "type": "stale",
+    "text": "Confirmed history ends on 2026-10-05, so forecasts start on 2026-10-06, not today (2026-10-08). Upload and confirm newer sales for a forecast from today."
+   }
+  ],
+  "today": "2026-10-08",
+  "timezone": "Asia/Karachi"
+ }
+}

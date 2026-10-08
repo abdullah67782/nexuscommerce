@@ -1,0 +1,9 @@
+'Generate forecast': False
+'95%': False
+'Export CSV': False
+'Accuracy': False
+'Predicted demand': False
+'Horizon': False
+'Personal model': False
+'Total demand ahead': True
+legacy endpoints called: []
