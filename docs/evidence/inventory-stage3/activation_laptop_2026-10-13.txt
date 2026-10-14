@@ -1,0 +1,19 @@
+Laptop activation run, 2026-10-13 (owner's machine, development database "nexuscommerce"). Reported by the owner.
+
+Step 1  ml\venv: python -m unittest tests.test_upper_estimates -v
+        Ran 11 tests, OK (skipped=1: FastAPI test client not installed). test_fixture_reproduced: ok (strict, not skipped)
+        parity: worst |dF| 1.42e-14; worst |d upper| {'U0': 2.842170943040401e-14, 'U1': 0.0, 'U2': 3.552713678800501e-15, 'U3': 0.0}; numpy 1.26.4
+Step 2  frontend: npm run build passed (11 pages). ESLint: UpperEstimates.jsx, CalendarTab.jsx, Outlook.jsx clean after the fix
+        (other pre-existing project errors unchanged).
+Step 3  rehearse-migration (PG_BIN=C:\Program Files\PostgreSQL\18\bin, for that command only)
+        Applied: 001..006. Pending: 007_inventory_calendar, 008_forecast_upper_estimates
+        Backup: backend\backups\nexuscommerce_pre_migrate_20261013T171338.dump (187 KB)
+        restore verified: users 10, products 17, sales 2451 (14027 units), imports 11, attributed 2451, upload_versions 11,
+          stock_counts 7, stock_movements 5 (2 units), suppliers 2, supplier_links 2, purchase_orders 2 (versions 11, 6 units),
+          received 8, adjustments 4, order events 12, supplier_lead_times 14, recommendations 7,
+          recommendation_fingerprints 3b2689ee53687ef8bbd894cfb9f2839f
+        applied to the scratch copy: 007, 008; every count unchanged; schema current. REHEARSAL PASSED.
+Step 4  npm run migrate: Applied 007_inventory_calendar, 008_forecast_upper_estimates. migrate:status: 001..008 applied.
+Step 5  backend\.env: FORECAST_V2_ENABLED=true (already), INVENTORY_CALENDAR_ENABLED=true, FORECAST_UPPER_ESTIMATES_ENABLED=true.
+        ML server (uvicorn main:app --port 8000) and backend (npm start) running; :8000/docs and :5000/api/health answered 200.
+Step 6  node scripts\smoke-stage3.js: 27/27 checks passed (seller smoke-stage3-1791911667008@nexus.local).

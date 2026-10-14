@@ -1,0 +1,189 @@
+{
+  "amendment_id": "nexus-stage3-dev-protocol-v1-amendment-A2",
+  "base_protocol_sha256": "5b4b618c3fb3326531f64a12bd0ca5a996937fbafe89a4ad4f2932473ec4569c",
+  "amendment_A1_sha256": "916c0b11b42dce3a20d82c6d5b85d16d3ee0a5da36efdfe49eabc8b11a1c72ea",
+  "approved_by": "architect (Codex) decision D2, after development results were seen",
+  "disclosure": "Made AFTER the development decision-track results were seen. The original selections (rule A0: kappa = 1 only) are preserved below and are evaluated and reported in the final run, but they do not authorise a suggestion.",
+  "reason": "D1 protects only the variability of demand inside the review window. With starting stock above the point forecast (kappa = 1.5) it counts the projected surplus as available, and development coverage fell to 0.601-0.833 for the cells where it was selected.",
+  "rule_A2": "A candidate is eligible only if, with exact integer arithmetic, |hits - p*n| <= tol*n on every (L, R) pair and both scenarios at kappa = 1 AND on (7, 7) at kappa 0.5 and 1.5 in both scenarios, with >= 200 decisions per cell; tol = 0.05 (0.10 rare). Among eligible candidates the lowest mean order quantity at kappa = 1 is selected; none -> no suggestion.",
+  "selections_A0_original": {
+    "regular|0.8": "D1@0.8",
+    "regular|0.9": "D1@0.9",
+    "occasional|0.8": "D2c@0.8",
+    "occasional|0.9": "D1@0.9",
+    "rare|0.8": "D2c@0.8",
+    "rare|0.9": "D2c@0.9",
+    "dormant|0.8": null,
+    "dormant|0.9": null,
+    "short_history|0.8": "D2c@0.8",
+    "short_history|0.9": "D2c@0.9"
+  },
+  "selections_A2": {
+    "regular|0.8": null,
+    "regular|0.9": "D2@0.9",
+    "occasional|0.8": null,
+    "occasional|0.9": "D2c@0.9",
+    "rare|0.8": "D2c@0.8",
+    "rare|0.9": "D2c@0.9",
+    "dormant|0.8": null,
+    "dormant|0.9": null,
+    "short_history|0.8": "D2c@0.8",
+    "short_history|0.9": "D2c@0.9"
+  },
+  "correction_to_the_development_report": "The report (section 6.3) read rounded coverages and stated that A2 would select D2c@0.9 for regular 90% and keep D2c@0.8 for occasional 80%. Exactly: D2c@0.9 regular reaches 0.848 at kappa 1.5 (below 0.85), so A2 selects D2@0.9; occasional 80% has no eligible candidate (D2c@0.8 reaches 0.852 at kappa 0.5, above 0.85).",
+  "decision_specific_quantity": "Every candidate is evaluated on the order quantity it produces for each decision. Q_method - Q_D0 is not a safety stock: with Stage 2's daily checkpoints a safety-stock setting SS changes the quantity to max(-min balance, SS - end balance), which is not Q_D0 + SS in general. Any later implementation must reproduce the evaluated quantity for each decision.",
+  "excess_stock_gate": "Per selected (segment, level): in every cell, shortage avoided per decision versus D0 > 0 and (mean end stock - D0 mean end stock) / (D0 mean lost units - mean lost units) <= cap, exactly; cap = 5/4 x the selected method's worst development ratio over all A2 cells; plus the date-block 95% interval of the pooled per-decision shortage reduction (kappa = 1) above 0.",
+  "caps": {
+    "regular|0.9": {
+      "method": "D2@0.9",
+      "dev_worst_ratio": {
+        "exact": "99459/24245",
+        "value": 4.102247886162095
+      },
+      "dev_worst_cell": {
+        "scenario": "none",
+        "L": 14,
+        "R": 7,
+        "kappa": 1.0,
+        "avoided_per_decision": {
+          "exact": "24245/7539",
+          "value": 3.215943759119247
+        },
+        "excess_per_decision": {
+          "exact": "33153/2513",
+          "value": 13.192598487863112
+        }
+      },
+      "cap": {
+        "exact": "99459/19396",
+        "value": 5.127809857702619
+      }
+    },
+    "occasional|0.9": {
+      "method": "D2c@0.9",
+      "dev_worst_ratio": {
+        "exact": "59676/10571",
+        "value": 5.645255888752247
+      },
+      "dev_worst_cell": {
+        "scenario": "none",
+        "L": 14,
+        "R": 7,
+        "kappa": 1.0,
+        "avoided_per_decision": {
+          "exact": "42284/47207",
+          "value": 0.8957146185946999
+        },
+        "excess_per_decision": {
+          "exact": "238704/47207",
+          "value": 5.0565382252632025
+        }
+      },
+      "cap": {
+        "exact": "74595/10571",
+        "value": 7.056569860940308
+      }
+    },
+    "rare|0.8": {
+      "method": "D2c@0.8",
+      "dev_worst_ratio": {
+        "exact": "11686/745",
+        "value": 15.685906040268456
+      },
+      "dev_worst_cell": {
+        "scenario": "none",
+        "L": 7,
+        "R": 7,
+        "kappa": 1.0,
+        "avoided_per_decision": {
+          "exact": "745/27144",
+          "value": 0.027446212791040377
+        },
+        "excess_per_decision": {
+          "exact": "5843/13572",
+          "value": 0.4305187150014736
+        }
+      },
+      "cap": {
+        "exact": "5843/298",
+        "value": 19.607382550335572
+      }
+    },
+    "rare|0.9": {
+      "method": "D2c@0.9",
+      "dev_worst_ratio": {
+        "exact": "307/34",
+        "value": 9.029411764705882
+      },
+      "dev_worst_cell": {
+        "scenario": "none",
+        "L": 7,
+        "R": 7,
+        "kappa": 1.0,
+        "avoided_per_decision": {
+          "exact": "85/522",
+          "value": 0.16283524904214558
+        },
+        "excess_per_decision": {
+          "exact": "1535/1044",
+          "value": 1.4703065134099618
+        }
+      },
+      "cap": {
+        "exact": "1535/136",
+        "value": 11.286764705882353
+      }
+    },
+    "short_history|0.8": {
+      "method": "D2c@0.8",
+      "dev_worst_ratio": {
+        "exact": "4587/712",
+        "value": 6.442415730337078
+      },
+      "dev_worst_cell": {
+        "scenario": "none",
+        "L": 14,
+        "R": 7,
+        "kappa": 1.0,
+        "avoided_per_decision": {
+          "exact": "356/1439",
+          "value": 0.2473940236275191
+        },
+        "excess_per_decision": {
+          "exact": "4587/2878",
+          "value": 1.593815149409312
+        }
+      },
+      "cap": {
+        "exact": "22935/2848",
+        "value": 8.053019662921349
+      }
+    },
+    "short_history|0.9": {
+      "method": "D2c@0.9",
+      "dev_worst_ratio": {
+        "exact": "11347/1448",
+        "value": 7.836325966850829
+      },
+      "dev_worst_cell": {
+        "scenario": "none",
+        "L": 14,
+        "R": 7,
+        "kappa": 1.0,
+        "avoided_per_decision": {
+          "exact": "724/1439",
+          "value": 0.5031271716469771
+        },
+        "excess_per_decision": {
+          "exact": "11347/2878",
+          "value": 3.9426685198054203
+        }
+      },
+      "cap": {
+        "exact": "56735/5792",
+        "value": 9.795407458563536
+      }
+    }
+  },
+  "frozen_at": "2026-10-12T21:01:04+00:00"
+}

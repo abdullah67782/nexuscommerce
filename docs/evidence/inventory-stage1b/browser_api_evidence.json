@@ -1,0 +1,326 @@
+{
+  "0_before": {
+    "Lawn Suit 3-Piece": {
+      "on_hand": 55,
+      "incoming": 0,
+      "approved_not_sent": 0,
+      "overdue": 0,
+      "inbound_state": "none",
+      "supplier_state": "none"
+    },
+    "Prayer Mat": {
+      "on_hand": 0,
+      "incoming": 0,
+      "approved_not_sent": 0,
+      "overdue": 0,
+      "inbound_state": "none",
+      "supplier_state": "none"
+    },
+    "Ceramic Mug Set": {
+      "on_hand": 21,
+      "incoming": 0,
+      "approved_not_sent": 0,
+      "overdue": 0,
+      "inbound_state": "none",
+      "supplier_state": "none"
+    }
+  },
+  "1_suppliers": [
+    {
+      "id": 1,
+      "name": "Faisalabad Textile Mills",
+      "email": null,
+      "phone": null,
+      "default_currency": "PKR",
+      "notes": null,
+      "active": true,
+      "updated_at": "2026-10-08T14:52:54.386Z",
+      "products": 2,
+      "missing_lead_time": 0,
+      "missing_cost": 0,
+      "open_orders": 0
+    },
+    {
+      "id": 2,
+      "name": "Hyderabad Ceramics",
+      "email": null,
+      "phone": null,
+      "default_currency": "PKR",
+      "notes": null,
+      "active": true,
+      "updated_at": "2026-10-08T14:53:01.679Z",
+      "products": 1,
+      "missing_lead_time": 1,
+      "missing_cost": 1,
+      "open_orders": 0
+    }
+  ],
+  "1_mug_supplier_readiness": "missing_lead_time",
+  "2_after_approve": {
+    "status": "approved",
+    "lawn": {
+      "on_hand": 55,
+      "incoming": 0,
+      "approved_not_sent": 30,
+      "overdue": 0,
+      "inbound_state": "approved_not_sent",
+      "supplier_state": "complete"
+    },
+    "movements_unchanged": true
+  },
+  "3_after_ordered": {
+    "status": "ordered",
+    "lawn": {
+      "on_hand": 55,
+      "incoming": 30,
+      "approved_not_sent": 0,
+      "overdue": 0,
+      "inbound_state": "open",
+      "supplier_state": "complete"
+    },
+    "prayer_mat": {
+      "on_hand": 0,
+      "incoming": 12,
+      "approved_not_sent": 0,
+      "overdue": 0,
+      "inbound_state": "open",
+      "supplier_state": "complete"
+    },
+    "movements_unchanged": true
+  },
+  "4_partial": {
+    "status": "partially_received",
+    "lawn": {
+      "on_hand": 75,
+      "incoming": 10,
+      "approved_not_sent": 0,
+      "overdue": 0,
+      "inbound_state": "open",
+      "supplier_state": "complete"
+    }
+  },
+  "5_complete": {
+    "status": "received",
+    "completed_at": "2026-10-08T14:53:31.154Z",
+    "lawn": {
+      "on_hand": 85,
+      "incoming": 0,
+      "approved_not_sent": 0,
+      "overdue": 0,
+      "inbound_state": "none",
+      "supplier_state": "complete"
+    },
+    "prayer_mat": {
+      "on_hand": 12,
+      "incoming": 0,
+      "approved_not_sent": 0,
+      "overdue": 0,
+      "inbound_state": "none",
+      "supplier_state": "complete"
+    }
+  },
+  "6_receipt_replay": {
+    "status": 200,
+    "replayed": true,
+    "movements_unchanged": true,
+    "prayer_mat_unchanged": true
+  },
+  "7_correction": {
+    "status": "partially_received",
+    "prayer_mat_line": {
+      "quantity_received": 10,
+      "quantity_corrected": 2,
+      "quantity_remaining": 2
+    },
+    "prayer_mat_stock": {
+      "on_hand": 10,
+      "incoming": 2,
+      "approved_not_sent": 0,
+      "overdue": 0,
+      "inbound_state": "open",
+      "supplier_state": "complete"
+    },
+    "effect": {
+      "id": 1,
+      "kind": "correction",
+      "quantity": 2,
+      "effective_at": "2026-10-08T14:53:00.000Z",
+      "reason": "Recorded 12; only 10 mats were in the delivery",
+      "recorded_at": "2026-10-08T14:53:34.331Z",
+      "receipt_id": 2,
+      "receipt_line_id": 3,
+      "product_id": 4,
+      "movement_id": 8
+    }
+  },
+  "8_return": {
+    "status": "partially_received",
+    "lawn_line": {
+      "quantity_received": 30,
+      "quantity_returned": 3,
+      "quantity_remaining": 0
+    },
+    "lawn_stock": {
+      "on_hand": 82,
+      "incoming": 0,
+      "approved_not_sent": 0,
+      "overdue": 0,
+      "inbound_state": "none",
+      "supplier_state": "complete"
+    },
+    "effect": {
+      "id": 2,
+      "kind": "supplier_return",
+      "quantity": 3,
+      "effective_at": "2026-10-08T14:53:00.000Z",
+      "reason": "Three suits with print defects sent back",
+      "recorded_at": "2026-10-08T14:53:37.433Z",
+      "receipt_id": 1,
+      "receipt_line_id": 1,
+      "product_id": 1,
+      "movement_id": 9
+    }
+  },
+  "9_history": [
+    [
+      "created",
+      null,
+      "draft"
+    ],
+    [
+      "approved",
+      "draft",
+      "approved"
+    ],
+    [
+      "ordered",
+      "approved",
+      "ordered"
+    ],
+    [
+      "received_goods",
+      "ordered",
+      "ordered"
+    ],
+    [
+      "status_changed",
+      "ordered",
+      "partially_received"
+    ],
+    [
+      "received_goods",
+      "partially_received",
+      "partially_received"
+    ],
+    [
+      "status_changed",
+      "partially_received",
+      "received"
+    ],
+    [
+      "receipt_corrected",
+      "received",
+      "received"
+    ],
+    [
+      "status_changed",
+      "received",
+      "partially_received"
+    ],
+    [
+      "goods_returned",
+      "partially_received",
+      "partially_received"
+    ],
+    [
+      "expected_arrival_changed",
+      "partially_received",
+      "partially_received"
+    ]
+  ],
+  "10_stale_version": [
+    409,
+    "version_conflict"
+  ],
+  "11_overdue": {
+    "list_overdue": true,
+    "lawn": {
+      "on_hand": 82,
+      "incoming": 20,
+      "approved_not_sent": 0,
+      "overdue": 20,
+      "inbound_state": "overdue",
+      "supplier_state": "complete"
+    }
+  },
+  "12_cancel_after_partial": {
+    "status": "cancelled",
+    "line": {
+      "quantity_received": 10,
+      "quantity_cancelled": 10,
+      "quantity_remaining": 0
+    },
+    "lawn_before_cancel": {
+      "on_hand": 92,
+      "incoming": 10,
+      "approved_not_sent": 0,
+      "overdue": 10,
+      "inbound_state": "overdue",
+      "supplier_state": "complete"
+    },
+    "lawn_after_cancel": {
+      "on_hand": 92,
+      "incoming": 0,
+      "approved_not_sent": 0,
+      "overdue": 0,
+      "inbound_state": "none",
+      "supplier_state": "complete"
+    },
+    "receive_after_cancel": [
+      409,
+      "not_receivable"
+    ],
+    "approve_after_cancel": [
+      409,
+      "invalid_transition"
+    ]
+  },
+  "13_count_authoritative": {
+    "count": 70,
+    "on_hand_after_count": 70,
+    "correction_status": 201,
+    "on_hand_after_correction": 70
+  },
+  "14_isolation": {
+    "get_po": 404,
+    "list": 0,
+    "suppliers": 0,
+    "receive": 404
+  },
+  "final": {
+    "Lawn Suit 3-Piece": {
+      "on_hand": 70,
+      "incoming": 1,
+      "approved_not_sent": 0,
+      "overdue": 0,
+      "inbound_state": "open",
+      "supplier_state": "complete"
+    },
+    "Prayer Mat": {
+      "on_hand": 10,
+      "incoming": 2,
+      "approved_not_sent": 0,
+      "overdue": 0,
+      "inbound_state": "open",
+      "supplier_state": "complete"
+    },
+    "Ceramic Mug Set": {
+      "on_hand": 21,
+      "incoming": 0,
+      "approved_not_sent": 0,
+      "overdue": 0,
+      "inbound_state": "none",
+      "supplier_state": "missing_lead_time"
+    }
+  }
+}

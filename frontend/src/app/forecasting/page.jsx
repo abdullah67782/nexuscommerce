@@ -15,6 +15,7 @@ import HatchDefs from '../../components/charts/HatchDefs';
 import { C, axisProps, gridProps, cursorProps } from '../../components/charts/chartTheme';
 import api from '../../services/api';
 import TotalsV2, { useForecastV2Enabled } from '../../components/forecast/TotalsV2';
+import UpperEstimates from '../../components/forecast/UpperEstimates';
 import toast from 'react-hot-toast';
 import {
   HiChartBar, HiArrowDownTray, HiSparkles, HiArrowPath, HiArrowUpTray,
@@ -107,7 +108,10 @@ function ForecastingV2Page() {
           </div>
         </Panel>
         {selectedProduct ? (
-          <TotalsV2 productId={selectedProduct} productName={products.find(p => String(p.id) === selectedProduct)?.name} />
+          <>
+            <TotalsV2 productId={selectedProduct} productName={products.find(p => String(p.id) === selectedProduct)?.name} />
+            <UpperEstimates key={selectedProduct} productId={selectedProduct} />
+          </>
         ) : !prodLoading && (
           <Panel variant="subtle">
             <EmptyState icon={<HiChartBar />} title="No products yet">Upload sales on Data Integration to see forecasts here.</EmptyState>
@@ -149,6 +153,18 @@ function LegacyForecastingPage() {
   // ── Bar animation state ───────────────────────────────────────────────────
   const [barsVisible, setBarsVisible] = useState(false);
 
+  async function loadFtStatus() {
+    try {
+      const r = await api.get('/finetune/status');
+      setTrainingEnabled(r.data.training_enabled === true);
+      if (r.data.status === 'running') setFtState('training');
+      else if (r.data.has_finetuned_model) setFtState('has_model');
+      else setFtState('idle');
+    } catch (_) {
+      setFtState('idle');
+    }
+  }
+
   // ─── On mount: load products + finetune status ────────────────────────────
   useEffect(() => {
     api.get('/products').then(r => {
@@ -160,15 +176,15 @@ function LegacyForecastingPage() {
       setSelectedProduct('1');
     }).finally(() => setProdLoading(false));
 
-    loadFtStatus();
+    queueMicrotask(loadFtStatus);
   }, []);
 
   // ─── Animate feature bars when features load ──────────────────────────────
   useEffect(() => {
-    if (features) {
-      setBarsVisible(false);
-      setTimeout(() => setBarsVisible(true), 50);
-    }
+    if (!features) return undefined;
+    queueMicrotask(() => setBarsVisible(false));
+    const t = setTimeout(() => setBarsVisible(true), 50);
+    return () => clearTimeout(t);
   }, [features]);
 
   // ─── Poll fine-tune status while training ─────────────────────────────────
@@ -205,17 +221,6 @@ function LegacyForecastingPage() {
   }, [ftState]);
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
-  const loadFtStatus = async () => {
-    try {
-      const r = await api.get('/finetune/status');
-      setTrainingEnabled(r.data.training_enabled === true);
-      if (r.data.status === 'running') setFtState('training');
-      else if (r.data.has_finetuned_model) setFtState('has_model');
-      else setFtState('idle');
-    } catch (_) {
-      setFtState('idle');
-    }
-  };
 
   const startFinetune = async () => {
     setFtStarting(true);

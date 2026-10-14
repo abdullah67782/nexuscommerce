@@ -1,0 +1,94 @@
+{
+  "platform": "Windows-10-10.0.19045-SP0",
+  "python": "3.12.4",
+  "numpy": "1.26.4",
+  "xgboost": "3.4.1",
+  "inputs": {
+    "7": {
+      "X_sha": "ca7d7d2b6526914d",
+      "y_sha": "34babd33044d1d6e",
+      "rows": 261863,
+      "X_sel_sha": "f410ae0ee8d6b386"
+    },
+    "28": {
+      "X_sha": "35d12013fef36141",
+      "y_sha": "d53f5e176c239d23",
+      "rows": 245422,
+      "X_sel_sha": "4a2440ffd65ec2ff"
+    }
+  },
+  "models": {
+    "7|0.8": {
+      "selected_pred_sha": "705b57d7a3b53efa",
+      "recipe": {
+        "pred_sha": "dd85aa84d2562b78",
+        "max_abs_diff_vs_selected": 0.3056662082672119,
+        "seconds": 6.4
+      },
+      "no_sampling_2": {
+        "pred_sha": "45dbfcfb52e597b3",
+        "max_abs_diff_vs_selected": null,
+        "seconds": 5.1
+      },
+      "no_sampling_1": {
+        "pred_sha": "45dbfcfb52e597b3",
+        "max_abs_diff_vs_selected": null,
+        "seconds": 7.0
+      }
+    },
+    "28|0.8": {
+      "selected_pred_sha": "981e6aaabea6b9b3",
+      "recipe": {
+        "pred_sha": "4a5c044b1f0c4d78",
+        "max_abs_diff_vs_selected": 0.9025399684906006,
+        "seconds": 5.6
+      },
+      "no_sampling_2": {
+        "pred_sha": "062e6e0b3ff0b5b1",
+        "max_abs_diff_vs_selected": null,
+        "seconds": 4.3
+      },
+      "no_sampling_1": {
+        "pred_sha": "062e6e0b3ff0b5b1",
+        "max_abs_diff_vs_selected": null,
+        "seconds": 6.3
+      }
+    },
+    "7|0.9": {
+      "selected_pred_sha": "d847edf0044923cb",
+      "recipe": {
+        "pred_sha": "3ea0a01f88f9a6bd",
+        "max_abs_diff_vs_selected": 0.5262050628662109,
+        "seconds": 6.1
+      },
+      "no_sampling_2": {
+        "pred_sha": "86fc5532630ec41a",
+        "max_abs_diff_vs_selected": null,
+        "seconds": 4.8
+      },
+      "no_sampling_1": {
+        "pred_sha": "86fc5532630ec41a",
+        "max_abs_diff_vs_selected": null,
+        "seconds": 7.6
+      }
+    },
+    "28|0.9": {
+      "selected_pred_sha": "cb1bf46c621a503a",
+      "recipe": {
+        "pred_sha": "526f2bb25b2cc148",
+        "max_abs_diff_vs_selected": 1.1127910614013672,
+        "seconds": 5.5
+      },
+      "no_sampling_2": {
+        "pred_sha": "0d6eb1dd91ab7fc1",
+        "max_abs_diff_vs_selected": null,
+        "seconds": 4.2
+      },
+      "no_sampling_1": {
+        "pred_sha": "0d6eb1dd91ab7fc1",
+        "max_abs_diff_vs_selected": null,
+        "seconds": 6.4
+      }
+    }
+  }
+}

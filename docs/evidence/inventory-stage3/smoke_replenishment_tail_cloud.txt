@@ -1,0 +1,4 @@
+PASS  timezone: matching again → actionable
+PASS  still only the one (cancelled) draft
+
+23/23 checks passed. Seller smoke-replenishment-1791910395991@nexus.local.

@@ -1,0 +1,99 @@
+{
+  "market": "pk",
+  "release": "nexus-v2-shared-20261008",
+  "scope": "15 named categories, recorded order quantities; marketplace only",
+  "uncertainty_windows_within": [
+    "2017-07-01",
+    "2017-12-31"
+  ],
+  "windows": 735,
+  "parity_max_abs_units": 0.00040733814421400893,
+  "U0": {
+    "pooled|7|0.8": 1.6633264877522893,
+    "pooled|7|0.9": 3.5710149187371405,
+    "pooled|28|0.8": 2.9317137812014638,
+    "pooled|28|0.9": 6.147931379534895,
+    "occasional|7|0.8": 1.6792427159570351,
+    "occasional|7|0.9": 3.0684475992896636,
+    "occasional|28|0.8": 2.702865291943954,
+    "occasional|28|0.9": 10.580193381605637,
+    "regular|7|0.8": 1.6723192557232014,
+    "regular|7|0.9": 3.9287701476263126,
+    "regular|28|0.8": 2.981597110488278,
+    "regular|28|0.9": 6.147931379534895
+  },
+  "U1": {
+    "pooled|7|0.8": 8.186794693772585,
+    "pooled|7|0.9": 31.26873554559405,
+    "pooled|28|0.8": 50.12087965251635,
+    "pooled|28|0.9": 126.74931412785006,
+    "occasional|7|0.8": 3.9919238680796414,
+    "occasional|7|0.9": 10.382882081851836,
+    "occasional|28|0.8": 12.188342367111588,
+    "occasional|28|0.9": 164.22445672035911,
+    "regular|7|0.8": 8.896563155985918,
+    "regular|7|0.9": 35.64814716206246,
+    "regular|28|0.8": 54.16786464480486,
+    "regular|28|0.9": 126.74931412785006
+  },
+  "counts": {
+    "pooled|7": 390,
+    "pooled|28": 345,
+    "occasional|7": 42,
+    "occasional|28": 33,
+    "regular|7": 348,
+    "regular|28": 312
+  },
+  "e1": {
+    "events": [
+      "Independence Day",
+      "Eid al-Adha"
+    ],
+    "alpha": 10.0,
+    "fit_windows_within": [
+      "2016-07-29",
+      "2017-12-31"
+    ],
+    "fit_occurrences": {
+      "Eid al-Adha": [
+        "2016-09-13",
+        "2017-09-02"
+      ],
+      "Independence Day": [
+        "2016-08-14",
+        "2017-08-14"
+      ]
+    },
+    "converged": true,
+    "features": [
+      "Eid al-Adha|pre2",
+      "Eid al-Adha|pre1",
+      "Eid al-Adha|d0",
+      "Eid al-Adha|post1",
+      "Eid al-Adha|post2",
+      "Independence Day|pre2",
+      "Independence Day|pre1",
+      "Independence Day|d0",
+      "Independence Day|post1",
+      "Independence Day|post2"
+    ],
+    "beta": [
+      -0.11403038406192934,
+      -0.2695805448712524,
+      -0.04654762505684305,
+      -0.1341107442801168,
+      -0.1569243520466209,
+      0.49072132895821463,
+      0.5889610042318477,
+      0.0931929445004173,
+      0.16594737185649555,
+      0.016482822149490123
+    ],
+    "fit_rows": 15135,
+    "fit_parity_max_abs_units": 0.0003559589385986328
+  },
+  "xgboost": "3.4.1",
+  "numpy": "2.5.3",
+  "pandas": "3.0.5",
+  "seconds": 2.3
+}

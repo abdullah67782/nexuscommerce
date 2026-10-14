@@ -1,0 +1,56 @@
+{
+ "protocol_id": "nexus-stage3-seq-protocol-v1",
+ "protocol_sha256": "87578cccf92dfcf1b70ca0ddd6adf3cbc14c0a85457f88e0eb43dbb3963cc97b",
+ "passed": true,
+ "checks": [
+  {
+   "id": "S1",
+   "check": "environment equals the frozen environment and Node.js is available",
+   "pass": true,
+   "environment": {
+    "python": "3.12.4",
+    "numpy": "1.26.4",
+    "pandas": "2.2.2",
+    "scipy": "1.17.1",
+    "xgboost": "3.4.1",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "node": "C:\\Program Files\\nodejs\\node.EXE"
+   },
+   "required": {
+    "python_minor": "3.12",
+    "numpy": "1.26.4",
+    "pandas": "2.2.2",
+    "scipy": "1.17.1",
+    "xgboost": "3.4.1"
+   }
+  },
+  {
+   "id": "S2",
+   "check": "every file listed in the sequential protocol matches its hash",
+   "pass": true,
+   "mismatches": []
+  },
+  {
+   "id": "S3",
+   "check": "reservation intact (150 products, none read before, refused by the development loaders)",
+   "pass": true
+  },
+  {
+   "id": "S4",
+   "check": "development rehearsal: parity with ml/v2 forecast_totals < 1e-3 and every policy replayed",
+   "pass": true,
+   "parity_max_abs_units": 2.842170943040401e-14,
+   "series": 292,
+   "release": "nexus-v2-shared-20261008"
+  },
+  {
+   "id": "S5",
+   "check": "engine parity: >= 2000 sampled decisions equal the application engine exactly",
+   "pass": true,
+   "decisions": 2400,
+   "mismatches": 0,
+   "error": null
+  }
+ ],
+ "reserved_outcomes_accessed": false
+}

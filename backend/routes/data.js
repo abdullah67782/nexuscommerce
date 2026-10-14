@@ -571,15 +571,19 @@ router.post('/data/rollback/:uploadId', authMiddleware, async (req, res) => {
       delSales = await client.query('DELETE FROM sales WHERE upload_id = $1 RETURNING id', [uploadId]);
 
       // Products created by this import that no longer have any sales — unless
-      // stock facts refer to them (counts, movements, settings, or legacy
-      // inventory rows): those are evidence and the product is kept.
+      // stock or purchasing facts refer to them (counts, movements, settings,
+      // legacy inventory rows, supplier terms, purchase-order lines, logged
+      // replenishment recommendations): those are evidence and the product is kept.
       const orphanProducts = `SELECT p.id FROM products p
          WHERE p.upload_id = $1 AND p.user_id = $2
            AND NOT EXISTS (SELECT 1 FROM sales s WHERE s.product_id = p.id)
            AND NOT EXISTS (SELECT 1 FROM stock_snapshots ss WHERE ss.product_id = p.id)
            AND NOT EXISTS (SELECT 1 FROM stock_movements sm WHERE sm.product_id = p.id)
            AND NOT EXISTS (SELECT 1 FROM inventory_policies ip WHERE ip.product_id = p.id)
-           AND NOT EXISTS (SELECT 1 FROM inventory i WHERE i.product_id = p.id)`;
+           AND NOT EXISTS (SELECT 1 FROM inventory i WHERE i.product_id = p.id)
+           AND NOT EXISTS (SELECT 1 FROM product_suppliers ps WHERE ps.product_id = p.id)
+           AND NOT EXISTS (SELECT 1 FROM purchase_order_lines pl WHERE pl.product_id = p.id)
+           AND NOT EXISTS (SELECT 1 FROM replenishment_recommendations rr WHERE rr.product_id = p.id)`;
       await client.query(`DELETE FROM forecasts WHERE product_id IN (${orphanProducts})`, [uploadId, sellerId]);
       await client.query(`DELETE FROM products WHERE id IN (${orphanProducts})`, [uploadId, sellerId]);
     }

@@ -19,6 +19,10 @@ if (!process.env.DB_NAME || !process.env.DB_NAME.endsWith('_test')) {
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
 const TABLES = [
+  'upper_estimate_events', 'upper_estimate_product_types', 'upper_estimate_settings',
+  'calendar_entry_events', 'calendar_entries', 'calendar_holiday_confirmations', 'calendar_settings',
+  'replenishment_recommendations', 'purchase_order_events', 'purchase_receipt_adjustments', 'purchase_receipt_lines', 'purchase_receipts',
+  'purchase_order_lines', 'purchase_orders', 'product_suppliers', 'suppliers',
   'anomalies_detected', 'upload_versions', 'data_freshness', 'finetune_jobs', 'forecasts',
   'model_metrics', 'inventory', 'inventory_legacy_rows', 'inventory_policies', 'stock_movements', 'stock_snapshots',
   'stock_snapshot_batches', 'inventory_source_mappings', 'inventory_locations', 'data_coverage_products', 'data_coverage', 'sales', 'products',
@@ -26,6 +30,23 @@ const TABLES = [
 ];
 
 // ── Fake ML server ──────────────────────────────────────────────────────────
+// Minimal stand-in for ml/v2 (tested in Python): tier by length, 28-day mean.
+function stubForecast(body) {
+  const q = body.quantities;
+  const tier = q.length < 28 ? 'insufficient' : q.length < 180 ? 'average' : 'model';
+  const mean = q.length ? q.slice(-28).reduce((a, b) => a + b, 0) / Math.min(28, q.length) : 0;
+  const last = new Date(Date.parse(`${body.start}T00:00:00Z`) + (q.length - 1) * 86400000);
+  const day = (n) => new Date(last.getTime() + n * 86400000).toISOString().slice(0, 10);
+  return {
+    status: tier === 'insufficient' ? 'insufficient_history' : 'ok',
+    history: { usable_days: q.length, first_day: body.start, last_day: day(0), tier },
+    pattern: tier === 'model' ? { group: 'regular', selling_day_percent: 100, window_days: 180 } : null,
+    forecasts: tier === 'insufficient' ? [] : [7, 28].map(h => ({
+      horizon_days: h, start: day(1), end: day(h), total_units: mean * h,
+      method: tier === 'model' ? 'shared_model' : 'average_28', method_label: 'stub' })),
+    models_release: tier === 'model' ? 'stub-release' : null,
+  };
+}
 function startMlStub() {
   const stub = {
     calls: [],
@@ -59,20 +80,21 @@ function startMlStub() {
           residual_std: 2,
         };
       } else if (req.url === '/v2/forecast') {
-        // Minimal stand-in for ml/v2 (tested in Python): tier by length, 28-day mean.
-        const q = body.quantities;
-        const tier = q.length < 28 ? 'insufficient' : q.length < 180 ? 'average' : 'model';
-        const mean = q.length ? q.slice(-28).reduce((a, b) => a + b, 0) / Math.min(28, q.length) : 0;
-        const last = new Date(Date.parse(`${body.start}T00:00:00Z`) + (q.length - 1) * 86400000);
-        const day = (n) => new Date(last.getTime() + n * 86400000).toISOString().slice(0, 10);
+        payload = stubForecast(body);
+      } else if (req.url === '/v2/upper-estimates') {
+        // Stand-in for ml/v2/upper_estimates.py (its numbers are tested in Python): the same forecast as
+        // /v2/forecast plus four labelled estimates for the model tier, else an unavailable reason.
+        const forecast = stubForecast(body);
+        const ok = forecast.history.tier === 'model';
         payload = {
-          status: tier === 'insufficient' ? 'insufficient_history' : 'ok',
-          history: { usable_days: q.length, first_day: body.start, last_day: day(0), tier },
-          pattern: tier === 'model' ? { group: 'regular', selling_day_percent: 100, window_days: 180 } : null,
-          forecasts: tier === 'insufficient' ? [] : [7, 28].map(h => ({
-            horizon_days: h, start: day(1), end: day(h), total_units: mean * h,
-            method: tier === 'model' ? 'shared_model' : 'average_28', method_label: 'stub' })),
-          models_release: tier === 'model' ? 'stub-release' : null,
+          version: 'upper-estimates-1', policy_version: 'upper-estimates-policy-1', kind: 'one-sided upper demand estimate',
+          forecast, status: ok ? 'available' : 'unavailable',
+          reason: ok ? null : { code: forecast.status === 'ok' ? 'short_history' : 'no_forecast', text: 'stub reason' },
+          estimates: ok ? forecast.forecasts.flatMap(f => [0.8, 0.9].map(p => ({
+            horizon_days: f.horizon_days, start: f.start, end: f.end, level: p, cell: `regular|${f.horizon_days}|${p}`,
+            upper_units: f.total_units * (p === 0.8 ? 1.25 : 1.5) + 0.125, forecast_units: f.total_units, method: 'U0',
+            method_label: 'stub', benchmark: { coverage: { exact: '4/5', value: 0.8 }, windows: 2064, series: 118, target: p } }))) : [],
+          limitations: ['Evaluated on US Walmart benchmark data; not calibrated to your store.'], benchmark: { name: 'M5 (US Walmart)' },
         };
       } else if (req.url === '/finetune') {
         payload = { status: 'started', seller_id: body.seller_id };

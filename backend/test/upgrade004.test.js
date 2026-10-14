@@ -13,7 +13,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Pool } = require('pg');
 require('./helpers');
-const { migrate, down, assertSchemaCurrent, MIGRATIONS_DIR } = require('../db/migrate');
+const { migrate, down, status, MIGRATIONS_DIR } = require('../db/migrate');
+// At 004 exactly: nothing edited, only later migrations pending.
+const assertSchemaCurrent = async (db) => {
+  const st = await status(db);
+  assert.deepEqual(st.changed, []);
+  assert.ok(st.pending.every(p => p.version > 4), 'only migrations after 004 are pending');
+};
 const ledger = require('../lib/stockLedger');
 
 const base = process.env.DB_NAME;
@@ -73,7 +79,7 @@ test('old-style database with legacy inventory rows, migrated to 003', async () 
 });
 
 test('004 keeps every legacy row as evidence, with an explicit outcome', async () => {
-  assert.deepEqual(await migrate(db), ['004_inventory_ledger']);
+  assert.deepEqual(await migrate(db, { target: 4 }), ['004_inventory_ledger']);
   await assertSchemaCurrent(db);
   assert.deepEqual(await legacyInventory(), inventoryBefore, 'legacy inventory table untouched');
   assert.equal(await n('SELECT COUNT(*)::int AS n FROM sales'), salesBefore);
@@ -163,7 +169,7 @@ test('004 reverses while it holds only migrated values; the legacy table is inta
   }
   assert.deepEqual(await legacyInventory(), inventoryBefore);
   await assert.rejects(db.query(`INSERT INTO data_uploads (uploaded_by, source) VALUES (1, 'stock_count')`), /check/i);
-  assert.deepEqual(await migrate(db), ['004_inventory_ledger'], 're-applies');
+  assert.deepEqual(await migrate(db, { target: 4 }), ['004_inventory_ledger'], 're-applies');
   assert.equal(await n(`SELECT COUNT(*)::int AS n FROM inventory_legacy_rows WHERE outcome = 'migrated'`), 3);
 });
 

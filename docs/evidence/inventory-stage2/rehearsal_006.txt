@@ -1,0 +1,18 @@
+Applied on the real database: 001_baseline, 002_import_identity, 003_data_coverage, 004_inventory_ledger, 005_suppliers_purchasing
+Pending: 006_replenishment
+
+1. Backup  -> /home/claude/nc/backend/backups/nexus_demo4_pre_migrate_20261008T162048.dump
+   162 KB
+2. Restore -> scratch database nexus_demo4_rehearsal_20261008t162048
+   restore verified: {"users":"4","products":"7","sales":"1685","sales_units":"3373","imports":"7","attributed_sales":"1685","upload_versions":"7","inventory_rows":"3","inventory_units":"117","stock_counts":"10","stock_movements":"19","stock_movement_units":"44","inventory_settings":"6","inventory_setting_values":"79","suppliers":"4","supplier_links":"5","purchase_orders":"4","purchase_order_versions":"32","purchase_order_units":"64","received_units":"68","receipt_adjustment_units":"14","purchase_order_events":"38"}
+3. Migrate the scratch copy
+   applying 006_replenishment
+   applied: 006_replenishment
+4. Verify
+   inventory evidence: 3 legacy rows kept (migrated 3); 3 unverified values, 117 units
+   row counts and quarantine unchanged; schema current
+
+REHEARSAL PASSED.
+Next: stop the backend, run `npm run migrate`, then start it again.
+Keep nexus_demo4_pre_migrate_20261008T162048.dump until the migrated app has been checked; restore it with:
+  dropdb nexus_demo4 && createdb nexus_demo4 && pg_restore -d nexus_demo4 --no-owner "/home/claude/nc/backend/backups/nexus_demo4_pre_migrate_20261008T162048.dump"

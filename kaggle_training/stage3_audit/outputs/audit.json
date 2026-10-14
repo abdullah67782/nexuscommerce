@@ -1,0 +1,1061 @@
+{
+  "pakistan_ecommerce": {
+    "source": "data/Pakistan Largest Ecommerce Dataset.csv (converted to the app import format)",
+    "country": "Pakistan",
+    "timezone": "Asia/Karachi assumed (dates only, no timestamps)",
+    "columns": [
+      "product_name",
+      "category",
+      "price",
+      "quantity",
+      "sale_date",
+      "revenue"
+    ],
+    "missing_from_conversion": "order status (cancelled/refunded), payment method, customer, discount amount \u2014 the original Kaggle columns are not in this file",
+    "rows_total": 584504,
+    "unparsed_dates": 0,
+    "date_range_all": [
+      "2016-07-01",
+      "2018-08-28"
+    ],
+    "development_end": "2017-12-31",
+    "products_all": 84889,
+    "categories_all": {
+      "Men's Fashion": 20088,
+      "Women's Fashion": 19251,
+      "Beauty & Grooming": 7644,
+      "Mobiles & Tablets": 7062,
+      "Home & Living": 5601,
+      "Appliances": 5144,
+      "Kids & Baby": 4581,
+      "Superstore": 4422,
+      "Health & Sports": 2669,
+      "Computing": 2236,
+      "Entertainment": 1722,
+      "School & Education": 1674,
+      "Soghaat": 1186,
+      "Others": 667,
+      "Books": 657,
+      "\\N": 295
+    },
+    "development": {
+      "rows": 424809,
+      "units": 510969.0,
+      "days_with_sales": 549,
+      "calendar_days": 549,
+      "days_without_any_sale": [],
+      "rows_revenue_below_price_x_qty": 93001,
+      "share_rows_revenue_below_price_x_qty": 0.2189,
+      "rows_nonpositive_quantity": 0,
+      "products": 57527,
+      "product_selling_days": {
+        "median": 2.0,
+        "p90": 7.0,
+        "products_with_180_or_more_days": 11,
+        "products_with_28_or_more_days": 641,
+        "products_with_1_day": 27795
+      },
+      "units_by_month": {
+        "2016-07": 10023.0,
+        "2016-08": 13138.0,
+        "2016-09": 17415.0,
+        "2016-10": 15606.0,
+        "2016-11": 77169.0,
+        "2016-12": 15157.0,
+        "2017-01": 15859.0,
+        "2017-02": 14951.0,
+        "2017-03": 22772.0,
+        "2017-04": 31836.0,
+        "2017-05": 41879.0,
+        "2017-06": 31000.0,
+        "2017-07": 23844.0,
+        "2017-08": 33553.0,
+        "2017-09": 9717.0,
+        "2017-10": 20937.0,
+        "2017-11": 91700.0,
+        "2017-12": 24413.0
+      },
+      "top_categories_units": {
+        "Mobiles & Tablets": 94677.0,
+        "Men's Fashion": 81792.0,
+        "Superstore": 61346.0,
+        "Women's Fashion": 48257.0,
+        "Soghaat": 41892.0,
+        "Beauty & Grooming": 41031.0,
+        "Appliances": 39608.0,
+        "Home & Living": 22997.0,
+        "Entertainment": 17142.0,
+        "Kids & Baby": 14848.0
+      },
+      "category_months_with_sales": {
+        "Appliances": 18,
+        "Beauty & Grooming": 18,
+        "Books": 18,
+        "Computing": 18,
+        "Entertainment": 18,
+        "Health & Sports": 18,
+        "Home & Living": 18,
+        "Kids & Baby": 18,
+        "Men's Fashion": 18,
+        "Mobiles & Tablets": 18,
+        "Others": 18,
+        "School & Education": 18,
+        "Soghaat": 18,
+        "Superstore": 18,
+        "Women's Fashion": 18,
+        "\\N": 18
+      }
+    },
+    "event_windows_total_units": [
+      {
+        "event": "Eid al-Fitr",
+        "type": "religious",
+        "date": "2016-07-06",
+        "status": "not enough earlier history in the file"
+      },
+      {
+        "event": "Eid al-Adha",
+        "type": "religious",
+        "date": "2016-09-13",
+        "status": "development",
+        "baseline_daily_units": 368.07,
+        "pre_7d_ratio": 0.84,
+        "event_3d_ratio": 0.35,
+        "post_7d_ratio": 0.79
+      },
+      {
+        "event": "Black/White Friday",
+        "type": "commercial",
+        "date": "2016-11-25",
+        "status": "development",
+        "baseline_daily_units": 470.0,
+        "pre_7d_ratio": 11.96,
+        "event_3d_ratio": 17.74,
+        "post_7d_ratio": 2.05
+      },
+      {
+        "event": "Christmas / Quaid Day",
+        "type": "national",
+        "date": "2016-12-25",
+        "status": "development",
+        "baseline_daily_units": 2419.71,
+        "pre_7d_ratio": 0.18,
+        "event_3d_ratio": 0.18,
+        "post_7d_ratio": 0.22
+      },
+      {
+        "event": "New Year",
+        "type": "national",
+        "date": "2017-01-01",
+        "status": "development",
+        "baseline_daily_units": 767.0,
+        "pre_7d_ratio": 0.62,
+        "event_3d_ratio": 0.73,
+        "post_7d_ratio": 0.85
+      },
+      {
+        "event": "Pakistan Day",
+        "type": "national",
+        "date": "2017-03-23",
+        "status": "development",
+        "baseline_daily_units": 583.82,
+        "pre_7d_ratio": 1.17,
+        "event_3d_ratio": 2.38,
+        "post_7d_ratio": 1.07
+      },
+      {
+        "event": "Ramadan start",
+        "type": "religious",
+        "date": "2017-05-27",
+        "status": "development",
+        "baseline_daily_units": 1430.32,
+        "pre_7d_ratio": 1.53,
+        "event_3d_ratio": 0.45,
+        "post_7d_ratio": 0.42
+      },
+      {
+        "event": "Eid al-Fitr",
+        "type": "religious",
+        "date": "2017-06-26",
+        "status": "development",
+        "baseline_daily_units": 1235.79,
+        "pre_7d_ratio": 0.53,
+        "event_3d_ratio": 0.14,
+        "post_7d_ratio": 0.39
+      },
+      {
+        "event": "Independence Day",
+        "type": "national",
+        "date": "2017-08-14",
+        "status": "development",
+        "baseline_daily_units": 902.57,
+        "pre_7d_ratio": 2.21,
+        "event_3d_ratio": 1.8,
+        "post_7d_ratio": 0.64
+      },
+      {
+        "event": "Eid al-Adha",
+        "type": "religious",
+        "date": "2017-09-02",
+        "status": "development",
+        "baseline_daily_units": 1164.89,
+        "pre_7d_ratio": 0.38,
+        "event_3d_ratio": 0.27,
+        "post_7d_ratio": 0.27
+      },
+      {
+        "event": "Black/White Friday",
+        "type": "commercial",
+        "date": "2017-11-24",
+        "status": "development",
+        "baseline_daily_units": 590.96,
+        "pre_7d_ratio": 11.84,
+        "event_3d_ratio": 14.14,
+        "post_7d_ratio": 2.01
+      },
+      {
+        "event": "Christmas / Quaid Day",
+        "type": "national",
+        "date": "2017-12-25",
+        "status": "development",
+        "baseline_daily_units": 2525.46,
+        "pre_7d_ratio": 0.22,
+        "event_3d_ratio": 0.12,
+        "post_7d_ratio": 0.09
+      },
+      {
+        "event": "New Year",
+        "type": "national",
+        "date": "2018-01-01",
+        "status": "reserved period \u2014 not read"
+      },
+      {
+        "event": "Ramadan start",
+        "type": "religious",
+        "date": "2018-05-17",
+        "status": "reserved period \u2014 not read"
+      },
+      {
+        "event": "Eid al-Fitr",
+        "type": "religious",
+        "date": "2018-06-16",
+        "status": "reserved period \u2014 not read"
+      },
+      {
+        "event": "Independence Day",
+        "type": "national",
+        "date": "2018-08-14",
+        "status": "reserved period \u2014 not read"
+      },
+      {
+        "event": "Eid al-Adha",
+        "type": "religious",
+        "date": "2018-08-22",
+        "status": "reserved period \u2014 not read"
+      }
+    ],
+    "reserved": {
+      "from": "2018-01-01",
+      "to": "2018-08-28",
+      "note": "not aggregated by this audit"
+    },
+    "recorded": {
+      "promotions": "not as a field; revenue below price \u00d7 quantity is a partial discount proxy",
+      "closures": "not recorded",
+      "stockouts": "not recorded (marketplace, no stock data)"
+    },
+    "prior_use": "demo upload only (backend/uploads); not used to train or evaluate the v2 models"
+  },
+  "generated_at": "2026-10-09 19:44:14.105220+00:00",
+  "reservation_rules": "\u2014 declared here, BEFORE any sales are read, so that later Stage 3\nexperiments still have untouched evidence:\n\n* M5: sales columns are read ONLY for the 180 products already consumed by earlier work\n  (60 original sample candidates incl. the 53 development products, the first reserved\n  holdout of 60, and the production holdout of 60). The other M5 products are described\n  from catalog columns and the calendar only, so a fresh product reservation can still be\n  drawn \"before their sales are read\".\n* Pakistan e-commerce file: sales are read only up to PAKISTAN_DEV_END. Later rows are\n  never aggregated; the audit reports only the latest date present.\n* Store Item Demand: only the date column and ids are read for 2017; sales are read only\n  up to 2016-12-31 (2017 was used for store 1/5/10 validation and final evaluation, and\n  stays unread for the other stores).\n* UCI Online Retail and Superstore were consumed by the legacy country models; they are\n  described in full.\nEvent dates for Pakistan are APPROXIMATE (moon-sighting dependent) and must be\nconfirmed locally before any use beyond this descriptive audit.",
+  "pandas": "2.3.3",
+  "store_item_demand": {
+    "source": "data/store_item_demand/train.csv.zip (Kaggle Store Item Demand Forecasting Challenge)",
+    "country": "not stated (anonymised; widely regarded as simulated)",
+    "timezone": "unknown",
+    "date_range": [
+      "2013-01-01",
+      "2017-12-31"
+    ],
+    "stores": 10,
+    "items": 50,
+    "development_end_for_audit": "2016-12-31",
+    "missing_calendar_days_before_2017": [],
+    "christmas_units_all_stores": {
+      "2013-12-25": 15351,
+      "2014-12-25": 18607,
+      "2015-12-25": 20877,
+      "2016-12-25": 25195
+    },
+    "zero_sale_rows_share_before_2017": 0.0,
+    "recorded": {
+      "promotions": "no",
+      "closures": "no",
+      "stockouts": "no",
+      "product_groups": "no (item ids only)"
+    },
+    "prior_use": "store 10 (validation 2017-01..06, final 2017-07..12); stores 1 and 5 repeated the protocol; other stores trained the general model through 2016"
+  },
+  "uci_online_retail": {
+    "source": "kaggle_training/original_training/datasets/uci_training_data.csv",
+    "rows": 930329,
+    "products": 5252,
+    "date_range": [
+      "2009-12-01",
+      "2011-12-09"
+    ],
+    "days_without_any_sale": 135,
+    "late_dec_early_jan_days_without_sale": [
+      "2009-12-24",
+      "2009-12-25",
+      "2009-12-26",
+      "2009-12-27",
+      "2009-12-28",
+      "2009-12-29",
+      "2009-12-30",
+      "2009-12-31",
+      "2010-01-01",
+      "2010-01-02",
+      "2010-01-03",
+      "2010-12-24",
+      "2010-12-25",
+      "2010-12-26",
+      "2010-12-27",
+      "2010-12-28",
+      "2010-12-29",
+      "2010-12-30",
+      "2010-12-31",
+      "2011-01-01",
+      "2011-01-02",
+      "2011-01-03"
+    ],
+    "negative_quantity_rows": 0,
+    "stock_columns": {
+      "stock_level": [
+        0.0,
+        499.0
+      ],
+      "reorder_threshold": [
+        5.0,
+        32.0
+      ]
+    },
+    "stock_columns_note": "derived during the earlier conversion (values count down from 500 per row); not observed stock",
+    "countries_rows": {
+      "United Kingdom": 866317,
+      "Germany": 13743,
+      "EIRE": 13692,
+      "France": 11425,
+      "Spain": 3158,
+      "Belgium": 2652,
+      "Switzerland": 2312,
+      "Portugal": 2198,
+      "Netherlands": 1846,
+      "Italy": 1306,
+      "Channel Islands": 1287,
+      "Cyprus": 1063,
+      "Norway": 946,
+      "Australia": 907,
+      "Finland": 843
+    },
+    "label": "UCI Online Retail (UK and Europe), legacy country models"
+  },
+  "superstore": {
+    "source": "kaggle_training/original_training/datasets/superstore_validation_data.csv",
+    "rows": 3974,
+    "products": 1606,
+    "date_range": [
+      "2014-01-02",
+      "2017-12-11"
+    ],
+    "days_without_any_sale": 957,
+    "late_dec_early_jan_days_without_sale": [
+      "2014-01-05",
+      "2014-12-20",
+      "2014-12-21",
+      "2014-12-22",
+      "2014-12-23",
+      "2014-12-24",
+      "2014-12-25",
+      "2014-12-26",
+      "2014-12-27",
+      "2014-12-28",
+      "2014-12-29",
+      "2014-12-30",
+      "2014-12-31",
+      "2015-01-01",
+      "2015-01-02",
+      "2015-01-04",
+      "2015-01-07",
+      "2015-12-20",
+      "2015-12-21",
+      "2015-12-22",
+      "2015-12-23",
+      "2015-12-24",
+      "2015-12-25",
+      "2015-12-26",
+      "2015-12-27",
+      "2015-12-28",
+      "2015-12-29",
+      "2015-12-30",
+      "2015-12-31",
+      "2016-01-01",
+      "2016-01-06",
+      "2016-12-20",
+      "2016-12-21",
+      "2016-12-22",
+      "2016-12-23",
+      "2016-12-24",
+      "2016-12-25",
+      "2016-12-26",
+      "2016-12-27",
+      "2016-12-28",
+      "2016-12-29",
+      "2016-12-30",
+      "2016-12-31",
+      "2017-01-02",
+      "2017-01-03"
+    ],
+    "negative_quantity_rows": 0,
+    "stock_columns": {
+      "stock_level": [
+        422.0,
+        499.0
+      ],
+      "reorder_threshold": [
+        5.0,
+        14.0
+      ]
+    },
+    "stock_columns_note": "derived during the earlier conversion (values count down from 500 per row); not observed stock",
+    "categories_rows": {
+      "Office Supplies": 2393,
+      "Furniture": 821,
+      "Technology": 760
+    },
+    "label": "US Superstore, legacy validation"
+  },
+  "final_dataset": {
+    "source": "data/Final_Dataset.csv",
+    "rows": 625,
+    "products": 510,
+    "date_range": [
+      "2026-02-10",
+      "2026-05-11"
+    ],
+    "note": "dates in 2026: a re-dated or generated demo file \u2014 not evidence of real seasonal or holiday behaviour"
+  },
+  "sample_forecast_data": {
+    "source": "data/sample_forecast_data.csv",
+    "rows": 728,
+    "products": 8,
+    "date_range": [
+      "2026-02-10",
+      "2026-05-11"
+    ],
+    "note": "dates in 2026: a re-dated or generated demo file \u2014 not evidence of real seasonal or holiday behaviour"
+  },
+  "m5": {
+    "source": "M5 (Walmart, USA): calendar.csv, sales_train_evaluation.csv.zip, sell_prices.csv.zip",
+    "country": "United States",
+    "states": [
+      "CA",
+      "TX",
+      "WI"
+    ],
+    "stores": [
+      "CA_1",
+      "CA_2",
+      "CA_3",
+      "CA_4",
+      "TX_1",
+      "TX_2",
+      "TX_3",
+      "WI_1",
+      "WI_2",
+      "WI_3"
+    ],
+    "timezone_note": "Store-local US dates (states span Pacific and Central time); no timestamps.",
+    "calendar_range": [
+      "2011-01-29",
+      "2016-06-19"
+    ],
+    "sales_range": [
+      "2011-01-29",
+      "2016-05-22"
+    ],
+    "sales_days": 1941,
+    "products": 3049,
+    "series": 30490,
+    "categories": {
+      "FOODS": 1437,
+      "HOBBIES": 565,
+      "HOUSEHOLD": 1047
+    },
+    "departments": {
+      "FOODS_1": 216,
+      "FOODS_2": 398,
+      "FOODS_3": 823,
+      "HOBBIES_1": 416,
+      "HOBBIES_2": 149,
+      "HOUSEHOLD_1": 532,
+      "HOUSEHOLD_2": 515
+    },
+    "consumed_products": 180,
+    "unused_products": 2869,
+    "event_types": {
+      "Cultural": 7,
+      "National": 10,
+      "Religious": 10,
+      "Sporting": 3
+    },
+    "event_names": [
+      "Chanukah End",
+      "Christmas",
+      "Cinco De Mayo",
+      "ColumbusDay",
+      "Easter",
+      "Eid al-Fitr",
+      "EidAlAdha",
+      "Father's day",
+      "Halloween",
+      "IndependenceDay",
+      "LaborDay",
+      "LentStart",
+      "LentWeek2",
+      "MartinLutherKingDay",
+      "MemorialDay",
+      "Mother's day",
+      "NBAFinalsEnd",
+      "NBAFinalsStart",
+      "NewYear",
+      "OrthodoxChristmas",
+      "OrthodoxEaster",
+      "Pesach End",
+      "PresidentsDay",
+      "Purim End",
+      "Ramadan starts",
+      "StPatricksDay",
+      "SuperBowl",
+      "Thanksgiving",
+      "ValentinesDay",
+      "VeteransDay"
+    ],
+    "focus_event_dates_within_sales": {
+      "Christmas": [
+        "2011-12-25",
+        "2012-12-25",
+        "2013-12-25",
+        "2014-12-25",
+        "2015-12-25"
+      ],
+      "NewYear": [
+        "2012-01-01",
+        "2013-01-01",
+        "2014-01-01",
+        "2015-01-01",
+        "2016-01-01"
+      ],
+      "Eid al-Fitr": [
+        "2011-08-31",
+        "2012-08-19",
+        "2013-08-08",
+        "2014-07-29",
+        "2015-07-18"
+      ],
+      "EidAlAdha": [
+        "2011-11-07",
+        "2012-10-26",
+        "2013-10-15",
+        "2014-10-04",
+        "2015-09-24"
+      ],
+      "Ramadan starts": [
+        "2011-08-01",
+        "2012-07-20",
+        "2013-07-09",
+        "2014-06-29",
+        "2015-06-18"
+      ],
+      "Thanksgiving": [
+        "2011-11-24",
+        "2012-11-22",
+        "2013-11-28",
+        "2014-11-27",
+        "2015-11-26"
+      ],
+      "Easter": [
+        "2011-04-24",
+        "2012-04-08",
+        "2013-03-31",
+        "2014-04-20",
+        "2015-04-05",
+        "2016-03-27"
+      ],
+      "IndependenceDay": [
+        "2011-07-04",
+        "2012-07-04",
+        "2013-07-04",
+        "2014-07-04",
+        "2015-07-04"
+      ]
+    },
+    "snap_days": {
+      "CA": 650,
+      "TX": 650,
+      "WI": 650
+    },
+    "christmas_consumed_products": [
+      {
+        "date": "2011-12-25",
+        "units": 1,
+        "store_product_rows_nonzero": 1
+      },
+      {
+        "date": "2012-12-25",
+        "units": 0,
+        "store_product_rows_nonzero": 0
+      },
+      {
+        "date": "2013-12-25",
+        "units": 0,
+        "store_product_rows_nonzero": 0
+      },
+      {
+        "date": "2014-12-25",
+        "units": 0,
+        "store_product_rows_nonzero": 0
+      },
+      {
+        "date": "2015-12-25",
+        "units": 1,
+        "store_product_rows_nonzero": 1
+      }
+    ],
+    "event_windows_consumed_products": [
+      {
+        "event": "Christmas",
+        "type": "National",
+        "date": "2011-12-25",
+        "status": "development",
+        "baseline_daily_units": 1581.14,
+        "pre_7d_ratio": 1.02,
+        "event_3d_ratio": 0.67,
+        "post_7d_ratio": 1.05
+      },
+      {
+        "event": "Christmas",
+        "type": "National",
+        "date": "2012-12-25",
+        "status": "development",
+        "baseline_daily_units": 1440.14,
+        "pre_7d_ratio": 1.21,
+        "event_3d_ratio": 0.7,
+        "post_7d_ratio": 1.25
+      },
+      {
+        "event": "Christmas",
+        "type": "National",
+        "date": "2013-12-25",
+        "status": "development",
+        "baseline_daily_units": 2246.64,
+        "pre_7d_ratio": 1.0,
+        "event_3d_ratio": 0.66,
+        "post_7d_ratio": 1.0
+      },
+      {
+        "event": "Christmas",
+        "type": "National",
+        "date": "2014-12-25",
+        "status": "development",
+        "baseline_daily_units": 2063.64,
+        "pre_7d_ratio": 1.05,
+        "event_3d_ratio": 0.68,
+        "post_7d_ratio": 1.01
+      },
+      {
+        "event": "Christmas",
+        "type": "National",
+        "date": "2015-12-25",
+        "status": "development",
+        "baseline_daily_units": 2220.39,
+        "pre_7d_ratio": 1.1,
+        "event_3d_ratio": 0.67,
+        "post_7d_ratio": 1.05
+      },
+      {
+        "event": "NewYear",
+        "type": "National",
+        "date": "2012-01-01",
+        "status": "development",
+        "baseline_daily_units": 1614.71,
+        "pre_7d_ratio": 0.88,
+        "event_3d_ratio": 1.0,
+        "post_7d_ratio": 1.06
+      },
+      {
+        "event": "NewYear",
+        "type": "National",
+        "date": "2013-01-01",
+        "status": "development",
+        "baseline_daily_units": 1559.61,
+        "pre_7d_ratio": 0.95,
+        "event_3d_ratio": 1.13,
+        "post_7d_ratio": 1.28
+      },
+      {
+        "event": "NewYear",
+        "type": "National",
+        "date": "2014-01-01",
+        "status": "development",
+        "baseline_daily_units": 2240.93,
+        "pre_7d_ratio": 0.88,
+        "event_3d_ratio": 0.96,
+        "post_7d_ratio": 0.97
+      },
+      {
+        "event": "NewYear",
+        "type": "National",
+        "date": "2015-01-01",
+        "status": "development",
+        "baseline_daily_units": 2071.07,
+        "pre_7d_ratio": 0.82,
+        "event_3d_ratio": 1.12,
+        "post_7d_ratio": 1.0
+      },
+      {
+        "event": "NewYear",
+        "type": "National",
+        "date": "2016-01-01",
+        "status": "development",
+        "baseline_daily_units": 2301.46,
+        "pre_7d_ratio": 0.81,
+        "event_3d_ratio": 1.1,
+        "post_7d_ratio": 1.06
+      },
+      {
+        "event": "Eid al-Fitr",
+        "type": "Religious",
+        "date": "2011-08-31",
+        "status": "development",
+        "baseline_daily_units": 1434.14,
+        "pre_7d_ratio": 0.94,
+        "event_3d_ratio": 0.98,
+        "post_7d_ratio": 1.04
+      },
+      {
+        "event": "Eid al-Fitr",
+        "type": "Religious",
+        "date": "2012-08-19",
+        "status": "development",
+        "baseline_daily_units": 1728.71,
+        "pre_7d_ratio": 1.09,
+        "event_3d_ratio": 1.02,
+        "post_7d_ratio": 0.94
+      },
+      {
+        "event": "Eid al-Fitr",
+        "type": "Religious",
+        "date": "2013-08-08",
+        "status": "development",
+        "baseline_daily_units": 2305.21,
+        "pre_7d_ratio": 1.12,
+        "event_3d_ratio": 1.04,
+        "post_7d_ratio": 1.03
+      },
+      {
+        "event": "Eid al-Fitr",
+        "type": "Religious",
+        "date": "2014-07-29",
+        "status": "development",
+        "baseline_daily_units": 2277.54,
+        "pre_7d_ratio": 0.9,
+        "event_3d_ratio": 0.8,
+        "post_7d_ratio": 1.06
+      },
+      {
+        "event": "Eid al-Fitr",
+        "type": "Religious",
+        "date": "2015-07-18",
+        "status": "development",
+        "baseline_daily_units": 2296.89,
+        "pre_7d_ratio": 1.03,
+        "event_3d_ratio": 1.05,
+        "post_7d_ratio": 0.94
+      },
+      {
+        "event": "EidAlAdha",
+        "type": "Religious",
+        "date": "2011-11-07",
+        "status": "development",
+        "baseline_daily_units": 1613.21,
+        "pre_7d_ratio": 0.97,
+        "event_3d_ratio": 0.9,
+        "post_7d_ratio": 1.02
+      },
+      {
+        "event": "EidAlAdha",
+        "type": "Religious",
+        "date": "2012-10-26",
+        "status": "development",
+        "baseline_daily_units": 1598.39,
+        "pre_7d_ratio": 0.88,
+        "event_3d_ratio": 1.04,
+        "post_7d_ratio": 0.99
+      },
+      {
+        "event": "EidAlAdha",
+        "type": "Religious",
+        "date": "2013-10-15",
+        "status": "development",
+        "baseline_daily_units": 2296.86,
+        "pre_7d_ratio": 1.05,
+        "event_3d_ratio": 0.89,
+        "post_7d_ratio": 0.92
+      },
+      {
+        "event": "EidAlAdha",
+        "type": "Religious",
+        "date": "2014-10-04",
+        "status": "development",
+        "baseline_daily_units": 2225.21,
+        "pre_7d_ratio": 0.98,
+        "event_3d_ratio": 1.19,
+        "post_7d_ratio": 0.98
+      },
+      {
+        "event": "EidAlAdha",
+        "type": "Religious",
+        "date": "2015-09-24",
+        "status": "development",
+        "baseline_daily_units": 2311.25,
+        "pre_7d_ratio": 0.92,
+        "event_3d_ratio": 0.89,
+        "post_7d_ratio": 0.97
+      },
+      {
+        "event": "Ramadan starts",
+        "type": "Religious",
+        "date": "2011-08-01",
+        "status": "development",
+        "baseline_daily_units": 1335.54,
+        "pre_7d_ratio": 0.95,
+        "event_3d_ratio": 1.0,
+        "post_7d_ratio": 1.02
+      },
+      {
+        "event": "Ramadan starts",
+        "type": "Religious",
+        "date": "2012-07-20",
+        "status": "development",
+        "baseline_daily_units": 1848.25,
+        "pre_7d_ratio": 1.0,
+        "event_3d_ratio": 1.09,
+        "post_7d_ratio": 0.88
+      },
+      {
+        "event": "Ramadan starts",
+        "type": "Religious",
+        "date": "2013-07-09",
+        "status": "development",
+        "baseline_daily_units": 2241.71,
+        "pre_7d_ratio": 1.16,
+        "event_3d_ratio": 1.0,
+        "post_7d_ratio": 1.05
+      },
+      {
+        "event": "Ramadan starts",
+        "type": "Religious",
+        "date": "2014-06-29",
+        "status": "development",
+        "baseline_daily_units": 2246.64,
+        "pre_7d_ratio": 0.93,
+        "event_3d_ratio": 1.07,
+        "post_7d_ratio": 1.08
+      },
+      {
+        "event": "Ramadan starts",
+        "type": "Religious",
+        "date": "2015-06-18",
+        "status": "development",
+        "baseline_daily_units": 2205.82,
+        "pre_7d_ratio": 1.1,
+        "event_3d_ratio": 1.08,
+        "post_7d_ratio": 0.97
+      },
+      {
+        "event": "Thanksgiving",
+        "type": "National",
+        "date": "2011-11-24",
+        "status": "development",
+        "baseline_daily_units": 1557.04,
+        "pre_7d_ratio": 1.04,
+        "event_3d_ratio": 0.82,
+        "post_7d_ratio": 0.99
+      },
+      {
+        "event": "Thanksgiving",
+        "type": "National",
+        "date": "2012-11-22",
+        "status": "development",
+        "baseline_daily_units": 1495.61,
+        "pre_7d_ratio": 1.02,
+        "event_3d_ratio": 0.73,
+        "post_7d_ratio": 0.85
+      },
+      {
+        "event": "Thanksgiving",
+        "type": "National",
+        "date": "2013-11-28",
+        "status": "development",
+        "baseline_daily_units": 2286.79,
+        "pre_7d_ratio": 1.04,
+        "event_3d_ratio": 0.68,
+        "post_7d_ratio": 1.04
+      },
+      {
+        "event": "Thanksgiving",
+        "type": "National",
+        "date": "2014-11-27",
+        "status": "development",
+        "baseline_daily_units": 2169.61,
+        "pre_7d_ratio": 0.99,
+        "event_3d_ratio": 0.73,
+        "post_7d_ratio": 1.04
+      },
+      {
+        "event": "Thanksgiving",
+        "type": "National",
+        "date": "2015-11-26",
+        "status": "development",
+        "baseline_daily_units": 2410.93,
+        "pre_7d_ratio": 0.93,
+        "event_3d_ratio": 0.67,
+        "post_7d_ratio": 0.97
+      },
+      {
+        "event": "Easter",
+        "type": "Cultural",
+        "date": "2011-04-24",
+        "status": "development",
+        "baseline_daily_units": 1375.21,
+        "pre_7d_ratio": 0.9,
+        "event_3d_ratio": 0.75,
+        "post_7d_ratio": 0.82
+      },
+      {
+        "event": "Easter",
+        "type": "Cultural",
+        "date": "2012-04-08",
+        "status": "development",
+        "baseline_daily_units": 1783.93,
+        "pre_7d_ratio": 1.08,
+        "event_3d_ratio": 1.0,
+        "post_7d_ratio": 0.92
+      },
+      {
+        "event": "Easter",
+        "type": "Cultural",
+        "date": "2013-03-31",
+        "status": "development",
+        "baseline_daily_units": 1985.0,
+        "pre_7d_ratio": 0.87,
+        "event_3d_ratio": 0.88,
+        "post_7d_ratio": 1.0
+      },
+      {
+        "event": "Easter",
+        "type": "Cultural",
+        "date": "2014-04-20",
+        "status": "development",
+        "baseline_daily_units": 2179.0,
+        "pre_7d_ratio": 1.03,
+        "event_3d_ratio": 0.89,
+        "post_7d_ratio": 0.94
+      },
+      {
+        "event": "Easter",
+        "type": "Cultural",
+        "date": "2015-04-05",
+        "status": "development",
+        "baseline_daily_units": 2138.46,
+        "pre_7d_ratio": 1.06,
+        "event_3d_ratio": 0.99,
+        "post_7d_ratio": 0.99
+      },
+      {
+        "event": "Easter",
+        "type": "Cultural",
+        "date": "2016-03-27",
+        "status": "development",
+        "baseline_daily_units": 2430.04,
+        "pre_7d_ratio": 0.95,
+        "event_3d_ratio": 0.86,
+        "post_7d_ratio": 1.0
+      },
+      {
+        "event": "IndependenceDay",
+        "type": "National",
+        "date": "2011-07-04",
+        "status": "development",
+        "baseline_daily_units": 1274.86,
+        "pre_7d_ratio": 0.98,
+        "event_3d_ratio": 0.95,
+        "post_7d_ratio": 1.13
+      },
+      {
+        "event": "IndependenceDay",
+        "type": "National",
+        "date": "2012-07-04",
+        "status": "development",
+        "baseline_daily_units": 1858.89,
+        "pre_7d_ratio": 0.97,
+        "event_3d_ratio": 0.96,
+        "post_7d_ratio": 1.04
+      },
+      {
+        "event": "IndependenceDay",
+        "type": "National",
+        "date": "2013-07-04",
+        "status": "development",
+        "baseline_daily_units": 2235.82,
+        "pre_7d_ratio": 1.11,
+        "event_3d_ratio": 1.15,
+        "post_7d_ratio": 1.11
+      },
+      {
+        "event": "IndependenceDay",
+        "type": "National",
+        "date": "2014-07-04",
+        "status": "development",
+        "baseline_daily_units": 2279.04,
+        "pre_7d_ratio": 1.05,
+        "event_3d_ratio": 1.08,
+        "post_7d_ratio": 1.03
+      },
+      {
+        "event": "IndependenceDay",
+        "type": "National",
+        "date": "2015-07-04",
+        "status": "development",
+        "baseline_daily_units": 2355.61,
+        "pre_7d_ratio": 1.03,
+        "event_3d_ratio": 1.0,
+        "post_7d_ratio": 0.98
+      }
+    ],
+    "recorded": {
+      "promotions": "no (weekly sell prices only; price cuts are a possible proxy)",
+      "closures": "not recorded; Christmas shows near-zero sales (store closure)",
+      "stockouts": "not recorded; zeros cannot be separated from lost sales"
+    },
+    "consumed_history": {
+      "development_products": 53,
+      "periods_examined_for_used_products": "all sales days up to 2016-05-22 (training to 2015-05-31, validation 2015-06..11, final test 2015-12-01..2016-05-22)",
+      "holdouts_used": [
+        "first reserved holdout (60 products, reserved_final_results)",
+        "nexus-production-holdout-20261008-v1 (60 products)"
+      ]
+    }
+  }
+}

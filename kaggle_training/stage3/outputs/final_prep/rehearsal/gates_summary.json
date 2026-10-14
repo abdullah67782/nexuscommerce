@@ -1,0 +1,39 @@
+{
+  "label": "REHEARSAL on development data: not evidence",
+  "e1c_us_pass": false,
+  "totals_cells_pass": {
+    "regular|7|0.8": true,
+    "regular|7|0.9": true,
+    "regular|28|0.8": true,
+    "regular|28|0.9": true,
+    "occasional|7|0.8": true,
+    "occasional|7|0.9": true,
+    "occasional|28|0.8": true,
+    "occasional|28|0.9": true,
+    "rare|7|0.8": true,
+    "rare|7|0.9": true,
+    "rare|28|0.8": true,
+    "rare|28|0.9": true,
+    "dormant|7|0.8": false,
+    "dormant|7|0.9": false,
+    "dormant|28|0.8": false,
+    "dormant|28|0.9": false,
+    "short_history|7|0.8": true,
+    "short_history|7|0.9": true,
+    "short_history|28|0.8": true,
+    "short_history|28|0.9": true
+  },
+  "decision_A2_pass": {
+    "regular|0.8": false,
+    "regular|0.9": false,
+    "occasional|0.8": false,
+    "occasional|0.9": true,
+    "rare|0.8": true,
+    "rare|0.9": true,
+    "dormant|0.8": false,
+    "dormant|0.9": false,
+    "short_history|0.8": true,
+    "short_history|0.9": false
+  },
+  "pakistan_e1_pass": false
+}

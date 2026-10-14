@@ -3,7 +3,7 @@
    Colours come only from tokens; semantic colours mark meaning, never decoration. */
 @layer components {
   /* ── Shared helpers ─────────────────────────────────────────────────── */
-  .stack { display: grid; gap: 14px; }
+  .stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }   /* wide tables scroll inside their panel instead of widening the page */
   .scroll-target { scroll-margin-top: 20px; }
   .panel-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 18px; border-bottom: 1px solid var(--border); }
   .panel-scroll { max-height: 380px; overflow-y: auto; }
@@ -121,6 +121,10 @@
   .stock-cell-inline .num { font-weight: 600; font-variant-numeric: tabular-nums; }
   .product-dialog.is-wide { width: min(760px, calc(100vw - 32px)); }
   .detail-grid em { display: block; margin-top: 4px; }
+  .po-timeline { display: grid; gap: 8px; padding-left: 0; list-style: none; }
+  .po-timeline li { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 12px; font-size: 13px; line-height: 1.55; color: var(--text-2); padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .po-timeline li:last-child { border-bottom: 0; }
+  @media (max-width: 560px) { .po-timeline li { grid-template-columns: 1fr; gap: 2px; } }
 
   /* ── Pricing ────────────────────────────────────────────────────────── */
   .detail-body { display: grid; gap: 16px; }
@@ -244,4 +248,27 @@
 @layer components {
   .controls.controls-single { grid-template-columns: minmax(0, 420px); }
   .history-facts div[data-warn] dd { color: var(--warning); }
+}
+
+/* Inventory Stage 2: replenishment outlook (existing tokens only) */
+@layer components {
+  .outlook-warnings, .outlook-list, .outlook-missing { display: grid; gap: 6px; margin: 0; padding-left: 0; list-style: none; font-size: 13px; line-height: 1.55; color: var(--text-2); }
+  .outlook-list { padding-left: 18px; list-style: disc; }
+  .outlook-missing li { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .outlook-missing li:last-child { border-bottom: 0; }
+  .order-breakdown { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--border); border-left: 2px solid var(--inventory); border-radius: 0 var(--r-md) var(--r-md) 0; }
+  .order-breakdown.is-indicative { border-left-color: var(--warning); }
+  .order-breakdown-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 15px; color: var(--text); }
+  .order-steps { display: grid; gap: 4px; margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.55; color: var(--text-2); }
+  .order-steps strong { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .assumption-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .assumption-chips details { flex-basis: 100%; }
+  .outlook-explain ol { display: grid; gap: 6px; margin: 8px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.6; color: var(--text-2); }
+  .outlook-explain strong { color: var(--text); font-weight: 500; }
+  .outlook-explain summary, .scenario-panel summary { display: list-item; cursor: pointer; }
+  .scenario-panel { padding: 12px 14px; border: 1px dashed var(--border); border-radius: var(--r-md); }
+  .scenario-result { display: grid; gap: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .outlook-cta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .scenario-panel .coverage-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 560px) { .scenario-panel .coverage-fields { grid-template-columns: 1fr; } }
 }

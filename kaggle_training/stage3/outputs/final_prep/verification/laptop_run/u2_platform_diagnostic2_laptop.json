@@ -1,0 +1,69 @@
+{
+  "platform": "Windows-10-10.0.19045-SP0",
+  "numpy": "1.26.4",
+  "xgboost": "3.4.1",
+  "horizons": {
+    "7": {
+      "fit_rows": 261863,
+      "fit_log1p_rows_differing": 16083,
+      "fit_log1p_max_ulp": 1,
+      "sel_rows": 96881,
+      "sel_log1p_rows_differing": 6309,
+      "sel_log1p_max_ulp": 1,
+      "X_sha_after_replacing_log1p": "ff004ba3bf71918d",
+      "X_sel_sha_after_replacing_log1p": "37825e160ae070a8"
+    },
+    "28": {
+      "fit_rows": 245422,
+      "fit_log1p_rows_differing": 8151,
+      "fit_log1p_max_ulp": 1,
+      "sel_rows": 87065,
+      "sel_log1p_rows_differing": 3057,
+      "sel_log1p_max_ulp": 1,
+      "X_sha_after_replacing_log1p": "859200b07635a999",
+      "X_sel_sha_after_replacing_log1p": "e22deace3c74007c"
+    }
+  },
+  "models": {
+    "7|0.8": {
+      "recipe": {
+        "pred_sha": "dd85aa84d2562b78",
+        "seconds": 6.6
+      },
+      "no_sampling_2": {
+        "pred_sha": "45dbfcfb52e597b3",
+        "seconds": 8.0
+      }
+    },
+    "28|0.8": {
+      "recipe": {
+        "pred_sha": "4a5c044b1f0c4d78",
+        "seconds": 13.2
+      },
+      "no_sampling_2": {
+        "pred_sha": "062e6e0b3ff0b5b1",
+        "seconds": 9.2
+      }
+    },
+    "7|0.9": {
+      "recipe": {
+        "pred_sha": "3ea0a01f88f9a6bd",
+        "seconds": 11.3
+      },
+      "no_sampling_2": {
+        "pred_sha": "86fc5532630ec41a",
+        "seconds": 9.4
+      }
+    },
+    "28|0.9": {
+      "recipe": {
+        "pred_sha": "526f2bb25b2cc148",
+        "seconds": 10.4
+      },
+      "no_sampling_2": {
+        "pred_sha": "0d6eb1dd91ab7fc1",
+        "seconds": 8.1
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+Applied on the real database: 001_baseline, 002_import_identity, 003_data_coverage, 004_inventory_ledger
+Pending: 005_suppliers_purchasing
+
+1. Backup  -> backend/backups/nexus_rh5_pre_migrate_20261008T144948.dump
+   107 KB
+2. Restore -> scratch database nexus_rh5_rehearsal_20261008t144948
+   restore verified: {"users":"1","products":"5","sales":"1683","sales_units":"3371","imports":"5","attributed_sales":"1683","upload_versions":"5","inventory_rows":"3","inventory_units":"117","stock_counts":"7","stock_movements":"4","stock_movement_units":"-10","inventory_settings":"6"}
+3. Migrate the scratch copy
+   applying 005_suppliers_purchasing
+   applied: 005_suppliers_purchasing
+4. Verify
+   inventory evidence: 3 legacy rows kept (migrated 3); 3 unverified values, 117 units
+   row counts and quarantine unchanged; schema current
+
+REHEARSAL PASSED.
+Next: stop the backend, run `npm run migrate`, then start it again.
+Keep nexus_rh5_pre_migrate_20261008T144948.dump until the migrated app has been checked; restore it with:
+  dropdb nexus_rh5 && createdb nexus_rh5 && pg_restore -d nexus_rh5 --no-owner "backend/backups/nexus_rh5_pre_migrate_20261008T144948.dump"

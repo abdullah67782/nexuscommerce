@@ -123,7 +123,7 @@ export default function DashboardPage() {
     }
   }, [selectedProduct, dateRange]);
 
-  useEffect(() => { fetchAll(); const t = setInterval(() => fetchAll(true), 60000); return () => clearInterval(t); }, [fetchAll]);
+  useEffect(() => { queueMicrotask(() => fetchAll()); const t = setInterval(() => fetchAll(true), 60000); return () => clearInterval(t); }, [fetchAll]);
   useEffect(() => { if (!loading) fetchSales(selectedProduct, dateRange); }, [selectedProduct, dateRange]); // eslint-disable-line
 
   // ── Derived signals (all from the responses above) ──────────────────────

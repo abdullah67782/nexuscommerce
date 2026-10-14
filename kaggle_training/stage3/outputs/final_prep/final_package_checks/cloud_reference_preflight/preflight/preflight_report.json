@@ -1,0 +1,224 @@
+{
+  "amendment": "nexus-stage3-final-protocol-v1-amendment-F2",
+  "mode": "preflight",
+  "passed": true,
+  "environment": {
+    "python": "3.13.16",
+    "numpy": "2.5.3",
+    "pandas": "3.0.5",
+    "scipy": "1.18.1",
+    "xgboost": "3.4.1",
+    "platform": "Linux-6.18.44-fc-v114-x86_64-with-glibc2.39"
+  },
+  "checks": [
+    {
+      "id": "P1",
+      "check": "environment equals the frozen calibration environment",
+      "pass": true,
+      "environment": {
+        "python": "3.13.16",
+        "numpy": "2.5.3",
+        "pandas": "3.0.5",
+        "scipy": "1.18.1",
+        "xgboost": "3.4.1",
+        "platform": "Linux-6.18.44-fc-v114-x86_64-with-glibc2.39"
+      },
+      "required": {
+        "python_minor": "3.12",
+        "numpy": "1.26.4",
+        "pandas": "2.2.2",
+        "scipy": "1.17.1",
+        "xgboost": "3.4.1"
+      },
+      "reference_override": true
+    },
+    {
+      "id": "P2a",
+      "check": "final protocol v1 matches its frozen hash",
+      "pass": true,
+      "protocol_sha256": "8c385172f651bef23b40cbb75a8508af8d3ffbc62c54781914406c3472a445af"
+    },
+    {
+      "id": "P2b",
+      "check": "all files listed in the final protocol match",
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "id": "P2c",
+      "check": "final package manifest and every listed file match",
+      "pass": true,
+      "manifest_sha_ok": true,
+      "mismatches": []
+    },
+    {
+      "id": "P2d",
+      "check": "calibration freeze and calibration artifacts match",
+      "pass": true
+    },
+    {
+      "id": "P3",
+      "check": "development frame CAL reproduced (research copy R14)",
+      "pass": true,
+      "rows": 120649,
+      "rows_reference": 120649,
+      "rows_only_here": 0,
+      "rows_only_reference": 0,
+      "actuals_identical": true,
+      "groups_identical": true,
+      "methods_identical": true,
+      "max_abs_F_diff": 0.0,
+      "tolerance": 1e-06,
+      "parity_vs_app_max_abs_units": 2.002716064453125e-05
+    },
+    {
+      "id": "P3",
+      "check": "development frame SEL reproduced (research copy R14)",
+      "pass": true,
+      "rows": 183946,
+      "rows_reference": 183946,
+      "rows_only_here": 0,
+      "rows_only_reference": 0,
+      "actuals_identical": true,
+      "groups_identical": true,
+      "methods_identical": true,
+      "max_abs_F_diff": 0.0,
+      "tolerance": 1e-06,
+      "parity_vs_app_max_abs_units": 6.973743438720703e-06
+    },
+    {
+      "id": "P4",
+      "check": "selected U2 h=7 p=0.8 SEL prediction hash equals development",
+      "pass": true,
+      "got": "705b57d7a3b53efa4b164940dced42f0d517ffc4de09fa7756e0d220e0582583",
+      "expected": "705b57d7a3b53efa4b164940dced42f0d517ffc4de09fa7756e0d220e0582583"
+    },
+    {
+      "id": "P4",
+      "check": "selected U2 h=7 p=0.9 SEL prediction hash equals development",
+      "pass": true,
+      "got": "d847edf0044923cb6538ee9c9d0a72cad5febda0f9d06b6eed43b188088d73e1",
+      "expected": "d847edf0044923cb6538ee9c9d0a72cad5febda0f9d06b6eed43b188088d73e1"
+    },
+    {
+      "id": "P4",
+      "check": "selected U2 h=28 p=0.8 SEL prediction hash equals development",
+      "pass": true,
+      "got": "981e6aaabea6b9b307fc4988c5889138f33f8cac73b59335c1b3539077ffed75",
+      "expected": "981e6aaabea6b9b307fc4988c5889138f33f8cac73b59335c1b3539077ffed75"
+    },
+    {
+      "id": "P4",
+      "check": "selected U2 h=28 p=0.9 SEL prediction hash equals development",
+      "pass": true,
+      "got": "cb1bf46c621a503ad57f45310b8a2fde3ee3af57c39d24fb02ccedd2cbae19a8",
+      "expected": "cb1bf46c621a503ad57f45310b8a2fde3ee3af57c39d24fb02ccedd2cbae19a8"
+    },
+    {
+      "id": "P5",
+      "check": "US calibration windows re-served by the frozen release match",
+      "pass": true,
+      "rows": 128268,
+      "rows_reference": 128268,
+      "rows_only_here": 0,
+      "rows_only_reference": 0,
+      "actuals_identical": true,
+      "groups_identical": true,
+      "methods_identical": true,
+      "max_abs_F_diff": 0.0,
+      "tolerance": 1e-06
+    },
+    {
+      "id": "P5",
+      "check": "PK calibration windows re-served by the frozen release match",
+      "pass": true,
+      "rows": 735,
+      "rows_reference": 735,
+      "rows_only_here": 0,
+      "rows_only_reference": 0,
+      "actuals_identical": true,
+      "groups_identical": true,
+      "methods_identical": true,
+      "max_abs_F_diff": 0.0,
+      "tolerance": 1e-06
+    },
+    {
+      "id": "P5",
+      "check": "parity of the frozen release with ml/v2 forecast_totals",
+      "pass": true,
+      "us": 6.318092374613116e-06,
+      "pk": 0.00040733814421400893
+    },
+    {
+      "id": "P6",
+      "check": "US calibration U0 within tolerance",
+      "pass": true,
+      "max_abs_diff": 0.0,
+      "tolerance": 1e-09,
+      "missing": []
+    },
+    {
+      "id": "P6",
+      "check": "US calibration U1 within tolerance",
+      "pass": true,
+      "max_abs_diff": 0.0,
+      "tolerance": 1e-09,
+      "missing": []
+    },
+    {
+      "id": "P6",
+      "check": "US calibration U2_correction within tolerance",
+      "pass": true,
+      "max_abs_diff": 0.0,
+      "tolerance": 1e-09,
+      "missing": []
+    },
+    {
+      "id": "P6",
+      "check": "US calibration D1_r within tolerance",
+      "pass": true,
+      "max_abs_diff": 0.0,
+      "tolerance": 1e-09,
+      "missing": []
+    },
+    {
+      "id": "P6",
+      "check": "US calibration counts identical",
+      "pass": true
+    },
+    {
+      "id": "P6",
+      "check": "PK calibration U0 within tolerance",
+      "pass": true,
+      "max_abs_diff": 0.0,
+      "tolerance": 1e-09,
+      "missing": []
+    },
+    {
+      "id": "P6",
+      "check": "PK calibration U1 within tolerance",
+      "pass": true,
+      "max_abs_diff": 0.0,
+      "tolerance": 1e-09,
+      "missing": []
+    },
+    {
+      "id": "P6",
+      "check": "PK calibration counts identical",
+      "pass": true
+    },
+    {
+      "id": "P6",
+      "check": "PK E1 beta within tolerance (same events, features, occurrences, rows)",
+      "pass": true,
+      "max_abs_diff": 5.551115123125783e-17,
+      "tolerance": 1e-08
+    }
+  ],
+  "manifest_sha256": "764ed1c73de7dcbf373bea7ce59c45b0ca6aad9e99590016c512ed43de1d08c5",
+  "calibration_freeze_sha256": "7ea548e2d32f9da22d4a9a58a5e708778dbdf39e1de0f1cc94fc150c47ab6af1",
+  "protocol_sha256": "8c385172f651bef23b40cbb75a8508af8d3ffbc62c54781914406c3472a445af",
+  "reference_unpinned": true,
+  "reserved_outcomes_accessed": false,
+  "seconds": 101.5
+}

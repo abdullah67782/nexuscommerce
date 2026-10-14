@@ -1,0 +1,111 @@
+{
+  "selected": {
+    "wape_all_7": 40.66821009903099,
+    "wape_event_7": 40.84556178580685,
+    "wape_non_event_7": 40.56885456375192,
+    "bias_event_7": -2.6056732786373673,
+    "rel_event_improvement_7": 0.0027483628883261607,
+    "wape_all_28": 32.93400452338126,
+    "wape_event_28": 32.93464309835703,
+    "wape_non_event_28": 32.93295907857072,
+    "bias_event_28": -3.347179194636176,
+    "rel_event_improvement_28": 0.000737542737040529,
+    "score": 0.001742952812683345,
+    "candidate": "E1c"
+  },
+  "selected_intervals": {
+    "7": {
+      "date_block_95": [
+        0.0,
+        0.006823641562379014
+      ],
+      "product_cluster_95": [
+        -0.0006168683732998883,
+        0.006154590066794518
+      ]
+    },
+    "28": {
+      "date_block_95": [
+        0.0,
+        0.0018437471757538197
+      ],
+      "product_cluster_95": [
+        -0.0011699919650643331,
+        0.0026863194546154962
+      ]
+    }
+  },
+  "per_event_selected": [
+    {
+      "event": "Christmas",
+      "h": 7,
+      "windows": 9593,
+      "wape_base": 42.61010937348252,
+      "wape_selected": 42.17784618689378
+    },
+    {
+      "event": "Christmas",
+      "h": 28,
+      "windows": 19168,
+      "wape_base": 33.51642583981764,
+      "wape_selected": 33.44538646213608
+    },
+    {
+      "event": "NewYear",
+      "h": 7,
+      "windows": 9595,
+      "wape_base": 43.512753436109925,
+      "wape_selected": 43.07750224086001
+    },
+    {
+      "event": "NewYear",
+      "h": 28,
+      "windows": 19177,
+      "wape_base": 33.387325499589714,
+      "wape_selected": 33.316022960591276
+    },
+    {
+      "event": "Thanksgiving",
+      "h": 7,
+      "windows": 9566,
+      "wape_base": 40.890113299194006,
+      "wape_selected": 40.890113299194006
+    },
+    {
+      "event": "Thanksgiving",
+      "h": 28,
+      "windows": 15930,
+      "wape_base": 32.701619094000954,
+      "wape_selected": 32.705639295047405
+    },
+    {
+      "event": "Easter",
+      "h": 7,
+      "windows": 6508,
+      "wape_base": 40.74845396921412,
+      "wape_selected": 40.74845396921412
+    },
+    {
+      "event": "Easter",
+      "h": 28,
+      "windows": 16261,
+      "wape_base": 33.33422619489593,
+      "wape_selected": 33.33422619489593
+    },
+    {
+      "event": "MemorialDay",
+      "h": 7,
+      "windows": 6545,
+      "wape_base": 37.89457651782749,
+      "wape_selected": 37.89457651782749
+    },
+    {
+      "event": "MemorialDay",
+      "h": 28,
+      "windows": 6537,
+      "wape_base": 31.31084342193352,
+      "wape_selected": 31.31084342193352
+    }
+  ],
+  "second_look_note": "SEL was already seen for the original candidates; amendment candidates are a second look."
+}

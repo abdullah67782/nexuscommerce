@@ -1,0 +1,31 @@
+Smoke-test seller: smoke-stage3-1791910380134@nexus.local (new, separate from your real sellers). Today 2026-10-13 (Asia/Karachi).
+
+PASS  no country confirmed → unavailable, forecast untouched
+PASS  Pakistan store → not evaluated
+PASS  US without the store profile → refused (country alone is not enough)
+PASS  store profile confirmed
+PASS  product department not chosen → asked for it
+PASS  regular product: four one-sided estimates
+PASS  the forecast beside them is the forecast
+PASS  regular cells use the evaluated method (U0)
+PASS  estimates are non-negative and carry dates, coverage and counts
+PASS  no lower estimate in any estimate
+PASS  limitation shown
+PASS  rare product: 7-day cells use the rare-sales simulation (U3), 28-day U0/U1
+PASS  the simulation is repeatable
+PASS  dormant product → reason, forecast only
+PASS  short history → reason, forecast only
+PASS  replenishment-2 with the calendar switched on
+PASS  upper-estimate answers never change the replenishment fingerprint
+PASS  demand change: saved with label assumed_by_seller
+PASS  demand change: older recommendation refused as stale
+PASS  closure: saved with label declared_closure
+PASS  closure: older recommendation refused as stale
+PASS  supplier delay: saved with label declared_supplier_delay
+PASS  supplier delay: older recommendation refused as stale
+PASS  holidays say "Effect unknown"
+PASS  outlook labels: demand change assumed, closure declared
+PASS  stock unchanged by all of this
+PASS  no purchase order was created
+
+27/27 checks passed. Seller smoke-stage3-1791910380134@nexus.local.

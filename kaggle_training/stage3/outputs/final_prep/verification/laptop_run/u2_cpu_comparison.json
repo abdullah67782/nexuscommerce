@@ -1,0 +1,69 @@
+{
+  "device": "cpu",
+  "selected_artifacts_unchanged": true,
+  "models": {
+    "7|0.8": {
+      "file": "U2_h7_p0.8_cpu.json",
+      "train_seconds": 7.3,
+      "max_abs_pred_diff_vs_selected": 0.3056662082672119,
+      "max_abs_upper_diff_vs_selected": 7.51111974335106,
+      "selected_booster_upper_max_abs_diff_vs_development": 0.0,
+      "identical_to_selected": false,
+      "selected_cells": {
+        "occasional|7|0.8": {
+          "hits_selected_booster": 42283,
+          "hits_this_retrain": 42293,
+          "hits_development": 42283,
+          "windows": 52807
+        },
+        "short_history|7|0.8": {
+          "hits_selected_booster": 2487,
+          "hits_this_retrain": 2487,
+          "hits_development": 2487,
+          "windows": 3105
+        }
+      }
+    },
+    "28|0.8": {
+      "file": "U2_h28_p0.8_cpu.json",
+      "train_seconds": 8.5,
+      "max_abs_pred_diff_vs_selected": 0.9025399684906006,
+      "max_abs_upper_diff_vs_selected": 63.32086787102003,
+      "selected_booster_upper_max_abs_diff_vs_development": 0.0,
+      "identical_to_selected": false,
+      "selected_cells": {}
+    },
+    "7|0.9": {
+      "file": "U2_h7_p0.9_cpu.json",
+      "train_seconds": 9.3,
+      "max_abs_pred_diff_vs_selected": 0.5262050628662109,
+      "max_abs_upper_diff_vs_selected": 13.205635346071489,
+      "selected_booster_upper_max_abs_diff_vs_development": 0.0,
+      "identical_to_selected": false,
+      "selected_cells": {
+        "short_history|7|0.9": {
+          "hits_selected_booster": 2814,
+          "hits_this_retrain": 2815,
+          "hits_development": 2814,
+          "windows": 3105
+        }
+      }
+    },
+    "28|0.9": {
+      "file": "U2_h28_p0.9_cpu.json",
+      "train_seconds": 8.2,
+      "max_abs_pred_diff_vs_selected": 1.1127910614013672,
+      "max_abs_upper_diff_vs_selected": 33.05614613177295,
+      "selected_booster_upper_max_abs_diff_vs_development": 0.0,
+      "identical_to_selected": false,
+      "selected_cells": {
+        "dormant|28|0.9": {
+          "hits_selected_booster": 2062,
+          "hits_this_retrain": 2062,
+          "hits_development": 2062,
+          "windows": 2295
+        }
+      }
+    }
+  }
+}

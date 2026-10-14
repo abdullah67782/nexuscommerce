@@ -1,5 +1,6 @@
 'use client';
-// Inventory (Stage 1a): physical stock from counts and recorded movements.
+// Inventory: physical stock from counts and recorded movements (Stage 1a), suppliers and
+// purchase orders (Stage 1b), and advisory replenishment (Stage 2).
 // No sample data: loading, error and empty states are real. Unknown stock is
 // shown as "no count", never as zero. On-hand is physical stock at the location,
 // not stock available to sell (reservations are not tracked yet).
@@ -16,6 +17,11 @@ import Segmented from '../../components/ui/Segmented';
 import StatusBadge from '../../components/ui/StatusBadge';
 import EmptyState from '../../components/ui/EmptyState';
 import api from '../../services/api';
+import SuppliersTab from '../../components/inventory/SuppliersTab';
+import PurchaseOrdersTab from '../../components/inventory/PurchaseOrdersTab';
+import ReplenishmentTab from '../../components/inventory/ReplenishmentTab';
+import CalendarTab from '../../components/inventory/CalendarTab';
+import OutlookPanel from '../../components/inventory/Outlook';
 import toast from 'react-hot-toast';
 import {
   HiArrowPath, HiMagnifyingGlass, HiArrowRight, HiArrowUpTray, HiCog6Tooth, HiClipboardDocumentCheck,
@@ -30,6 +36,7 @@ const FILTERS = [
   { value: 'below_threshold', label: 'Below threshold', count: 'below_threshold' },
   { value: 'needs_review', label: 'Needs review', count: 'needs_review' },
   { value: 'inconsistent', label: 'Inconsistent', count: 'inconsistent' },
+  { value: 'inbound_overdue', label: 'Overdue orders', count: 'inbound_overdue' },
 ];
 const STOCK_STATE = {
   missing: { tone: 'neutral', label: 'No count' },
@@ -48,7 +55,10 @@ const ALERT = {
 };
 const KINDS = {
   shipment: 'Shipment', customer_return: 'Customer return', damage: 'Damaged / lost', found: 'Found', correction: 'Correction',
+  receipt: 'Purchase receipt', receipt_correction: 'Receipt correction', supplier_return: 'Returned to supplier',
 };
+const TABS = [{ value: 'stock', label: 'Stock' }, { value: 'replenishment', label: 'Replenishment' }, { value: 'suppliers', label: 'Suppliers' }, { value: 'orders', label: 'Purchase orders' }, { value: 'calendar', label: 'Calendar' }];
+const readTab = () => { try { const t = new URLSearchParams(window.location.search).get('tab'); return TABS.some(x => x.value === t) ? t : 'stock'; } catch { return 'stock'; } };
 const RELATION = {
   after_count: 'after the count — applied', at_count_included: 'at the count time — inside the count',
   before_count_included: 'before the count — inside the count', no_count: 'no count to apply to',
@@ -79,6 +89,30 @@ const browserZone = () => { try { return Intl.DateTimeFormat().resolvedOptions()
 const errorText = (e, fallback) => e?.response?.data?.message || e?.response?.data?.error || fallback;
 
 export default function InventoryPage() {
+  const [tab, setTab] = useState('stock');
+  useEffect(() => { queueMicrotask(() => setTab(readTab())); }, []);
+  const switchTab = (t) => {
+    setTab(t);
+    try { const u = new URL(window.location.href); u.searchParams.set('tab', t); window.history.replaceState(null, '', u); } catch { /* ignore */ }
+  };
+  return (
+    <ProtectedRoute>
+      <div className="page">
+        <PageHeader title="Inventory" description="Physical stock from counts and recorded movements, with suppliers, purchase orders and advisory replenishment. Incoming orders are never counted as on-hand.">
+          <Segmented label="Inventory section" value={tab} onChange={switchTab} options={TABS} />
+        </PageHeader>
+        {tab === 'stock' && <StockTab />}
+        {tab === 'replenishment' && <ReplenishmentTab renderProduct={(id, close, changed) => (
+          <ProductDialog key={id} productId={id} initialTab="outlook" onClose={close} onChanged={changed} />)} />}
+        {tab === 'suppliers' && <SuppliersTab />}
+        {tab === 'orders' && <PurchaseOrdersTab />}
+        {tab === 'calendar' && <CalendarTab />}
+      </div>
+    </ProtectedRoute>
+  );
+}
+
+function StockTab() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -106,7 +140,7 @@ export default function InventoryPage() {
     }
   }, [page, filter, query]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { queueMicrotask(load); }, [load]);
   useEffect(() => { const t = setTimeout(() => { setPage(1); setQuery(search.trim()); }, 300); return () => clearTimeout(t); }, [search]);
 
   const counts = data?.counts;
@@ -126,13 +160,13 @@ export default function InventoryPage() {
   }
 
   return (
-    <ProtectedRoute>
-      <div className="page">
-        <PageHeader title="Inventory" description="Physical stock from your counts and the movements recorded since. Sales uploads never change stock.">
+    <>
+      <div className="stack">
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <Button variant="secondary" onClick={load} disabled={loading} icon={<HiArrowPath className={loading ? 'spin' : ''} />}>{loading ? 'Loading…' : 'Refresh'}</Button>
           <Button variant="secondary" onClick={() => setDialog('settings')} disabled={!data} icon={<HiCog6Tooth />}>Settings</Button>
           <Button onClick={() => setDialog('file')} disabled={!data || noProducts} icon={<HiArrowUpTray />}>Stock count file</Button>
-        </PageHeader>
+        </div>
 
         {error && !data ? (
           <Panel>
@@ -179,12 +213,12 @@ export default function InventoryPage() {
               <div className="table-scroll">
                 <table className="data-table">
                   <thead>
-                    <tr>{['Product', 'On hand', 'Last count', 'Since the count', 'Reorder threshold', 'Stock status', 'Next step'].map(h => <th key={h} className={['On hand', 'Reorder threshold'].includes(h) ? 'is-num' : ''}>{h}</th>)}</tr>
+                    <tr>{['Product', 'On hand', 'Incoming', 'Last count', 'Since the count', 'Reorder threshold', 'Stock status', 'Next step'].map(h => <th key={h} className={['On hand', 'Incoming', 'Reorder threshold'].includes(h) ? 'is-num' : ''}>{h}</th>)}</tr>
                   </thead>
                   <tbody>
-                    {firstLoad ? [...Array(5)].map((_, i) => <tr key={i}><td colSpan={7}><Skeleton height={22} /></td></tr>)
+                    {firstLoad ? [...Array(5)].map((_, i) => <tr key={i}><td colSpan={8}><Skeleton height={22} /></td></tr>)
                       : data.items.length ? data.items.map(it => <ItemRow key={it.product_id} it={it} onOpen={() => setOpenId(it.product_id)} />)
-                      : <tr><td colSpan={7}><EmptyState icon={<HiClipboardDocumentCheck />} title="No matches">No product matches this filter.</EmptyState></td></tr>}
+                      : <tr><td colSpan={8}><EmptyState icon={<HiClipboardDocumentCheck />} title="No matches">No product matches this filter.</EmptyState></td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -206,7 +240,22 @@ export default function InventoryPage() {
       {openId && <ProductDialog key={openId} productId={openId} onClose={() => setOpenId(null)} onChanged={load} />}
       {dialog === 'file' && <CountFileDialog onClose={() => setDialog(null)} onDone={load} />}
       {dialog === 'settings' && <SettingsDialog onClose={() => setDialog(null)} onDone={load} />}
-    </ProtectedRoute>
+    </>
+  );
+}
+
+// Incoming purchase-order quantities: shown beside on-hand, never added to it.
+function Incoming({ inbound }) {
+  if (!inbound || (!inbound.open_quantity && !inbound.approved_not_sent)) return <span className="text-faint">—</span>;
+  return (
+    <span>
+      {inbound.open_quantity > 0 && <span className="num" style={{ fontWeight: 600 }}>+{fmtNum(inbound.open_quantity)}</span>}
+      <span className="list-row-aside" style={{ display: 'block', fontSize: 12 }}>
+        {inbound.overdue_quantity > 0 ? <span style={{ color: 'var(--danger)' }}>{fmtNum(inbound.overdue_quantity)} overdue</span>
+          : inbound.next_expected ? `due ${inbound.next_expected}` : inbound.open_quantity ? 'no arrival date' : ''}
+        {inbound.approved_not_sent > 0 ? `${inbound.open_quantity ? ' · ' : ''}${fmtNum(inbound.approved_not_sent)} approved, not sent` : ''}
+      </span>
+    </span>
   );
 }
 
@@ -230,6 +279,7 @@ function ItemRow({ it, onOpen }) {
     <tr className="is-clickable" onClick={onOpen} onKeyDown={(e) => { if (e.key === 'Enter') onOpen(); }} tabIndex={0} aria-label={`Open ${it.name}`}>
       <td className="is-strong">{it.name}<span className="list-row-aside" style={{ display: 'block', fontSize: 12 }}>{it.category || '—'}</span></td>
       <td className="is-num"><OnHand stock={s} /></td>
+      <td className="is-num"><Incoming inbound={it.inbound} /></td>
       <td>{s.last_count ? <>{fmtWhen(s.last_count.observed_at)}<span className="list-row-aside" style={{ display: 'block', fontSize: 12 }}>{ageText(s.last_count.observed_at)} · {SOURCE_KIND[s.last_count.source_kind] || s.last_count.source_kind}</span></> : <span className="text-faint">—</span>}</td>
       <td className="cell-note">{s.known
         ? <>{s.events_since_count ? `${s.events_since_count} movement${s.events_since_count === 1 ? '' : 's'}, net ${s.net_change_since_count > 0 ? '+' : ''}${s.net_change_since_count}` : 'No movements recorded'}
@@ -244,15 +294,15 @@ function ItemRow({ it, onOpen }) {
 }
 
 // ── Product drawer ───────────────────────────────────────────────────────────
-function ProductDialog({ productId, onClose, onChanged }) {
+function ProductDialog({ productId, onClose, onChanged, initialTab = 'count' }) {
   const [item, setItem] = useState(null);
   const [error, setError] = useState(null);
-  const [tab, setTab] = useState('count');
+  const [tab, setTab] = useState(initialTab);
   const load = useCallback(async () => {
     try { setItem((await api.get(`/inventory/items/${productId}`)).data); setError(null); }
     catch (e) { setError(errorText(e, 'This product could not be loaded.')); }
   }, [productId]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { queueMicrotask(load); }, [load]);
   const changed = () => { load(); onChanged(); };
 
   const s = item?.stock;
@@ -280,9 +330,12 @@ function ProductDialog({ productId, onClose, onChanged }) {
           </div>
           <p className="side-note">{item.readiness.stock.reason}{item.readiness.reconciliation.state === 'needs_review' ? ` ${item.readiness.reconciliation.reason}` : ''}
             {item.readiness.sales_history ? ` Sales history: ${item.readiness.sales_history.reason}` : ''}</p>
+          <p className="side-note"><strong>Incoming:</strong> {item.readiness.inbound?.reason} <strong>Supplier:</strong> {item.readiness.supplier?.reason}</p>
           {s.legacy && <p className="side-note"><HiExclamationTriangle style={{ color: 'var(--warning)', verticalAlign: '-2px' }} /> Old stock column value: {fmtNum(s.legacy.quantity)}{s.legacy.written_at_server_time ? ` (written ${s.legacy.written_at_server_time}, server clock)` : ''}. It has no count time, so it is shown for reference only.</p>}
           <Segmented label="Action" value={tab} onChange={setTab} fill
-            options={[{ value: 'count', label: 'Record count' }, { value: 'adjust', label: 'Adjustment' }, { value: 'policy', label: 'Threshold' }, { value: 'history', label: 'History' }]} />
+            options={[{ value: 'outlook', label: 'Outlook' }, { value: 'count', label: 'Record count' }, { value: 'adjust', label: 'Adjustment' }, { value: 'policy', label: 'Settings' }, { value: 'history', label: 'History' }]} />
+          {tab === 'outlook' && <OutlookPanel key={productId} productId={productId} onChanged={changed}
+            onAction={(a) => { if (a === 'suppliers') window.location.assign('/inventory?tab=suppliers'); else setTab(a); }} />}
           {tab === 'count' && <CountForm item={item} onDone={changed} />}
           {tab === 'adjust' && <AdjustForm item={item} onDone={changed} />}
           {tab === 'policy' && <PolicyForm item={item} onDone={changed} />}
@@ -379,17 +432,30 @@ function AdjustForm({ item, onDone }) {
 function PolicyForm({ item, onDone }) {
   const [threshold, setThreshold] = useState(item.policy.reorder_threshold ?? '');
   const [stale, setStale] = useState('');
+  const [view, setView] = useState(null);
+  const [review, setReview] = useState('');
+  const [safety, setSafety] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
+  useEffect(() => {
+    api.get(`/inventory/items/${item.product_id}/policy`).then(r => {
+      setView(r.data);
+      setReview(r.data.stored?.review_period_days ?? '');
+      setSafety(r.data.stored?.safety_stock_units ?? '');
+    }).catch(() => setView(null));
+  }, [item.product_id]);
   const submit = async () => {
     setBusy(true); setErr(null);
     try {
       await api.patch(`/inventory/items/${item.product_id}/policy`, {
-        reorder_threshold: threshold === '' ? null : Number(threshold), ...(stale !== '' ? { stale_after_days: Number(stale) } : {}) });
+        reorder_threshold: threshold === '' ? null : Number(threshold), ...(stale !== '' ? { stale_after_days: Number(stale) } : {}),
+        review_period_days: review === '' ? null : Number(review), safety_stock_units: safety === '' ? null : Number(safety) });
       toast.success('Settings saved'); onDone();
     } catch (e) { setErr(errorText(e, 'Settings were not saved.')); }
     finally { setBusy(false); }
   };
+  const eff = view?.effective;
+  const src = (s) => (s === 'product' ? 'this product' : s === 'seller_default' ? 'your default' : 'the default');
   return (
     <div className="stack">
       <p className="side-note">Set manually. Threshold source: {item.policy.threshold_source === 'legacy_migration' ? 'copied from the old stock column (the old upload used 10 when a file had none)' : item.policy.threshold_source || 'not set'}. Count tolerance now: {item.policy.stale_after_days} days.</p>
@@ -398,7 +464,12 @@ function PolicyForm({ item, onDone }) {
           <input id="pol-thr" type="number" min="0" step="1" className="input-field" value={threshold} onChange={e => setThreshold(e.target.value)} placeholder="not set" /></div>
         <div><label htmlFor="pol-stale" className="label-text">Recount after (days)</label>
           <input id="pol-stale" type="number" min="1" max="365" step="1" className="input-field" value={stale} onChange={e => setStale(e.target.value)} placeholder={`${item.policy.stale_after_days}`} /></div>
+        <div><label htmlFor="pol-review" className="label-text">Review period (days)</label>
+          <input id="pol-review" type="number" min="1" max="28" step="1" className="input-field" value={review} onChange={e => setReview(e.target.value)} placeholder={eff ? `${eff.review_period_days} (${src(eff.review_period_source)})` : ''} /></div>
+        <div><label htmlFor="pol-safety" className="label-text">Safety stock (units)</label>
+          <input id="pol-safety" type="number" min="0" step="1" className="input-field" value={safety} onChange={e => setSafety(e.target.value)} placeholder={eff ? `${eff.safety_stock_units} (${src(eff.safety_stock_source)})` : ''} /></div>
       </div>
+      <p className="side-note">{view?.replenishment_note || 'The review period is how long an order should last after it arrives. Safety stock is a number you choose, not a calculated protection level.'} Leave a field empty to use {src('seller_default')} or the default.</p>
       {err && <p className="side-note" role="alert" style={{ color: 'var(--danger)' }}>{err}</p>}
       <Button onClick={submit} disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button>
     </div>
@@ -524,19 +595,21 @@ function CountFileDialog({ onClose, onDone }) {
 
 function SettingsDialog({ onClose, onDone }) {
   const [view, setView] = useState(null);
-  const [form, setForm] = useState({ stale: '', threshold: '' });
+  const [form, setForm] = useState({ stale: '', threshold: '', review: '', safety: '' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
   useEffect(() => {
     api.get('/inventory/policy').then(r => {
       setView(r.data);
-      setForm({ stale: String(r.data.effective.stale_after_days), threshold: r.data.effective.reorder_threshold ?? '' });
+      setForm({ stale: String(r.data.effective.stale_after_days), threshold: r.data.effective.reorder_threshold ?? '',
+        review: r.data.stored?.review_period_days ?? '', safety: r.data.stored?.safety_stock_units ?? '' });
     }).catch(e => setErr(errorText(e, 'Settings could not be loaded.')));
   }, []);
   const save = async () => {
     setBusy(true); setErr(null);
     try {
-      await api.patch('/inventory/policy', { stale_after_days: Number(form.stale), reorder_threshold: form.threshold === '' ? null : Number(form.threshold) });
+      await api.patch('/inventory/policy', { stale_after_days: Number(form.stale), reorder_threshold: form.threshold === '' ? null : Number(form.threshold),
+        review_period_days: form.review === '' ? null : Number(form.review), safety_stock_units: form.safety === '' ? null : Number(form.safety) });
       toast.success('Defaults saved'); onDone(); onClose();
     } catch (e) { setErr(errorText(e, 'Settings were not saved.')); }
     finally { setBusy(false); }
@@ -547,13 +620,18 @@ function SettingsDialog({ onClose, onDone }) {
       <h2 id="inv-settings-title" className="dialog-title" style={{ marginTop: 10 }}>Inventory settings</h2>
       {!view && !err ? <div style={{ marginTop: 14 }}><Skeleton height={120} /></div> : (
         <div className="stack" style={{ marginTop: 14 }}>
-          <p className="side-note">{view?.note} A product's own settings take precedence.</p>
+          <p className="side-note">{view?.note} A product&apos;s own settings take precedence.</p>
           <div className="coverage-fields">
             <div><label htmlFor="set-stale" className="label-text">Recount after (days)</label>
               <input id="set-stale" type="number" min="1" max="365" className="input-field" value={form.stale} onChange={e => setForm(f => ({ ...f, stale: e.target.value }))} /></div>
             <div><label htmlFor="set-thr" className="label-text">Default reorder threshold</label>
               <input id="set-thr" type="number" min="0" className="input-field" value={form.threshold} placeholder="not set" onChange={e => setForm(f => ({ ...f, threshold: e.target.value }))} /></div>
+            <div><label htmlFor="set-review" className="label-text">Review period (days)</label>
+              <input id="set-review" type="number" min="1" max="28" className="input-field" value={form.review} placeholder={`${view?.defaults?.review_period_days ?? 7} (default)`} onChange={e => setForm(f => ({ ...f, review: e.target.value }))} /></div>
+            <div><label htmlFor="set-safety" className="label-text">Safety stock (units)</label>
+              <input id="set-safety" type="number" min="0" className="input-field" value={form.safety} placeholder={`${view?.defaults?.safety_stock_units ?? 0} (default)`} onChange={e => setForm(f => ({ ...f, safety: e.target.value }))} /></div>
           </div>
+          <p className="side-note">{view?.replenishment_note}</p>
           {err && <p className="side-note" role="alert" style={{ color: 'var(--danger)' }}>{err}</p>}
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={onClose} disabled={busy} className="btn-secondary" style={{ flex: 1 }}>Cancel</button>

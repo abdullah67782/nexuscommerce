@@ -51,6 +51,31 @@ const CHECKS = {
   // The legacy inventory table is never modified (004 copies it, read-only).
   inventory_rows: 'SELECT COUNT(*)::int AS n FROM inventory',
   inventory_units: 'SELECT COALESCE(SUM(stock_level), 0)::bigint AS n FROM inventory',
+  // The stock ledger (004) must survive later migrations unchanged.
+  stock_counts: 'SELECT COUNT(*)::int AS n FROM stock_snapshots',
+  stock_movements: 'SELECT COUNT(*)::int AS n FROM stock_movements',
+  stock_movement_units: 'SELECT COALESCE(SUM(quantity), 0)::bigint AS n FROM stock_movements',
+  inventory_settings: 'SELECT COUNT(*)::int AS n FROM inventory_policies',
+  inventory_setting_values: `SELECT COALESCE(SUM(COALESCE(reorder_threshold, 0) + COALESCE(stale_after_days, 0)), 0)::bigint AS n
+                             FROM inventory_policies`,
+  // Purchasing (005) must survive later migrations unchanged.
+  suppliers: 'SELECT COUNT(*)::int AS n FROM suppliers',
+  supplier_links: 'SELECT COUNT(*)::int AS n FROM product_suppliers',
+  purchase_orders: 'SELECT COUNT(*)::int AS n FROM purchase_orders',
+  purchase_order_versions: 'SELECT COALESCE(SUM(version), 0)::bigint AS n FROM purchase_orders',
+  purchase_order_units: 'SELECT COALESCE(SUM(quantity_ordered - quantity_cancelled), 0)::bigint AS n FROM purchase_order_lines',
+  received_units: 'SELECT COALESCE(SUM(quantity), 0)::bigint AS n FROM purchase_receipt_lines',
+  receipt_adjustment_units: 'SELECT COALESCE(SUM(quantity), 0)::bigint AS n FROM purchase_receipt_adjustments',
+  purchase_order_events: 'SELECT COUNT(*)::int AS n FROM purchase_order_events',
+  supplier_lead_times: 'SELECT COALESCE(SUM(lead_time_days), 0)::bigint AS n FROM product_suppliers',
+  // Recommendations (006) keep their identity: engine version and input fingerprint, row for row.
+  recommendations: 'SELECT COUNT(*)::int AS n FROM replenishment_recommendations',
+  recommendation_fingerprints: `SELECT COALESCE(md5(string_agg(engine_version || ':' || inputs_sha256 || ':' || status, '|' ORDER BY id)), '-') AS n
+                                FROM replenishment_recommendations`,
+  // Store calendar (007) and upper-estimate answers (008) must survive later migrations ('n/a' before they exist).
+  calendar_entries: 'SELECT COUNT(*)::int AS n FROM calendar_entries',
+  calendar_entry_events: 'SELECT COUNT(*)::int AS n FROM calendar_entry_events',
+  upper_estimate_answers: 'SELECT COUNT(*)::int AS n FROM upper_estimate_events',
 };
 
 // 004: every legacy inventory row is kept as evidence with an outcome, and the

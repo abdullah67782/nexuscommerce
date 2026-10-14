@@ -1,0 +1,85 @@
+{
+  "label": "REHEARSAL on development data: not evidence",
+  "promotion_gates": {
+    "e1c_us_pass": false,
+    "totals_uncertainty_cells_pass": {
+      "regular|7|0.8": true,
+      "regular|7|0.9": true,
+      "regular|28|0.8": true,
+      "regular|28|0.9": true,
+      "occasional|7|0.8": true,
+      "occasional|7|0.9": true,
+      "occasional|28|0.8": true,
+      "occasional|28|0.9": true,
+      "rare|7|0.8": true,
+      "rare|7|0.9": true,
+      "rare|28|0.8": true,
+      "rare|28|0.9": true,
+      "dormant|7|0.8": false,
+      "dormant|7|0.9": false,
+      "dormant|28|0.8": false,
+      "dormant|28|0.9": false,
+      "short_history|7|0.8": true,
+      "short_history|7|0.9": true,
+      "short_history|28|0.8": true,
+      "short_history|28|0.9": true
+    },
+    "pakistan_e1_pass": false
+  },
+  "research_only_amendment_F1": {
+    "decision_protection_A2": {
+      "regular|0.8": {
+        "research_checks_all_met": false,
+        "research_stability_check_excess_cap": null,
+        "promotion_authorised": false
+      },
+      "regular|0.9": {
+        "research_checks_all_met": false,
+        "research_stability_check_excess_cap": true,
+        "promotion_authorised": false
+      },
+      "occasional|0.8": {
+        "research_checks_all_met": false,
+        "research_stability_check_excess_cap": null,
+        "promotion_authorised": false
+      },
+      "occasional|0.9": {
+        "research_checks_all_met": true,
+        "research_stability_check_excess_cap": true,
+        "promotion_authorised": false
+      },
+      "rare|0.8": {
+        "research_checks_all_met": true,
+        "research_stability_check_excess_cap": true,
+        "promotion_authorised": false
+      },
+      "rare|0.9": {
+        "research_checks_all_met": true,
+        "research_stability_check_excess_cap": true,
+        "promotion_authorised": false
+      },
+      "dormant|0.8": {
+        "research_checks_all_met": false,
+        "research_stability_check_excess_cap": null,
+        "promotion_authorised": false
+      },
+      "dormant|0.9": {
+        "research_checks_all_met": false,
+        "research_stability_check_excess_cap": null,
+        "promotion_authorised": false
+      },
+      "short_history|0.8": {
+        "research_checks_all_met": true,
+        "research_stability_check_excess_cap": true,
+        "promotion_authorised": false
+      },
+      "short_history|0.9": {
+        "research_checks_all_met": false,
+        "research_stability_check_excess_cap": true,
+        "promotion_authorised": false
+      }
+    },
+    "pakistan_uncertainty": "descriptive only"
+  },
+  "scope": "a passed promotion gate authorises only an implementation review for that market, segment, horizon and level; production is unchanged"
+}

@@ -8,9 +8,10 @@ const path = require('path');
 const pool = require('../config/db');
 const authMiddleware = require('../middleware/auth');
 const { upload, parseFile } = require('../lib/files');
-const { sha256, stableStringify, claimImport, replayOf, addVersion, lockSeller, defaultTimezone } = require('../lib/imports');
+const { sha256, stableStringify, claimImport, replayOf, addVersion, lockSeller, defaultTimezone, todayIn } = require('../lib/imports');
 const ledger = require('../lib/stockLedger');
 const readiness = require('../lib/inventoryReadiness');
+const purchasing = require('../lib/purchasing');
 
 const { InventoryError, parseInstant, wholeQuantity } = ledger;
 const router = express.Router();
@@ -97,7 +98,26 @@ async function loadItems(db, sellerId, productIds = null) {
      ORDER BY name, id`, [sellerId, productIds]);
   const pos = await ledger.positions(db, sellerId, location, productIds);
   const pol = await ledger.policies(db, sellerId, location, productIds);
-  const items = products.map(p => itemFrom(p, pos.get(p.id), pol.forProduct(p.id)));
+  const today = todayIn(location.timezone);
+  const inbound = await purchasing.inboundByProduct(db, sellerId, productIds, today);
+  const terms = await purchasing.supplierTermsByProduct(db, sellerId, productIds);
+  const items = products.map((p) => {
+    const item = itemFrom(p, pos.get(p.id), pol.forProduct(p.id));
+    const inb = inbound.get(p.id);
+    const t = terms.get(p.id);
+    // Incoming stock is reported beside on-hand, never added to it.
+    item.inbound = {
+      open_quantity: inb?.open_quantity || 0, approved_not_sent: inb?.approved_not_sent || 0,
+      open_orders: inb?.open_orders || 0, next_expected: inb?.next_expected || null,
+      overdue_quantity: inb?.overdue_quantity || 0, no_date_quantity: inb?.no_date_quantity || 0,
+    };
+    item.supplier = t ? { id: t.supplier_id, name: t.supplier_name, preferred: t.is_preferred, lead_time_days: t.lead_time_days,
+      unit_cost: t.unit_cost === null ? null : Number(t.unit_cost), currency: t.currency, pack_size: t.pack_size,
+      min_order_qty: t.min_order_qty, active_links: t.active_links } : null;
+    item.readiness.inbound = purchasing.inboundDimension(inb);
+    item.readiness.supplier = purchasing.supplierDimension(t);
+    return item;
+  });
   return { location, items, policyOf: (id) => pol.forProduct(id), sellerDefault: pol.sellerDefault };
 }
 
@@ -109,7 +129,7 @@ async function addSalesHistory(db, sellerId, location, item) {
 
 // ─── GET /api/inventory/items ────────────────────────────────────────────────
 const STATE_FILTERS = ['missing', 'unverified_only', 'inconsistent', 'stale', 'last_known', 'tracked',
-  'below_threshold', 'needs_review', 'unknown_stock'];
+  'below_threshold', 'needs_review', 'unknown_stock', 'inbound', 'inbound_overdue'];
 
 router.get('/items', authMiddleware, async (req, res) => {
   try {
@@ -134,6 +154,9 @@ router.get('/items', authMiddleware, async (req, res) => {
       tracked: items.filter(i => i.readiness.stock.state === 'tracked').length,
       below_threshold: items.filter(i => i.threshold_alert === 'below').length,
       needs_review: items.filter(i => i.readiness.reconciliation.state === 'needs_review').length,
+      inbound: items.filter(i => i.inbound.open_quantity > 0).length,
+      inbound_overdue: items.filter(i => i.inbound.overdue_quantity > 0).length,
+      no_supplier: items.filter(i => !i.supplier).length,
     };
     const matches = items.filter((i) => {
       if (q && !String(i.name).toLowerCase().includes(q)) return false;
@@ -141,6 +164,8 @@ router.get('/items', authMiddleware, async (req, res) => {
       if (state === 'below_threshold') return i.threshold_alert === 'below';
       if (state === 'needs_review') return i.readiness.reconciliation.state === 'needs_review';
       if (state === 'unknown_stock') return !i.stock.known;
+      if (state === 'inbound') return i.inbound.open_quantity > 0;
+      if (state === 'inbound_overdue') return i.inbound.overdue_quantity > 0;
       return i.readiness.stock.state === state;
     });
     const slice = matches.slice((page - 1) * pageSize, page * pageSize);
@@ -153,6 +178,7 @@ router.get('/items', authMiddleware, async (req, res) => {
       notes: [
         'On-hand is physical stock at this location. Reservations and backorders are not tracked, so it is not available-to-sell stock.',
         'Sales uploads never change stock. Stock comes only from counts and recorded movements.',
+        'Incoming purchase-order quantities are shown separately; they enter on-hand only when received.',
       ],
     });
   } catch (err) { fail(res, err, 'loading inventory'); }
@@ -510,42 +536,81 @@ function parsePolicy(body) {
       out.stale_after_days = n;
     }
   }
-  if (!Object.keys(out).length) throw new InventoryError(400, { error: 'invalid_request', message: 'Send reorder_threshold and/or stale_after_days.' });
+  // Stage 2 settings (migration 006). null = use the default (review 7 days, safety stock 0).
+  if ('review_period_days' in body) {
+    if (body.review_period_days === null) out.review_period_days = null;
+    else {
+      const n = Number(body.review_period_days);
+      if (!Number.isInteger(n) || n < 1 || n > 28) {
+        throw new InventoryError(400, { error: 'invalid_request', message: 'review_period_days must be a whole number from 1 to 28, or null.' });
+      }
+      out.review_period_days = n;
+    }
+  }
+  if ('safety_stock_units' in body) {
+    if (body.safety_stock_units === null) out.safety_stock_units = null;
+    else {
+      const q = wholeQuantity(body.safety_stock_units);
+      if (q.error) throw new InventoryError(400, { error: 'invalid_request', message: 'safety_stock_units must be a whole number ≥ 0, or null.' });
+      out.safety_stock_units = q.value;
+    }
+  }
+  if (!Object.keys(out).length) {
+    throw new InventoryError(400, { error: 'invalid_request', message: 'Send reorder_threshold, stale_after_days, review_period_days and/or safety_stock_units.' });
+  }
   return out;
 }
 
+const { DEFAULT_REVIEW_DAYS, DEFAULT_SAFETY_STOCK } = require('../lib/replenishment/engine');
+const REPLENISHMENT_DEFAULTS = { review_period_days: DEFAULT_REVIEW_DAYS, safety_stock_units: DEFAULT_SAFETY_STOCK };
+const POLICY_FIELDS = ['reorder_threshold', 'stale_after_days', 'review_period_days', 'safety_stock_units'];
 async function upsertPolicy(client, sellerId, location, productId, changes) {
   const where = productId === null ? 'product_id IS NULL' : 'product_id = $3';
   const params = productId === null ? [sellerId, location.id] : [sellerId, location.id, productId];
   const { rows } = await client.query(
-    `SELECT id, reorder_threshold, stale_after_days FROM inventory_policies
+    `SELECT id, ${POLICY_FIELDS.join(', ')} FROM inventory_policies
      WHERE seller_id = $1 AND location_id = $2 AND ${where}`, params);
-  const next = { reorder_threshold: rows[0]?.reorder_threshold ?? null, stale_after_days: rows[0]?.stale_after_days ?? null, ...changes };
+  const next = Object.fromEntries(POLICY_FIELDS.map(f => [f, rows[0]?.[f] ?? null]));
+  Object.assign(next, changes);
+  const values = POLICY_FIELDS.map(f => next[f]);
   if (rows.length) {
     await client.query(
-      `UPDATE inventory_policies SET reorder_threshold = $2, stale_after_days = $3, provenance = 'seller',
-         updated_by = $4, updated_at = NOW() WHERE id = $1`,
-      [rows[0].id, next.reorder_threshold, next.stale_after_days, sellerId]);
+      `UPDATE inventory_policies SET reorder_threshold = $2, stale_after_days = $3, review_period_days = $4, safety_stock_units = $5,
+         provenance = 'seller', updated_by = $6, updated_at = NOW() WHERE id = $1`,
+      [rows[0].id, ...values, sellerId]);
   } else {
     await client.query(
-      `INSERT INTO inventory_policies (seller_id, product_id, location_id, reorder_threshold, stale_after_days, provenance, updated_by)
-       VALUES ($1, $2, $3, $4, $5, 'seller', $1)`,
-      [sellerId, productId, location.id, next.reorder_threshold, next.stale_after_days]);
+      `INSERT INTO inventory_policies (seller_id, product_id, location_id, reorder_threshold, stale_after_days, review_period_days,
+         safety_stock_units, provenance, updated_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'seller', $1)`,
+      [sellerId, productId, location.id, ...values]);
   }
 }
 
 async function policyView(db, sellerId, productId) {
   const location = await readLocation(db, sellerId);
   const pol = await ledger.policies(db, sellerId, location, productId === null ? null : [productId]);
-  const { rows } = await db.query(
-    `SELECT reorder_threshold, stale_after_days, provenance, updated_at FROM inventory_policies
-     WHERE seller_id = $1 AND location_id = $2 AND ${productId === null ? 'product_id IS NULL' : 'product_id = $3'}`,
-    productId === null ? [sellerId, location.id] : [sellerId, location.id, productId]);
+  const stored = async (pid) => (await db.query(
+    `SELECT ${POLICY_FIELDS.join(', ')}, provenance, updated_at FROM inventory_policies
+     WHERE seller_id = $1 AND location_id = $2 AND ${pid === null ? 'product_id IS NULL' : 'product_id = $3'}`,
+    pid === null ? [sellerId, location.id] : [sellerId, location.id, pid])).rows[0] || null;
+  const own = await stored(productId);
+  const sellerRow = productId === null ? own : await stored(null);
+  // Stage 2 settings: product value, else the seller default, else the documented default.
+  const resolve = (field, fallback) => (own?.[field] != null ? { value: own[field], source: productId === null ? 'seller_default' : 'product' }
+    : sellerRow?.[field] != null ? { value: sellerRow[field], source: 'seller_default' } : { value: fallback, source: 'default' });
+  const review = resolve('review_period_days', REPLENISHMENT_DEFAULTS.review_period_days);
+  const safety = resolve('safety_stock_units', REPLENISHMENT_DEFAULTS.safety_stock_units);
   return {
-    stored: rows[0] || null,
-    effective: productId === null ? pol.sellerDefault : pol.forProduct(productId),
-    defaults: { stale_after_days: ledger.DEFAULT_STALE_DAYS, reorder_threshold: null },
+    stored: own,
+    effective: {
+      ...(productId === null ? pol.sellerDefault : pol.forProduct(productId)),
+      review_period_days: review.value, review_period_source: review.source,
+      safety_stock_units: safety.value, safety_stock_source: safety.source,
+    },
+    defaults: { stale_after_days: ledger.DEFAULT_STALE_DAYS, reorder_threshold: null, ...REPLENISHMENT_DEFAULTS },
     note: 'The stale tolerance says when a count needs repeating. It is not evidence that stock stays accurate for that long.',
+    replenishment_note: 'The review period is how long an order should last after it arrives (until the next review). Safety stock is a number you choose; it is not a calculated protection level.',
   };
 }
 

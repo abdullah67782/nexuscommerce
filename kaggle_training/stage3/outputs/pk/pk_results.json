@@ -1,0 +1,201 @@
+{
+  "scope": "category level, this marketplace only; target = recorded order quantities (no order status); no SKU advice",
+  "categories": {
+    "named": [
+      "Appliances",
+      "Beauty & Grooming",
+      "Books",
+      "Computing",
+      "Entertainment",
+      "Health & Sports",
+      "Home & Living",
+      "Kids & Baby",
+      "Men's Fashion",
+      "Mobiles & Tablets",
+      "Others",
+      "School & Education",
+      "Soghaat",
+      "Superstore",
+      "Women's Fashion"
+    ],
+    "uncategorised_reported_separately": true
+  },
+  "rows": 424809,
+  "date_range": [
+    "2016-07-01",
+    "2017-12-31"
+  ],
+  "base_model": "nexus-v2-shared-20261008",
+  "parity_max_abs_units": {
+    "FIT": 0.00010108947799380985,
+    "CAL": 0.00012016296341244015,
+    "SEL": 0.0002498030662536621
+  },
+  "windows": {
+    "FIT": {
+      "7": 4965,
+      "28": 4650
+    },
+    "CAL": {
+      "7": 375,
+      "28": 330
+    },
+    "SEL": {
+      "7": 390,
+      "28": 345
+    }
+  },
+  "fit_occurrences_primary": {
+    "Black/White Friday": [
+      "2016-11-25"
+    ],
+    "Christmas / Quaid Day": [
+      "2016-12-25"
+    ],
+    "Eid al-Adha": [
+      "2016-09-13"
+    ],
+    "Eid al-Fitr": [
+      "2017-06-26"
+    ],
+    "Independence Day": [
+      "2016-08-14"
+    ],
+    "New Year": [
+      "2017-01-01"
+    ],
+    "Pakistan Day": [
+      "2017-03-23"
+    ],
+    "Ramadan start": [
+      "2017-05-27"
+    ]
+  },
+  "sel_occurrences_primary": {
+    "Black/White Friday": [
+      "2017-11-24"
+    ],
+    "Christmas / Quaid Day": [
+      "2017-12-25"
+    ],
+    "Eid al-Adha": [
+      "2017-09-02"
+    ],
+    "Independence Day": [
+      "2017-08-14"
+    ]
+  },
+  "e1_exploratory": {
+    "label": "EXPLORATORY: every effect estimated from a single occurrence; not a candidate",
+    "results": [
+      {
+        "alpha": 0.1,
+        "converged": true,
+        "wape_event_base_7": 79.18736609052296,
+        "wape_event_e1_7": 141.4035032336626,
+        "wape_non_event_base_7": 77.36582211501486,
+        "wape_non_event_e1_7": 75.1168362812455,
+        "rel_event_improvement_7": -0.785682618512874,
+        "wape_event_base_28": 80.59447924578082,
+        "wape_event_e1_28": 62.1575715845505,
+        "wape_non_event_base_28": 45.46623738721004,
+        "wape_non_event_e1_28": 44.94407453045102,
+        "rel_event_improvement_28": 0.22876142179671075
+      },
+      {
+        "alpha": 1.0,
+        "converged": true,
+        "wape_event_base_7": 79.18736609052296,
+        "wape_event_e1_7": 129.26477626130924,
+        "wape_non_event_base_7": 77.36582211501486,
+        "wape_non_event_e1_7": 73.07300879898739,
+        "rel_event_improvement_7": -0.6323914109422498,
+        "wape_event_base_28": 80.59447924578082,
+        "wape_event_e1_28": 62.288617311975955,
+        "wape_non_event_base_28": 45.46623738721004,
+        "wape_non_event_e1_28": 44.890022436657006,
+        "rel_event_improvement_28": 0.22713543291196572
+      },
+      {
+        "alpha": 10.0,
+        "converged": true,
+        "wape_event_base_7": 79.18736609052296,
+        "wape_event_e1_7": 78.98959377462154,
+        "wape_non_event_base_7": 77.36582211501486,
+        "wape_non_event_e1_7": 71.97655421722877,
+        "rel_event_improvement_7": 0.002497523603390651,
+        "wape_event_base_28": 80.59447924578082,
+        "wape_event_e1_28": 65.80664955129804,
+        "wape_non_event_base_28": 45.46623738721004,
+        "wape_non_event_e1_28": 45.24889398314732,
+        "rel_event_improvement_28": 0.18348440033201077
+      }
+    ],
+    "multipliers_per_day_alpha_1": {
+      "Black/White Friday|pre2": 3.6341188823141133,
+      "Black/White Friday|pre1": 20.994032047148416,
+      "Black/White Friday|d0": 3.8258759131675584,
+      "Black/White Friday|post1": 7.96712851837142,
+      "Black/White Friday|post2": 1.4358315898867533,
+      "Christmas / Quaid Day|pre2": 0.5510723818809542,
+      "Christmas / Quaid Day|pre1": 0.1812447836618379,
+      "Christmas / Quaid Day|d0": 0.7077420248919452,
+      "Christmas / Quaid Day|post1": 0.5040967852616651,
+      "Christmas / Quaid Day|post2": 0.7796122449971782,
+      "Eid al-Adha|pre2": 0.4589949023255846,
+      "Eid al-Adha|pre1": 0.824865902280452,
+      "Eid al-Adha|d0": 1.0136260703546696,
+      "Eid al-Adha|post1": 1.2122996640729489,
+      "Eid al-Adha|post2": 2.8475804637257323,
+      "Eid al-Fitr|pre2": 0.9759650241143797,
+      "Eid al-Fitr|pre1": 0.5584467342879464,
+      "Eid al-Fitr|d0": 0.8467369733658128,
+      "Eid al-Fitr|post1": 0.7030342903889971,
+      "Eid al-Fitr|post2": 0.9413187812119949,
+      "Independence Day|pre2": 1.7268479722096124,
+      "Independence Day|pre1": 1.4074295806824124,
+      "Independence Day|d0": 1.0049392203775687,
+      "Independence Day|post1": 0.9708311666223207,
+      "Independence Day|post2": 0.873176480696788,
+      "Labour Day|pre2": 2.141865189565313,
+      "Labour Day|pre1": 4.102827082470953,
+      "Labour Day|d0": 0.9599178046619125,
+      "Labour Day|post1": 0.9504916287333119,
+      "Labour Day|post2": 0.7912667060917895,
+      "New Year|pre2": 0.1812447836618379,
+      "New Year|pre1": 0.28661587435175306,
+      "New Year|d0": 0.9704370130397505,
+      "New Year|post1": 0.96464218938228,
+      "New Year|post2": 1.087270070080342,
+      "Pakistan Day|pre2": 1.5526924127072568,
+      "Pakistan Day|pre1": 1.6704806670324157,
+      "Pakistan Day|d0": 1.3763581296352922,
+      "Pakistan Day|post1": 2.0791811267730536,
+      "Pakistan Day|post2": 1.110815799446604,
+      "Ramadan start|pre2": 3.097510825556587,
+      "Ramadan start|pre1": 3.3649366528577764,
+      "Ramadan start|d0": 0.5294163206587827,
+      "Ramadan start|post1": 0.4646135296760429,
+      "Ramadan start|post2": 1.0776014923840387
+    }
+  },
+  "uncertainty_selection_pooled": {
+    "pooled|7|0.8": {
+      "method": null,
+      "reason": "no candidate within tolerance"
+    },
+    "pooled|7|0.9": {
+      "method": null,
+      "reason": "no candidate within tolerance"
+    },
+    "pooled|28|0.8": {
+      "method": null,
+      "reason": "no candidate within tolerance"
+    },
+    "pooled|28|0.9": {
+      "method": null,
+      "reason": "no candidate within tolerance"
+    }
+  },
+  "note_cal_fit_overlap": "CAL (2017-01..06) lies inside the E1 FIT range; U0/U1 calibrate base-forecast residuals and do not use E1"
+}

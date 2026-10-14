@@ -1,0 +1,12 @@
+{
+  "amendment_id": "nexus-stage3-dev-protocol-v1-amendment-A1",
+  "base_protocol_sha256": "5b4b618c3fb3326531f64a12bd0ca5a996937fbafe89a4ad4f2932473ec4569c",
+  "reason": "The frozen E1 fit uses a ridge penalty normalised per unit of forecast (objective in e1_layer.py). On FIT data only, this shrinks rare one-day effects strongly: Christmas day-0 was estimated at a 0.86 daily multiplier, while FIT data show a store closure (0 units on 2012-12-25 across 2,359 series; 4 units on 2013-12-25 across 2,771). This diagnosis used FIT data only; SEL results of the original candidates were seen (all slightly worse than base) before this amendment, so SEL is a SECOND LOOK for these new candidates and their SEL results are less clean.",
+  "new_candidates": {
+    "E1c": "calendar closure rule, no learned parameters: closure days known from the calendar (US: 25 December, established from FIT data); adjusted = F * (h - closed days in the window) / h",
+    "E1w": "same E1 form, penalty per coefficient scaled by that coefficient's share of exposure-weighted forecast units (rare events are not over-shrunk); levels pooled and pooled+category; alpha in [0.1, 1, 10]; Christmas|d0 excluded from learned features",
+    "E1cw": "E1c for closure days, then E1w on the remaining events"
+  },
+  "selection": "unchanged rule: highest mean relative event-window WAPE improvement over both horizons on SEL; all original candidates stay in the comparison; gates of proposal section 8.5 reported descriptively",
+  "frozen_at": "2026-10-12T19:32:24+00:00"
+}

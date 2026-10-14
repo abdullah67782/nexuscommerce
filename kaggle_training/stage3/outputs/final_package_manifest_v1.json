@@ -1,0 +1,26 @@
+{
+  "package": "nexus-stage3-final-evaluation-v1",
+  "protocol_sha256": "8c385172f651bef23b40cbb75a8508af8d3ffbc62c54781914406c3472a445af",
+  "amendments": {
+    "F1": "9cbdec8fe37646c2967afc09ad5cb04a3eba5559f1cc4c73a962f997a6e64223",
+    "F2": "93cb6e474e29d8b03a03cdbbfbcf271cfffa407c71e9bb9dbbcdc8fa617036b5"
+  },
+  "calibration_freeze_sha256": "7ea548e2d32f9da22d4a9a58a5e708778dbdf39e1de0f1cc94fc150c47ab6af1",
+  "pakistan_source_sha256": "103727e1c7a1670003de5102f25c33734f5cb1a988526ec264c8aec79fb39fb9",
+  "files": {
+    "kaggle_training/stage3/outputs/final_protocol.json": "8c385172f651bef23b40cbb75a8508af8d3ffbc62c54781914406c3472a445af",
+    "kaggle_training/stage3/outputs/final_protocol.sha256": "092a89a3a4111e76c9fafe4d695b86b9bd19ceaf2758ec5fcbd7130447f6c6db",
+    "kaggle_training/stage3/outputs/final_amendment_F1.json": "9cbdec8fe37646c2967afc09ad5cb04a3eba5559f1cc4c73a962f997a6e64223",
+    "kaggle_training/stage3/outputs/final_amendment_F2.json": "93cb6e474e29d8b03a03cdbbfbcf271cfffa407c71e9bb9dbbcdc8fa617036b5",
+    "kaggle_training/stage3/final/preflight.py": "5327acd15967d8c8d135ebb51ad52dea099c28e747a74d91363276d26d8b4eeb",
+    "kaggle_training/stage3/final/final_execute.py": "f2d381d0321c0faa3ccfcd83e8855bf9833bb29e74f8a46e2011fa13164bf3aa",
+    "kaggle_training/stage3/outputs/final_prep/verification/laptop_run/calibration/calibration_freeze.json": "7ea548e2d32f9da22d4a9a58a5e708778dbdf39e1de0f1cc94fc150c47ab6af1",
+    "kaggle_training/stage3/outputs/final_prep/verification/laptop_run/calibration/calibration_pk.json": "9d9f014b923ccf8c3fee503f443c8fe868852782fa8305e09651ed3d165a0edc",
+    "kaggle_training/stage3/outputs/final_prep/verification/laptop_run/calibration/calibration_pk_rows.csv.gz": "cc6993a9dd5fc40fc4d994e8d3cdd4e6c52282798275b1d17322c413ab1770d5",
+    "kaggle_training/stage3/outputs/final_prep/verification/laptop_run/calibration/calibration_us.json": "fc73f5d2b592a282d774f0d3b6d5a22797d872c586a8ed0db955a6e9d4742d12",
+    "kaggle_training/stage3/outputs/final_prep/verification/laptop_run/calibration/calibration_us_rows.csv.gz": "66ec0e475b9737d147ccb4d69d1332d7e564b95b663bb441fb512b93fcbacb08"
+  },
+  "plus": "every file listed in final_protocol.json 'hashes' (42), verified separately",
+  "entry_point": "kaggle_training/stage3/final/final_execute.py",
+  "frozen_at": "2026-10-13T12:56:02+00:00"
+}

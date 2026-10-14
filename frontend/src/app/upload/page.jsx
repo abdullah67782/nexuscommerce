@@ -310,7 +310,7 @@ export default function UploadPage() {
     setAnomaliesLoading(false);
   }, []);
 
-  useEffect(() => { fetchPageData(); }, [fetchPageData]);
+  useEffect(() => { queueMicrotask(fetchPageData); }, [fetchPageData]);
 
   // ── Derived stats ──────────────────────────────────────────────────────────
   const totalRecords = freshness?.total_records ?? 0;

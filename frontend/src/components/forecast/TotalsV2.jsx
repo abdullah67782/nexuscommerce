@@ -45,7 +45,7 @@ export default function TotalsV2({ productId, productName }) {
       .catch(e => setState({ loading: false, data: null,
         error: e.response?.data?.message || e.response?.data?.error || 'The totals forecast is unavailable.' }));
   };
-  useEffect(load, [productId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { queueMicrotask(load); }, [productId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { loading, data, error } = state;
   const tier = data?.history?.tier ? TIER[data.history.tier] : null;

@@ -1,0 +1,10 @@
+{
+  "what": "development values (cloud development run) that the Kaggle package must reproduce",
+  "files": {
+    "FIT_A.csv.gz": "34989133382d94e8f0b31ed2b158d4788bccc2decc63311c646b87549189a65d",
+    "FIT_B.csv.gz": "579c0fb0fb61dd86a1635984c6303ec3b1afee1f831e77e28018a8b476d7b616",
+    "CAL.csv.gz": "2f6b20a514f64a8111ea7799fdb9e577a816efe4735df418e241e259ba6f1d0f",
+    "SEL.csv.gz": "0a26d0376682266695f5f1baaf1fdb46af8eb929978901489ef6b8c715612f6a",
+    "SEL_U2_uppers.csv.gz": "15b3ba3b0015cd586c7ff480c234055f7363bd61dfdc15999c1ef9065e6e402b"
+  }
+}

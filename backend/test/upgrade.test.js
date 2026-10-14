@@ -162,7 +162,7 @@ test('reversal of 002 works once the data allows it, and 002 + 003 can be re-app
   assert.equal((await one(`SELECT to_regclass('data_sources') AS t`)).t, null);
   assert.equal(await count('sales'), salesBefore, 'no sale lost by the reversal');
   await assert.rejects(assertSchemaCurrent(db), (err) => err.code === 'SCHEMA_NOT_CURRENT');
-  assert.deepEqual(await migrate(db), ['002_import_identity', '003_data_coverage', '004_inventory_ledger']);
+  assert.deepEqual(await migrate(db), ['002_import_identity', '003_data_coverage', '004_inventory_ledger', '005_suppliers_purchasing', '006_replenishment', '007_inventory_calendar', '008_forecast_upper_estimates']);
   assert.equal(await count('sales'), salesBefore);
   await assertSchemaCurrent(db);
 });

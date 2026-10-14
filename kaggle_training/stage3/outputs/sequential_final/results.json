@@ -1,0 +1,931 @@
+{
+ "label": "SEQUENTIAL FINAL EVALUATION (one time)",
+ "protocol_id": "nexus-stage3-seq-protocol-v1",
+ "protocol_sha256": "87578cccf92dfcf1b70ca0ddd6adf3cbc14c0a85457f88e0eb43dbb3963cc97b",
+ "replay": [
+  "2015-11-23",
+  "2016-05-22"
+ ],
+ "series": 1498,
+ "excluded": {
+  "history_under_28_days": 2,
+  "no_price": 0,
+  "gap": 0
+ },
+ "release": "nexus-v2-shared-20261008",
+ "parity_max_abs_units": 1.4210854715202004e-14,
+ "missing_forecasts": 0,
+ "path_sources": {
+  "regular|0.9": {
+   "own": 5263
+  },
+  "occasional|0.9": {
+   "own": 28052
+  },
+  "rare|0.8": {
+   "own": 16146
+  },
+  "rare|0.9": {
+   "own": 16146
+  },
+  "short_history|0.8": {
+   "own": 70,
+   "pooled": 11,
+   "none(point)": 18
+  },
+  "short_history|0.9": {
+   "own": 70,
+   "pooled": 11,
+   "none(point)": 18
+  }
+ },
+ "segments_at_start": {
+  "occasional": 822,
+  "rare": 490,
+  "regular": 162,
+  "dormant": 16,
+  "short_history": 8
+ },
+ "seconds": 60.5,
+ "engine_parity_final": {
+  "decisions": 3005,
+  "equal": 3005,
+  "mismatch_count": 0,
+  "exact": true
+ },
+ "baselines": {
+  "D0": {
+   "lost": 297391.0,
+   "demand": 1660830.0,
+   "fill_rate": 0.820938326017714,
+   "hold_unit_days": 11657143.0,
+   "lost_value": 1047406.6699999999,
+   "hold_value": 44227764.660000004,
+   "stockout_days": 92501.0,
+   "ordered": 1290459.0
+  },
+  "S2": {
+   "lost": 201753.0,
+   "demand": 1660830.0,
+   "fill_rate": 0.8785227867993715,
+   "hold_unit_days": 14457714.0,
+   "lost_value": 729538.72,
+   "hold_value": 53701811.62,
+   "stockout_days": 66937.0,
+   "ordered": 1404130.0
+  },
+  "S4": {
+   "lost": 143560.0,
+   "demand": 1660830.0,
+   "fill_rate": 0.913561291643335,
+   "hold_unit_days": 17419326.0,
+   "lost_value": 530869.88,
+   "hold_value": 64042812.79000001,
+   "stockout_days": 49455.0,
+   "ordered": 1480711.0
+  },
+  "S7": {
+   "lost": 94078.0,
+   "demand": 1660830.0,
+   "fill_rate": 0.9433548286097915,
+   "hold_unit_days": 21955894.0,
+   "lost_value": 365235.8,
+   "hold_value": 79556303.52,
+   "stockout_days": 34430.0,
+   "ordered": 1557653.0
+  },
+  "S10": {
+   "lost": 69007.0,
+   "demand": 1660830.0,
+   "fill_rate": 0.9584502929258263,
+   "hold_unit_days": 26558527.0,
+   "lost_value": 281449.58999999997,
+   "hold_value": 95265596.42,
+   "stockout_days": 26361.0,
+   "ordered": 1609923.0
+  },
+  "S14": {
+   "lost": 50648.0,
+   "demand": 1660830.0,
+   "fill_rate": 0.9695044044242939,
+   "hold_unit_days": 32878979.0,
+   "lost_value": 220081.92,
+   "hold_value": 116998067.28,
+   "stockout_days": 20062.0,
+   "ordered": 1665148.0
+  }
+ },
+ "cells": {
+  "regular|0.9": {
+   "cell": "regular|0.9",
+   "series": 162,
+   "replays": 810,
+   "totals": {
+    "demand_units": 765890.0,
+    "lost_D0": 122923.0,
+    "lost_candidate": 45809.0,
+    "fill_rate_D0": 0.839503061797386,
+    "fill_rate_candidate": 0.9401885388241131,
+    "stockout_days_D0": 18812.0,
+    "stockout_days_candidate": 7571.0,
+    "hold_unit_days_D0": 4158222.0,
+    "hold_unit_days_candidate": 7723768.0,
+    "ordered_D0": 605506.0,
+    "ordered_candidate": 702289.0,
+    "lost_value_D0": 330333.05,
+    "lost_value_candidate": 130076.03,
+    "hold_value_D0": 11407381.14,
+    "hold_value_candidate": 19852440.72,
+    "end_stock_D0": 17145.0,
+    "end_stock_candidate": 35072.0
+   },
+   "extra_unit_days_per_avoided_unit": 46.23733692974039,
+   "reduction_units": 77114.0,
+   "reduction_ci_product": [
+    46911.65,
+    114866.3
+   ],
+   "reduction_ci_date_block": [
+    59819.0,
+    91092.0
+   ],
+   "net_benefit_primary": 54292.81861643835,
+   "net_ci_product": [
+    28134.94120342466,
+    93809.25458613013
+   ],
+   "net_ci_date_block": [
+    42456.40824657532,
+    65083.63637654103
+   ],
+   "sensitivity": {
+    "m15_h15": 26567.980569863015,
+    "m15_h25": 24254.26561643836,
+    "m15_h40": 20783.693186301367,
+    "m30_h15": 56606.53356986301,
+    "m30_h25": 54292.81861643835,
+    "m30_h40": 50822.24618630137,
+    "m45_h15": 86645.08656986302,
+    "m45_h25": 84331.37161643835,
+    "m45_h40": 80860.79918630136
+   },
+   "seller_curve": [
+    {
+     "policy": "D0",
+     "hold_value": 11407381.14,
+     "lost_value": 330333.05
+    },
+    {
+     "policy": "S2",
+     "hold_value": 15010387.38,
+     "lost_value": 184470.61
+    },
+    {
+     "policy": "S4",
+     "hold_value": 18742132.68,
+     "lost_value": 110620.5
+    },
+    {
+     "policy": "S7",
+     "hold_value": 24569239.73,
+     "lost_value": 55107.270000000004
+    },
+    {
+     "policy": "S10",
+     "hold_value": 30636618.79,
+     "lost_value": 31292.29
+    },
+    {
+     "policy": "S14",
+     "hold_value": 38801102.93,
+     "lost_value": 16832.21
+    }
+   ],
+   "seller_lost_value_at_candidate_holding": 100042.9037645972,
+   "seller_comparison": "interpolated",
+   "kappa_robustness": {
+    "0.5": {
+     "reduction_units": 75304.0,
+     "net_benefit_primary": 53325.43170547945
+    },
+    "1.5": {
+     "reduction_units": 69825.0,
+     "net_benefit_primary": 50032.721452054786
+    }
+   },
+   "per_pair": {
+    "L3_R7": {
+     "lost_D0": 23198.0,
+     "lost_candidate": 9057.0,
+     "net_benefit_primary": 10594.44715068493
+    },
+    "L7_R7": {
+     "lost_D0": 26865.0,
+     "lost_candidate": 10229.0,
+     "net_benefit_primary": 12162.434246575342
+    },
+    "L3_R14": {
+     "lost_D0": 21008.0,
+     "lost_candidate": 7263.0,
+     "net_benefit_primary": 9274.043116438355
+    },
+    "L7_R14": {
+     "lost_D0": 23243.0,
+     "lost_candidate": 7947.0,
+     "net_benefit_primary": 10135.70380821918
+    },
+    "L14_R7": {
+     "lost_D0": 28609.0,
+     "lost_candidate": 11313.0,
+     "net_benefit_primary": 12126.190294520547
+    }
+   },
+   "gates": {
+    "G1_sample": true,
+    "G2_shortage_reduction": true,
+    "G3_net_benefit": true,
+    "G4_better_than_seller_rule": false,
+    "G5_kappa_robust": true,
+    "G6_engine_parity": true
+   },
+   "passed": false,
+   "promotion_authorised": false
+  },
+  "occasional|0.9": {
+   "cell": "occasional|0.9",
+   "series": 822,
+   "replays": 4110,
+   "totals": {
+    "demand_units": 783880.0,
+    "lost_D0": 146845.0,
+    "lost_candidate": 53234.0,
+    "fill_rate_D0": 0.8126690309741287,
+    "fill_rate_candidate": 0.9320890952696841,
+    "stockout_days_D0": 56697.0,
+    "stockout_days_candidate": 18142.0,
+    "hold_unit_days_D0": 6108185.0,
+    "hold_unit_days_candidate": 13050305.0,
+    "ordered_D0": 597316.0,
+    "ordered_candidate": 727511.0,
+    "lost_value_D0": 559354.1200000001,
+    "lost_value_candidate": 198195.59,
+    "hold_value_D0": 24810371.009999998,
+    "hold_value_candidate": 52386252.92999999,
+    "end_stock_D0": 24420.0,
+    "end_stock_candidate": 58073.0
+   },
+   "extra_unit_days_per_avoided_unit": 74.15923342342246,
+   "reduction_units": 93611.0,
+   "reduction_ci_product": [
+    74583.125,
+    114253.775
+   ],
+   "reduction_ci_date_block": [
+    83145.475,
+    102319.5
+   ],
+   "net_benefit_primary": 89459.96864383561,
+   "net_ci_product": [
+    69905.63499554795,
+    112006.23517996575
+   ],
+   "net_ci_date_block": [
+    74714.02768784255,
+    99766.13266232885
+   ],
+   "sensitivity": {
+    "m15_h15": 42841.22528630137,
+    "m15_h25": 35286.18914383562,
+    "m15_h40": 23953.634930136985,
+    "m30_h15": 97015.00478630138,
+    "m30_h25": 89459.96864383561,
+    "m30_h40": 78127.41443013698,
+    "m45_h15": 151188.78428630138,
+    "m45_h25": 143633.74814383563,
+    "m45_h40": 132301.19393013697
+   },
+   "seller_curve": [
+    {
+     "policy": "D0",
+     "hold_value": 24810371.009999998,
+     "lost_value": 559354.1200000001
+    },
+    {
+     "policy": "S2",
+     "hold_value": 30317782.029999997,
+     "lost_value": 394529.28
+    },
+    {
+     "policy": "S4",
+     "hold_value": 35968015.05,
+     "lost_value": 284479.27
+    },
+    {
+     "policy": "S7",
+     "hold_value": 44617425.3,
+     "lost_value": 185661.16999999998
+    },
+    {
+     "policy": "S10",
+     "hold_value": 53302847.25,
+     "lost_value": 134017.77000000002
+    },
+    {
+     "policy": "S14",
+     "hold_value": 65341625.96,
+     "lost_value": 94983.78
+    }
+   ],
+   "seller_lost_value_at_candidate_holding": 139467.82727735408,
+   "seller_comparison": "interpolated",
+   "kappa_robustness": {
+    "0.5": {
+     "reduction_units": 90653.0,
+     "net_benefit_primary": 86898.6305890411
+    },
+    "1.5": {
+     "reduction_units": 84373.0,
+     "net_benefit_primary": 80514.84966438357
+    }
+   },
+   "per_pair": {
+    "L3_R7": {
+     "lost_D0": 28910.0,
+     "lost_candidate": 11204.0,
+     "net_benefit_primary": 18250.010479452052
+    },
+    "L7_R7": {
+     "lost_D0": 32197.0,
+     "lost_candidate": 11997.0,
+     "net_benefit_primary": 20336.427068493154
+    },
+    "L3_R14": {
+     "lost_D0": 24917.0,
+     "lost_candidate": 8662.0,
+     "net_benefit_primary": 14488.72205479452
+    },
+    "L7_R14": {
+     "lost_D0": 27404.0,
+     "lost_candidate": 9050.0,
+     "net_benefit_primary": 16057.165315068494
+    },
+    "L14_R7": {
+     "lost_D0": 33417.0,
+     "lost_candidate": 12321.0,
+     "net_benefit_primary": 20327.643726027396
+    }
+   },
+   "gates": {
+    "G1_sample": true,
+    "G2_shortage_reduction": true,
+    "G3_net_benefit": true,
+    "G4_better_than_seller_rule": false,
+    "G5_kappa_robust": true,
+    "G6_engine_parity": true
+   },
+   "passed": false,
+   "promotion_authorised": false
+  },
+  "rare|0.8": {
+   "cell": "rare|0.8",
+   "series": 490,
+   "replays": 2450,
+   "totals": {
+    "demand_units": 103040.0,
+    "lost_D0": 25686.0,
+    "lost_candidate": 16262.0,
+    "fill_rate_D0": 0.7507181677018634,
+    "fill_rate_candidate": 0.8421777950310558,
+    "stockout_days_D0": 15982.0,
+    "stockout_days_candidate": 9520.0,
+    "hold_unit_days_D0": 1288511.0,
+    "hold_unit_days_candidate": 2054106.0,
+    "ordered_D0": 81274.0,
+    "ordered_candidate": 94797.0,
+    "lost_value_D0": 150677.83,
+    "lost_value_candidate": 93288.56999999999,
+    "hold_value_D0": 7676672.84,
+    "hold_value_candidate": 12593205.899999999,
+    "end_stock_D0": 7919.0,
+    "end_stock_candidate": 11862.0
+   },
+   "extra_unit_days_per_avoided_unit": 81.23885823429542,
+   "reduction_units": 9424.0,
+   "reduction_ci_product": [
+    6504.925,
+    13533.525
+   ],
+   "reduction_ci_date_block": [
+    7095.625,
+    11847.324999999999
+   ],
+   "net_benefit_primary": 13849.289602739727,
+   "net_ci_product": [
+    9080.301166095891,
+    20989.96416866438
+   ],
+   "net_ci_date_block": [
+    9780.800079452056,
+    18036.739982363026
+   ],
+   "sensitivity": {
+    "m15_h15": 6587.895961643836,
+    "m15_h25": 5240.900602739726,
+    "m15_h40": 3220.4075643835627,
+    "m30_h15": 15196.284961643836,
+    "m30_h25": 13849.289602739727,
+    "m30_h40": 11828.796564383561,
+    "m45_h15": 23804.673961643835,
+    "m45_h25": 22457.678602739725,
+    "m45_h40": 20437.185564383562
+   },
+   "seller_curve": [
+    {
+     "policy": "D0",
+     "hold_value": 7676672.84,
+     "lost_value": 150677.83
+    },
+    {
+     "policy": "S2",
+     "hold_value": 8003240.6,
+     "lost_value": 144419.09
+    },
+    {
+     "policy": "S4",
+     "hold_value": 8934796.63,
+     "lost_value": 130047.22
+    },
+    {
+     "policy": "S7",
+     "hold_value": 9916366.98,
+     "lost_value": 119298.47
+    },
+    {
+     "policy": "S10",
+     "hold_value": 10824147.330000002,
+     "lost_value": 111237.0
+    },
+    {
+     "policy": "S14",
+     "hold_value": 12286691.98,
+     "lost_value": 103545.82999999999
+    }
+   ],
+   "seller_lost_value_at_candidate_holding": 103545.82999999999,
+   "seller_comparison": "beyond_seller_range",
+   "kappa_robustness": {
+    "0.5": {
+     "reduction_units": 9081.0,
+     "net_benefit_primary": 13437.125410958904
+    },
+    "1.5": {
+     "reduction_units": 8898.0,
+     "net_benefit_primary": 13154.26148630137
+    }
+   },
+   "per_pair": {
+    "L3_R7": {
+     "lost_D0": 4773.0,
+     "lost_candidate": 2962.0,
+     "net_benefit_primary": 2881.498835616438
+    },
+    "L7_R7": {
+     "lost_D0": 5332.0,
+     "lost_candidate": 3434.0,
+     "net_benefit_primary": 2984.6914109589043
+    },
+    "L3_R14": {
+     "lost_D0": 4523.0,
+     "lost_candidate": 2678.0,
+     "net_benefit_primary": 2406.636732876712
+    },
+    "L7_R14": {
+     "lost_D0": 5147.0,
+     "lost_candidate": 3092.0,
+     "net_benefit_primary": 2748.073212328768
+    },
+    "L14_R7": {
+     "lost_D0": 5911.0,
+     "lost_candidate": 4096.0,
+     "net_benefit_primary": 2828.3894109589046
+    }
+   },
+   "gates": {
+    "G1_sample": true,
+    "G2_shortage_reduction": true,
+    "G3_net_benefit": true,
+    "G4_better_than_seller_rule": false,
+    "G5_kappa_robust": true,
+    "G6_engine_parity": true
+   },
+   "passed": false,
+   "promotion_authorised": false
+  },
+  "rare|0.9": {
+   "cell": "rare|0.9",
+   "series": 490,
+   "replays": 2450,
+   "totals": {
+    "demand_units": 103040.0,
+    "lost_D0": 25686.0,
+    "lost_candidate": 12418.0,
+    "fill_rate_D0": 0.7507181677018634,
+    "fill_rate_candidate": 0.8794836956521739,
+    "stockout_days_D0": 15982.0,
+    "stockout_days_candidate": 6815.0,
+    "hold_unit_days_D0": 1288511.0,
+    "hold_unit_days_candidate": 2960156.0,
+    "ordered_D0": 81274.0,
+    "ordered_candidate": 104556.0,
+    "lost_value_D0": 150677.83,
+    "lost_value_candidate": 72398.13,
+    "hold_value_D0": 7676672.84,
+    "hold_value_candidate": 18149995.43,
+    "end_stock_D0": 7919.0,
+    "end_stock_candidate": 17747.0
+   },
+   "extra_unit_days_per_avoided_unit": 125.9907295749171,
+   "reduction_units": 13268.0,
+   "reduction_ci_product": [
+    9732.625,
+    18082.55
+   ],
+   "reduction_ci_date_block": [
+    10425.675,
+    16219.374999999998
+   ],
+   "net_benefit_primary": 16310.40137671233,
+   "net_ci_product": [
+    10940.531570547946,
+    24349.770840753423
+   ],
+   "net_ci_date_block": [
+    11059.846505650677,
+    21722.8319520548
+   ],
+   "sensitivity": {
+    "m15_h15": 7437.849826027398,
+    "m15_h25": 4568.446376712329,
+    "m15_h40": 264.341202739726,
+    "m30_h15": 19179.8048260274,
+    "m30_h25": 16310.40137671233,
+    "m30_h40": 12006.296202739726,
+    "m45_h15": 30921.7598260274,
+    "m45_h25": 28052.35637671233,
+    "m45_h40": 23748.251202739728
+   },
+   "seller_curve": [
+    {
+     "policy": "D0",
+     "hold_value": 7676672.84,
+     "lost_value": 150677.83
+    },
+    {
+     "policy": "S2",
+     "hold_value": 8003240.6,
+     "lost_value": 144419.09
+    },
+    {
+     "policy": "S4",
+     "hold_value": 8934796.63,
+     "lost_value": 130047.22
+    },
+    {
+     "policy": "S7",
+     "hold_value": 9916366.98,
+     "lost_value": 119298.47
+    },
+    {
+     "policy": "S10",
+     "hold_value": 10824147.330000002,
+     "lost_value": 111237.0
+    },
+    {
+     "policy": "S14",
+     "hold_value": 12286691.98,
+     "lost_value": 103545.82999999999
+    }
+   ],
+   "seller_lost_value_at_candidate_holding": 103545.82999999999,
+   "seller_comparison": "beyond_seller_range",
+   "kappa_robustness": {
+    "0.5": {
+     "reduction_units": 12982.0,
+     "net_benefit_primary": 16038.707520547945
+    },
+    "1.5": {
+     "reduction_units": 12705.0,
+     "net_benefit_primary": 15521.45755479452
+    }
+   },
+   "per_pair": {
+    "L3_R7": {
+     "lost_D0": 4773.0,
+     "lost_candidate": 2125.0,
+     "net_benefit_primary": 3630.8837602739723
+    },
+    "L7_R7": {
+     "lost_D0": 5332.0,
+     "lost_candidate": 2560.0,
+     "net_benefit_primary": 3705.628315068493
+    },
+    "L3_R14": {
+     "lost_D0": 4523.0,
+     "lost_candidate": 2087.0,
+     "net_benefit_primary": 2692.726191780822
+    },
+    "L7_R14": {
+     "lost_D0": 5147.0,
+     "lost_candidate": 2483.0,
+     "net_benefit_primary": 2847.3613287671233
+    },
+    "L14_R7": {
+     "lost_D0": 5911.0,
+     "lost_candidate": 3163.0,
+     "net_benefit_primary": 3433.8017808219183
+    }
+   },
+   "gates": {
+    "G1_sample": true,
+    "G2_shortage_reduction": true,
+    "G3_net_benefit": true,
+    "G4_better_than_seller_rule": false,
+    "G5_kappa_robust": true,
+    "G6_engine_parity": true
+   },
+   "passed": false,
+   "promotion_authorised": false
+  },
+  "short_history|0.8": {
+   "cell": "short_history|0.8",
+   "series": 8,
+   "replays": 40,
+   "totals": {
+    "demand_units": 3760.0,
+    "lost_D0": 648.0,
+    "lost_candidate": 506.0,
+    "fill_rate_D0": 0.8276595744680851,
+    "fill_rate_candidate": 0.8654255319148936,
+    "stockout_days_D0": 421.0,
+    "stockout_days_candidate": 335.0,
+    "hold_unit_days_D0": 56751.0,
+    "hold_unit_days_candidate": 65077.0,
+    "ordered_D0": 2879.0,
+    "ordered_candidate": 3057.0,
+    "lost_value_D0": 2716.4700000000003,
+    "lost_value_candidate": 2110.73,
+    "hold_value_D0": 197372.55999999994,
+    "hold_value_candidate": 226294.19000000003,
+    "end_stock_D0": 152.0,
+    "end_stock_candidate": 193.0
+   },
+   "extra_unit_days_per_avoided_unit": 58.63380281690141,
+   "reduction_units": 142.0,
+   "reduction_ci_product": [
+    38.95,
+    278.025
+   ],
+   "reduction_ci_date_block": [
+    56.0,
+    264.0
+   ],
+   "net_benefit_primary": 161.91266438356155,
+   "net_ci_product": [
+    33.94043150684932,
+    315.4047239726027
+   ],
+   "net_ci_date_block": [
+    60.05518493150686,
+    317.3974726027398
+   ],
+   "sensitivity": {
+    "m15_h15": 78.97539863013694,
+    "m15_h25": 71.05166438356157,
+    "m15_h40": 59.166063013698505,
+    "m30_h15": 169.83639863013693,
+    "m30_h25": 161.91266438356155,
+    "m30_h40": 150.0270630136985,
+    "m45_h15": 260.69739863013695,
+    "m45_h25": 252.7736643835616,
+    "m45_h40": 240.8880630136985
+   },
+   "seller_curve": [
+    {
+     "policy": "D0",
+     "hold_value": 197372.55999999994,
+     "lost_value": 2716.4700000000003
+    },
+    {
+     "policy": "S2",
+     "hold_value": 234434.5,
+     "lost_value": 1794.5400000000002
+    },
+    {
+     "policy": "S4",
+     "hold_value": 261901.31999999992,
+     "lost_value": 1397.69
+    },
+    {
+     "policy": "S7",
+     "hold_value": 317304.4,
+     "lost_value": 843.6899999999999
+    },
+    {
+     "policy": "S10",
+     "hold_value": 366015.94000000006,
+     "lost_value": 577.33
+    },
+    {
+     "policy": "S14",
+     "hold_value": 432679.30000000016,
+     "lost_value": 394.9
+    }
+   ],
+   "seller_lost_value_at_candidate_holding": 1997.033339482498,
+   "seller_comparison": "interpolated",
+   "kappa_robustness": {
+    "0.5": {
+     "reduction_units": 122.0,
+     "net_benefit_primary": 136.0391369863013
+    },
+    "1.5": {
+     "reduction_units": 70.0,
+     "net_benefit_primary": 80.44498630136975
+    }
+   },
+   "per_pair": {
+    "L3_R7": {
+     "lost_D0": 141.0,
+     "lost_candidate": 111.0,
+     "net_benefit_primary": 35.08454794520546
+    },
+    "L7_R7": {
+     "lost_D0": 153.0,
+     "lost_candidate": 120.0,
+     "net_benefit_primary": 39.58808904109588
+    },
+    "L3_R14": {
+     "lost_D0": 94.0,
+     "lost_candidate": 77.0,
+     "net_benefit_primary": 19.248863013698642
+    },
+    "L7_R14": {
+     "lost_D0": 106.0,
+     "lost_candidate": 79.0,
+     "net_benefit_primary": 26.76813698630133
+    },
+    "L14_R7": {
+     "lost_D0": 154.0,
+     "lost_candidate": 119.0,
+     "net_benefit_primary": 41.22302739726025
+    }
+   },
+   "gates": {
+    "G1_sample": false,
+    "G2_shortage_reduction": true,
+    "G3_net_benefit": true,
+    "G4_better_than_seller_rule": false,
+    "G5_kappa_robust": true,
+    "G6_engine_parity": true
+   },
+   "passed": false,
+   "promotion_authorised": false
+  },
+  "short_history|0.9": {
+   "cell": "short_history|0.9",
+   "series": 8,
+   "replays": 40,
+   "totals": {
+    "demand_units": 3760.0,
+    "lost_D0": 648.0,
+    "lost_candidate": 447.0,
+    "fill_rate_D0": 0.8276595744680851,
+    "fill_rate_candidate": 0.8811170212765957,
+    "stockout_days_D0": 421.0,
+    "stockout_days_candidate": 294.0,
+    "hold_unit_days_D0": 56751.0,
+    "hold_unit_days_candidate": 70943.0,
+    "ordered_D0": 2879.0,
+    "ordered_candidate": 3141.0,
+    "lost_value_D0": 2716.4700000000003,
+    "lost_value_candidate": 1867.26,
+    "hold_value_D0": 197372.55999999994,
+    "hold_value_candidate": 246597.1799999999,
+    "end_stock_D0": 152.0,
+    "end_stock_candidate": 218.0
+   },
+   "extra_unit_days_per_avoided_unit": 70.60696517412936,
+   "reduction_units": 201.0,
+   "reduction_ci_product": [
+    61.0,
+    373.04999999999995
+   ],
+   "reduction_ci_date_block": [
+    74.0,
+    362.0
+   ],
+   "net_benefit_primary": 221.04750684931508,
+   "net_ci_product": [
+    54.19164383561645,
+    422.4109726027397
+   ],
+   "net_ci_date_block": [
+    77.81558219178083,
+    430.64715017123285
+   ],
+   "sensitivity": {
+    "m15_h15": 107.15220410958905,
+    "m15_h25": 93.66600684931508,
+    "m15_h40": 73.43671095890411,
+    "m30_h15": 234.53370410958905,
+    "m30_h25": 221.04750684931508,
+    "m30_h40": 200.81821095890413,
+    "m45_h15": 361.91520410958907,
+    "m45_h25": 348.42900684931516,
+    "m45_h40": 328.1997109589041
+   },
+   "seller_curve": [
+    {
+     "policy": "D0",
+     "hold_value": 197372.55999999994,
+     "lost_value": 2716.4700000000003
+    },
+    {
+     "policy": "S2",
+     "hold_value": 234434.5,
+     "lost_value": 1794.5400000000002
+    },
+    {
+     "policy": "S4",
+     "hold_value": 261901.31999999992,
+     "lost_value": 1397.69
+    },
+    {
+     "policy": "S7",
+     "hold_value": 317304.4,
+     "lost_value": 843.6899999999999
+    },
+    {
+     "policy": "S10",
+     "hold_value": 366015.94000000006,
+     "lost_value": 577.33
+    },
+    {
+     "policy": "S14",
+     "hold_value": 432679.30000000016,
+     "lost_value": 394.9
+    }
+   ],
+   "seller_lost_value_at_candidate_holding": 1618.8094437142715,
+   "seller_comparison": "interpolated",
+   "kappa_robustness": {
+    "0.5": {
+     "reduction_units": 167.0,
+     "net_benefit_primary": 185.87358219178083
+    },
+    "1.5": {
+     "reduction_units": 111.0,
+     "net_benefit_primary": 118.08358904109588
+    }
+   },
+   "per_pair": {
+    "L3_R7": {
+     "lost_D0": 141.0,
+     "lost_candidate": 98.0,
+     "net_benefit_primary": 51.98728082191779
+    },
+    "L7_R7": {
+     "lost_D0": 153.0,
+     "lost_candidate": 104.0,
+     "net_benefit_primary": 57.54250000000002
+    },
+    "L3_R14": {
+     "lost_D0": 94.0,
+     "lost_candidate": 64.0,
+     "net_benefit_primary": 32.283157534246584
+    },
+    "L7_R14": {
+     "lost_D0": 106.0,
+     "lost_candidate": 71.0,
+     "net_benefit_primary": 32.98825342465754
+    },
+    "L14_R7": {
+     "lost_D0": 154.0,
+     "lost_candidate": 110.0,
+     "net_benefit_primary": 46.24631506849315
+    }
+   },
+   "gates": {
+    "G1_sample": false,
+    "G2_shortage_reduction": true,
+    "G3_net_benefit": true,
+    "G4_better_than_seller_rule": false,
+    "G5_kappa_robust": true,
+    "G6_engine_parity": true
+   },
+   "passed": false,
+   "promotion_authorised": false
+  }
+ },
+ "promotion_authorised": false
+}

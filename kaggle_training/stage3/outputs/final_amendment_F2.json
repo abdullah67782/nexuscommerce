@@ -1,0 +1,40 @@
+{
+  "amendment_id": "nexus-stage3-final-protocol-v1-amendment-F2",
+  "base_protocol_sha256": "8c385172f651bef23b40cbb75a8508af8d3ffbc62c54781914406c3472a445af",
+  "amendment_F1_sha256": "9cbdec8fe37646c2967afc09ad5cb04a3eba5559f1cc4c73a962f997a6e64223",
+  "approved_by": "architect (Codex), after the cross-build U2 reproducibility finding",
+  "rule": "Before any reserved outcome is accessed and before the one-time lock is created, the final machine runs the preflight (final/preflight.py). It verifies artifact hashes, reproduces the development prediction hashes, and recomputes the calibration values for comparison within the tolerances below. On any failure the run stops. Nothing is retrained, recalibrated in place or substituted; recomputed values are compared and discarded.",
+  "environment": {
+    "python_minor": "3.12",
+    "numpy": "1.26.4",
+    "pandas": "2.2.2",
+    "scipy": "1.17.1",
+    "xgboost": "3.4.1"
+  },
+  "tolerances": {
+    "forecast_units_abs": 1e-06,
+    "parity_us_units": 0.001,
+    "parity_pk_units": 0.01,
+    "quantile_abs": 1e-09,
+    "beta_abs": 1e-08,
+    "counts_and_actuals": "exact",
+    "selected_u2_predictions": "exact sha256 of the float32 prediction bytes"
+  },
+  "observed_on_calibration_machine": {
+    "forecasts": "identical (max diff 0)",
+    "quantiles": "identical",
+    "pk_e1_beta_vs_development_machine": 5.551115123125783e-17,
+    "selected_u2_prediction_hashes": "identical"
+  },
+  "development_prediction_sha256": {
+    "selected_u2_sel": {
+      "7|0.8": "705b57d7a3b53efa4b164940dced42f0d517ffc4de09fa7756e0d220e0582583",
+      "7|0.9": "d847edf0044923cb6538ee9c9d0a72cad5febda0f9d06b6eed43b188088d73e1",
+      "28|0.8": "981e6aaabea6b9b307fc4988c5889138f33f8cac73b59335c1b3539077ffed75",
+      "28|0.9": "cb1bf46c621a503ad57f45310b8a2fde3ee3af57c39d24fb02ccedd2cbae19a8"
+    }
+  },
+  "calibration_freeze_sha256": "7ea548e2d32f9da22d4a9a58a5e708778dbdf39e1de0f1cc94fc150c47ab6af1",
+  "calibration_dir": "kaggle_training/stage3/outputs/final_prep/verification/laptop_run/calibration",
+  "frozen_at": "2026-10-13T12:56:02+00:00"
+}
