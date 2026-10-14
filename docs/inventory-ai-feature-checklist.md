@@ -1,5 +1,7 @@
 # Inventory AI — feature checklist against the agreed architecture
 
+**Two scopes:** the **staged operational release** (Stages 1a–3 as approved) is complete. The **full original architecture** is **not** complete: six items in §9–§10 are unbuilt and explicitly deferred by the owner.
+
 Reconciliation of `docs/inventory-ai-architecture-proposal.md` (§4–§11) and the approved stage plans (Stage 1 plan, Stage 2 design, Stage 3 proposal and decisions) with what is built. Updated 2026-10-14.
 
 **Status legend:**
@@ -11,7 +13,7 @@ Reconciliation of `docs/inventory-ai-architecture-proposal.md` (§4–§11) and 
 | **Reference (benchmark)** | Shown with its evidence label; not calibrated to the store |
 | **Research only** | Evaluated; not offered as a feature |
 | **Pending** | Waiting for clearance or evidence (listed in §11) |
-| **Not approved** | In the architecture but never part of an approved stage. Recorded, not silently dropped; needs an owner decision. |
+| **Unbuilt — deferred by the owner** | In the original architecture but not built in this module. On 2026-10-14 the owner explicitly deferred it to a later stage. The full architecture is therefore **not** complete. |
 
 ## 1. Stock foundation (architecture §4; Stage 1a)
 
@@ -47,7 +49,7 @@ Reconciliation of `docs/inventory-ai-architecture-proposal.md` (§4–§11) and 
 | Confirmed-history-only input; unknown days never zero | Enabled | `lib/coverage.js` |
 | Forecast lag handling and date coverage | Enabled | Stage 2 amendment 2 |
 | T28 < T7 detection (no quantity) | Enabled | Stage 2 amendment 3 |
-| Stock-out flags with the forecast (recorded and suspected; never imputed) | Enabled; recorded periods need ledger data | `lib/stockoutFlags.js`; `stockout-events.test.js` |
+| Stock-out flags with the forecast ("out of stock by your records" only when every day is confirmed, no stock was added and a receipt follows; otherwise "possible"; wording qualified; never imputed) | Enabled; recorded periods need ledger data | `lib/stockoutFlags.js`; `stockout-events.test.js` |
 | Events in the forecast period listed ("effect unknown" / seller labels); forecast unchanged | Enabled | `routes/forecast.js`; test |
 
 ## 4. Events and calendar (Stage 3a)
@@ -77,7 +79,7 @@ Reconciliation of `docs/inventory-ai-architecture-proposal.md` (§4–§11) and 
 | Queue across all products; product outlook; approximate cover; before-arrival shortage | Enabled | Replenishment tab |
 | Coherent snapshot + fingerprint; stale refusal; one draft per recommendation (concurrency) | Enabled | Stage 2 tests; journey test |
 | Seller-set review period and safety stock | Enabled | Settings |
-| AI purchasing protection (suggested safety stock) | Research only: **no cell passed** the one-time final evaluation (G4: the seller's own safety stock gives the same protection with less stock). Not integrated. | `docs/inventory-stage3-sequential-results.md` |
+| AI purchasing protection (suggested safety stock) | Research only: **no cell passed** the one-time final evaluation (G4: no candidate demonstrated superiority over the seller-set safety stock under the frozen comparison; the short-history cells also failed G1). Not integrated. | `docs/inventory-stage3-sequential-results.md` |
 
 ## 7. Scenarios
 
@@ -93,7 +95,7 @@ Reconciliation of `docs/inventory-ai-architecture-proposal.md` (§4–§11) and 
 | Feature | Status | Where / evidence |
 |---|---|---|
 | Records: ordered_at, promise (at order time and revisions), receipts, completion, cancellations | Enabled | Migration 005 |
-| Delivery performance per supplier: delivered day (net of corrections), lead time to first and full receipt, on-time vs promise, late open orders censored, units, returns | Enabled; meaningful once orders exist | `lib/supplierPerformance.js`; Suppliers → supplier |
+| Delivery performance per supplier: delivered day (full ordered quantity, net of corrections; an order cancelled after a partial receipt is kept apart and never counts as delivered or on time), lead time to first and full receipt, on-time vs promise, late open orders censored, units, returns | Enabled; meaningful once orders exist | `lib/supplierPerformance.js`; Suppliers → supplier |
 | Timestamp quality (back-dated orders, late-recorded receipts, impossible dates excluded) | Enabled | Same; tests |
 | Declared lead times and delay scenarios | Enabled | Same |
 | Learned delivery estimate | **Needs seller data.** Readiness state; enabled only with ≥ 8 valid deliveries **and** a forward-chaining check beating the declared lead time. Display-only; replenishment keeps the declared lead time. | Tests (both outcomes) |
@@ -104,17 +106,17 @@ Reconciliation of `docs/inventory-ai-architecture-proposal.md` (§4–§11) and 
 |---|---|---|
 | Historical policy replay (simulator) with the real engine (exact parity) | Built (research tooling) | `kaggle_training/stage3/sequential` |
 | Comparison of seller safety stock vs AI protection, shortage vs holding cost | Done (final, one time, 1,498 series) | `docs/inventory-stage3-sequential-results.md` |
-| CP-SAT budget / pack / MOQ optimiser, solver status | **Not approved.** Pack and MOQ are enforced deterministically, but there is no budget optimiser. | Owner decision requested |
+| CP-SAT budget / pack / MOQ optimiser, solver status | **Unbuilt — deferred by the owner.** Pack and MOQ are enforced deterministically; there is no budget optimiser. | Owner decision 2026-10-14 |
 
 ## 10. Other architecture items
 
 | Feature | Status |
 |---|---|
-| Inventory anomaly detection (§6D) | **Not approved.** Proposed in this module: deterministic accounting checks only. Awaiting decision. |
-| Excess-stock / slow-mover advice (§6E) | **Not approved.** Proposed in this module: deterministic version. Awaiting decision. |
-| Grounded assistant (§9) | Not approved (later stage) |
-| Outcomes view (§10) | Not approved (later stage). The recommendation log keeps the inputs and outputs needed later. |
-| Recommendation decisions (accept / reject / snooze, §10) | Partly: "Create draft" from a recommendation is recorded on the order. Reject / snooze: not approved. |
+| Inventory anomaly detection (§6D) | **Unbuilt — deferred by the owner** (2026-10-14) |
+| Excess-stock / slow-mover advice (§6E) | **Unbuilt — deferred by the owner** (2026-10-14) |
+| Grounded assistant (§9) | **Unbuilt — deferred by the owner** (2026-10-14) |
+| Outcomes tracking view (§10) | **Unbuilt — deferred by the owner** (2026-10-14). The recommendation log keeps the inputs and outputs needed later. |
+| Recommendation decisions (accept / reject / snooze, §10) | Partly: "Create draft" from a recommendation is recorded on the order. Reject / snooze: **unbuilt — deferred by the owner** (2026-10-14). |
 | Background jobs / async plans (§3) | Not needed at the current scale: bounded concurrency + cache |
 
 ## 11. Delivery state
@@ -123,7 +125,7 @@ Reconciliation of `docs/inventory-ai-architecture-proposal.md` (§4–§11) and 
 |---|---|---|
 | Migrations 001–008 | Rehearsed and applied on the development database (2026-10-13) | |
 | Flags | `FORECAST_V2_ENABLED`, `INVENTORY_CALENDAR_ENABLED`, `FORECAST_UPPER_ESTIMATES_ENABLED`: on in development | |
-| Backend tests | 232/232 (cloud) | |
+| Backend tests | 233/233 (cloud), the same with the development switches set in the shell (the tests set their own switches) | |
 | ML tests | Strict parity on the laptop | |
 | Frontend | Build passed; release files lint-clean | |
 | Smoke | `smoke-stage3` 27/27 (laptop, real ML), `smoke-replenishment` 23/23 | |

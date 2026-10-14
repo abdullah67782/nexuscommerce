@@ -23,9 +23,9 @@
 
 ## What the results mean
 
-Every candidate cut lost sales and paid for its extra stock (G2, G3 and G5 hold). However, a plain seller safety stock of a few days' sales reached the same protection with less stock in every cell, so G4 fails throughout. This repeats the development rehearsal.
+Every candidate cut lost sales and paid for its extra stock (G2, G3 and G5 hold). However, no candidate demonstrated superiority over the seller-set safety stock under the frozen comparison (G4). In the regular, occasional and short-history cells, the seller-rule curve lost less sales value at the same stock. In the two rare cells, the candidate held more stock than the largest seller rule tested (S14), so the comparison could not show superiority. The short-history cells also had too few series (G1). These failures reflect the frozen comparison and its sample limits; they do not prove that the seller rule is better everywhere.
 
-The finding for sellers: if you want fewer stock-outs, raise the safety-stock days in Replenishment settings. The scenario panel shows the cost in stock of doing so.
+For sellers: if you want fewer stock-outs, the supported lever is the safety-stock days in Replenishment settings. The scenario panel shows the cost in stock of changing it.
 
 **Limits:**
 - These results come from the M5 benchmark (Walmart), not from a seller's store.

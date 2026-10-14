@@ -10,7 +10,7 @@ const forecastService = require('../lib/forecastService');
 
 let ctx, a, b;
 before(async () => { ctx = await setup(); });
-after(async () => { await ctx.teardown(); delete process.env.INVENTORY_CALENDAR_ENABLED; });
+after(async () => { await ctx.teardown(); process.env.INVENTORY_CALENDAR_ENABLED = 'false'; });
 beforeEach(async () => {
   await ctx.reset();
   ctx.ml.reset();

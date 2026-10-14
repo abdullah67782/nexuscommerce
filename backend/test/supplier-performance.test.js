@@ -90,7 +90,7 @@ test('delivery day is the receipt that completes the order; corrections move it,
   assert.deepEqual([det[a.id].state, det[a.id].lead_days, det[a.id].lead_days_first_receipt, det[a.id].days_late, det[a.id].on_time, det[a.id].returned_units],
     ['delivered', 9, 5, 2, false, 2], 'a later supplier return does not undo the delivery date');
   assert.deepEqual([det[b.id].state, det[b.id].lead_days, det[b.id].on_time], ['delivered', 12, false]);
-  assert.deepEqual(p.supplier.orders, { placed: 4, delivered: 2, open: 1, open_late: 1, cancelled: 0, excluded_invalid_dates: 0 });
+  assert.deepEqual(p.supplier.orders, { placed: 4, delivered: 2, open: 1, open_late: 1, cancelled: 0, cancelled_after_partial: 0, excluded_invalid_dates: 0 });
   assert.deepEqual([p.supplier.promises.judged, p.supplier.promises.on_time, p.supplier.promises.late], [3, 0, 3], 'the late open order counts as late');
   assert.deepEqual(p.supplier.lead_time.open_late_days_so_far, [20]);
   assert.equal(p.supplier.lead_time.observed_median_days, 10.5);
@@ -148,4 +148,32 @@ test('read-only, seller-isolated, and replenishment keeps the declared lead time
   assert.deepEqual((await call(other, 'GET', '/suppliers/performance')).body.suppliers, []);
   const terms = (await call(s, 'GET', `/products/${s.p.Mouse}/suppliers`)).body;
   assert.equal(JSON.stringify(terms).includes('"lead_time_days":7'), true, 'the declared lead time is unchanged');
+});
+
+test('regression: an order cancelled after a partial receipt is never a completed or on-time delivery', async () => {
+  const s = await seller('a@test.com');
+  const sup = await supplier(s, 'Acme', 7);
+  // 10 ordered, 4 received on day 3 (inside the promise), remaining 6 cancelled.
+  const po = await order(s, sup, day(-30), { qty: 10, receipts: [[3, 4]] });
+  const cur = (await call(s, 'GET', `/purchase-orders/${po.id}`)).body;
+  const c = await call(s, 'POST', `/purchase-orders/${po.id}/cancel`, { version: cur.version, reason: 'supplier short' });
+  assert.equal(c.status, 200, JSON.stringify(c.body));
+  // Eight genuinely complete deliveries, so the learned estimate is evaluated on deliveries only.
+  for (let k = 0; k < 8; k += 1) await order(s, sup, day(-120 + k * 10), { receipts: [[7, 10]] });
+  const p = (await call(s, 'GET', `/suppliers/${sup}/performance`)).body;
+  assert.equal(p.supplier.orders.delivered, 8, 'the cancelled partial order is not a delivery');
+  assert.equal(p.supplier.orders.cancelled_after_partial, 1);
+  assert.equal(p.supplier.lead_time.observed_orders, 8);
+  assert.equal(p.supplier.promises.judged, 8, 'not judged on time');
+  assert.equal(p.supplier.promises.on_time, 8);
+  const row = p.supplier.order_detail.find(o => o.po_id === po.id);
+  assert.ok(row);
+  {
+    assert.equal(row.state, 'cancelled_after_partial');
+    assert.equal(row.delivered_day, null);
+    assert.equal(row.lead_days, null);
+    assert.equal(row.on_time, null);
+    assert.equal(row.received_units, 4);
+    assert.equal(row.ordered_units, 10);
+  }
 });

@@ -292,7 +292,7 @@ test('forecast service down or switched off: unavailable, no numbers, not logged
   assert.deepEqual([q.forecast_service, q.counts.unavailable], ['unavailable', 1]);
   assert.equal((await one('SELECT COUNT(*)::int AS n FROM replenishment_recommendations')).n, 0);
   ctx.ml.reset();
-  delete process.env.FORECAST_V2_ENABLED;
+  process.env.FORECAST_V2_ENABLED = 'false';
   const off = (await api('GET', `/inventory/items/${id}/replenishment`, a.token)).body;
   assert.equal(off.status, 'unavailable');
   assert.match(off.forecast.message, /switched off/);

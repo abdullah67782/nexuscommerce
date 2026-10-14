@@ -12,8 +12,8 @@ let ctx, a, b;
 before(async () => { ctx = await setup(); });
 after(async () => {
   await ctx.teardown();
-  delete process.env.FORECAST_UPPER_ESTIMATES_ENABLED;
-  delete process.env.INVENTORY_CALENDAR_ENABLED;
+  process.env.FORECAST_UPPER_ESTIMATES_ENABLED = 'false';
+  process.env.INVENTORY_CALENDAR_ENABLED = 'false';
 });
 beforeEach(async () => {
   await ctx.reset();

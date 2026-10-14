@@ -50,7 +50,7 @@ export default function SupplierPerformance({ supplierId }) {
       </dl>
       <p className="side-note">
         {p.orders.placed} ordered · {p.orders.delivered} delivered · {p.orders.open} open · {p.orders.open_late} open and late
-        {p.orders.cancelled ? ` · ${p.orders.cancelled} cancelled` : ''}{p.orders.excluded_invalid_dates ? ` · ${p.orders.excluded_invalid_dates} left out (impossible dates)` : ''}.
+        {p.orders.cancelled ? ` · ${p.orders.cancelled} cancelled${p.orders.cancelled_after_partial ? ` (${p.orders.cancelled_after_partial} after a partial delivery, not counted as delivered)` : ''}` : ''}{p.orders.excluded_invalid_dates ? ` · ${p.orders.excluded_invalid_dates} left out (impossible dates)` : ''}.
         {' '}{p.promises.note}
       </p>
       <p className="side-note"><StatusBadge tone={learned[0]}>{learned[1]}</StatusBadge> {p.learned_estimate.text}</p>

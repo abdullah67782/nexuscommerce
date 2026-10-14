@@ -108,7 +108,7 @@ Net benefit = m × value of avoided lost sales − h/365 × extra stock value-da
 
 **Reading:**
 - In development every candidate cuts lost sales, and at 30% margin and 25% holding cost pays for its extra stock (G2, G3 and G5 hold).
-- But the seller's simple safety stock reaches the same protection with **less** stock in every cell, so **G4 fails everywhere**.
+- But no candidate showed superiority over the seller-rule curve (G4 fails everywhere: below the curve where comparable, or holding more stock than S14).
 - G6 shows as false in the development file only because parity is checked separately there; it is exact.
 - If the final run behaves the same, no AI protection is promoted. The deterministic recommendations and the seller-set safety stock remain the product.
 - This expectation does not change any gate.

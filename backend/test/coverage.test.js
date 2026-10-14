@@ -17,7 +17,7 @@ after(async () => { await ctx.teardown(); });
 beforeEach(async () => {
   await ctx.reset();
   ctx.ml.reset();
-  delete process.env.FORECAST_V2_ENABLED;
+  process.env.FORECAST_V2_ENABLED = 'false';
   a = await registerSeller(ctx.api, 'a@test.com');
   b = await registerSeller(ctx.api, 'b@test.com');
 });

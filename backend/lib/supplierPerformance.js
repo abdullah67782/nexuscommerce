@@ -7,8 +7,11 @@
 //   ordered day      ordered_at as the seller entered it (it may be back-dated);
 //   promise          expected_arrival recorded when the order was marked ordered (the 'ordered' event), else the
 //                    order's current expected date (flagged 'promise_revised' when they differ);
-//   delivered day    the received_at day of the receipt that brought every line to its ordered quantity
-//                    (net of cancelled quantities and receipt corrections; supplier returns do not undo delivery).
+//   delivered day    the received_at day of the receipt that brought every line to its FULL ordered quantity
+//                    (net of receipt corrections; supplier returns do not undo delivery). A cancelled remainder never
+//                    completes an order: an order cancelled after a partial receipt is 'cancelled_after_partial' —
+//                    kept apart from deliveries, outside lead-time statistics and the learned estimate, and not
+//                    judged on time.
 //                    completed_at is NOT used: it is the time the last receipt was recorded, not when goods arrived.
 //   lead time        delivered day − ordered day (and first receipt day − ordered day).
 //   open and late    still open after its promised day: a lower bound on the lead time, never dropped and never
@@ -84,7 +87,7 @@ function analyseOrder(o, tz, today) {
   if (o.receipts.some(r => Date.parse(r.received_at) < Date.parse(o.ordered_at))) issues.push('receipt_before_order');
   if (o.receipts.some(r => (Date.parse(r.recorded_at) - Date.parse(r.received_at)) / 86400000 > LATE_RECORD_DAYS)) issues.push('receipt_recorded_late');
 
-  const need = new Map(o.lines.map(l => [l.line_id, l.quantity_ordered - l.quantity_cancelled]));
+  const need = new Map(o.lines.map(l => [l.line_id, l.quantity_ordered]));   // cancellation never counts as delivered
   const got = new Map(o.lines.map(l => [l.line_id, 0]));
   let deliveredAt = null;
   const byReceipt = [...new Set(o.receipts.map(r => r.id))].map(id => o.receipts.filter(r => r.id === id));
@@ -99,10 +102,10 @@ function analyseOrder(o, tz, today) {
   const receivedUnits = [...got.values()].reduce((s, q) => s + q, 0);
   const returnedUnits = o.lines.reduce((s, l) => s + l.quantity_returned, 0);
   let state;
-  if (deliveredAt) state = 'delivered';
+  if (deliveredAt && o.status !== 'cancelled') state = 'delivered';
   else if (o.status === 'cancelled') state = receivedUnits > 0 ? 'cancelled_after_partial' : 'cancelled';
   else state = promise && today > promise ? 'open_late' : 'open';
-  const deliveredDay = deliveredAt ? dayIn(deliveredAt, tz) : null;
+  const deliveredDay = state === 'delivered' ? dayIn(deliveredAt, tz) : null;
   return {
     po_id: o.id, supplier_id: o.supplier_id, status: o.status, state, ordered_day: orderedDay, promised_day: promise,
     first_receipt_day: firstAt ? dayIn(firstAt, tz) : null, delivered_day: deliveredDay,
@@ -170,6 +173,7 @@ function summarise(supplier, orders, terms, delays) {
     orders: {
       placed: orders.length, delivered: delivered.length, open: valid.filter(o => o.state === 'open').length, open_late: late.length,
       cancelled: valid.filter(o => o.state === 'cancelled' || o.state === 'cancelled_after_partial').length,
+      cancelled_after_partial: valid.filter(o => o.state === 'cancelled_after_partial').length,
       excluded_invalid_dates: orders.length - valid.length,
     },
     lead_time: {

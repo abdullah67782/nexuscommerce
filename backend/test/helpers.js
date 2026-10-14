@@ -18,6 +18,12 @@ if (!process.env.DB_NAME || !process.env.DB_NAME.endsWith('_test')) {
 }
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
+// Feature switches never come from the shell, .env.test or backend/.env: every test starts with all of them OFF
+// and turns on only what it tests. Set to 'false' (not deleted) so a later dotenv load of backend/.env cannot
+// fill them in.
+const FEATURE_FLAGS = ['FORECAST_V2_ENABLED', 'INVENTORY_CALENDAR_ENABLED', 'FORECAST_UPPER_ESTIMATES_ENABLED'];
+for (const f of FEATURE_FLAGS) process.env[f] = 'false';
+
 const TABLES = [
   'upper_estimate_events', 'upper_estimate_product_types', 'upper_estimate_settings',
   'calendar_entry_events', 'calendar_entries', 'calendar_holiday_confirmations', 'calendar_settings',

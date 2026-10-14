@@ -10,7 +10,7 @@ const SF = require('../lib/stockoutFlags');
 
 let ctx, a;
 before(async () => { ctx = await setup(); });
-after(async () => { await ctx.teardown(); delete process.env.INVENTORY_CALENDAR_ENABLED; });
+after(async () => { await ctx.teardown(); process.env.INVENTORY_CALENDAR_ENABLED = 'false'; });
 beforeEach(async () => {
   await ctx.reset();
   ctx.ml.reset();
@@ -105,4 +105,21 @@ test('events in the forecast period: seller entries keep their labels; holidays 
   assert.ok(r.body.events_in_horizon.filter(e => e.kind === 'holiday').every(h => h.effect_label === 'Effect unknown' && h.label === 'none'));
   assert.ok(r.body.notes.some(n => n.type === 'events' && /does not include any event effect/.test(n.text)));
   assert.deepEqual(r.body.forecasts, plain.body.forecasts, 'the forecast is unchanged');
+});
+
+test('regression: unknown days and stock added by other movements never establish a stock-out; wording stays qualified', () => {
+  const ev = (receipts) => ({ tz: 'UTC', closures: [], receipts, counts: [{ observed_at: '2026-01-10T10:00:00Z', quantity: 0 }] });
+  const receipt = [{ kind: 'receipt', effective_at: '2026-01-20T10:00:00Z' }];
+  const full = { usable: { start: '2026-01-01', quantities: new Array(40).fill(0) } };
+  assert.equal(SF.flags(full, ev(receipt)).supported.length, 1, 'confirmed zero days, receipt next: established');
+  // Confirmed history ends on 2026-01-14: days 15–19 are unknown, not zero.
+  const short = { usable: { start: '2026-01-01', quantities: new Array(14).fill(0) } };
+  assert.equal(SF.flags(short, ev(receipt)).supported.length, 0, 'an unknown day is never a zero');
+  // A customer return (or found stock) before the receipt: stock was not continuously zero.
+  for (const kind of ['customer_return', 'found', 'correction']) {
+    assert.equal(SF.flags(full, ev([{ kind, effective_at: '2026-01-14T10:00:00Z' }, ...receipt])).supported.length, 0, kind);
+  }
+  const text = SF.notes(SF.flags(full, ev(receipt))).map(n => n.text).join(' ');
+  assert.match(text, /may understate demand/);
+  assert.doesNotMatch(text, /lower than demand|are lower/);
 });
