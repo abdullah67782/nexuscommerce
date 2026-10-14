@@ -124,6 +124,12 @@ async function revokeForImport(client, { sellerId, importId, reason = 'rollback'
 // coverage existed). Same rules as declaring it at upload time; the caller holds
 // the seller lock inside a transaction.
 async function confirmExistingImport(client, { sellerId, importId, input }) {
+  const { rows: kind } = await client.query(
+    'SELECT source FROM data_uploads WHERE id = $1 AND uploaded_by = $2', [importId, sellerId]);
+  if (kind[0]?.source === 'stock_count') {
+    throw new CoverageError(400, { error: 'not_a_sales_import',
+      message: 'This is a stock-count file. A sales period can only be confirmed for a sales import.' });
+  }
   const { rows } = await client.query(
     `SELECT du.id, du.status, du.source_id, ds.timezone, uv.rows_rejected,
             EXISTS (SELECT 1 FROM data_coverage c WHERE c.upload_id = du.id AND c.status = 'confirmed') AS has_coverage

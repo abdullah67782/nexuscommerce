@@ -1,0 +1,21 @@
+◇ injected env (0) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+Applied on the real database: 001_baseline, 002_import_identity, 003_data_coverage, 004_inventory_ledger, 005_suppliers_purchasing, 006_replenishment
+Pending: 007_inventory_calendar, 008_forecast_upper_estimates
+
+1. Backup  -> /home/claude/nc/backend/backups/nexus_rehearse_src_pre_migrate_20261013T165141.dump
+   152 KB
+2. Restore -> scratch database nexus_rehearse_src_rehearsal_20261013t165141
+   restore verified: {"users":"2","products":"3","sales":"400","sales_units":"800","imports":"0","attributed_sales":"400","upload_versions":"0","inventory_rows":"0","inventory_units":"0","stock_counts":"2","stock_movements":"0","stock_movement_units":"0","inventory_settings":"0","inventory_setting_values":"0","suppliers":"1","supplier_links":"2","purchase_orders":"0","purchase_order_versions":"0","purchase_order_units":"0","received_units":"0","receipt_adjustment_units":"0","purchase_order_events":"0","supplier_lead_times":"12","recommendations":"1","recommendation_fingerprints":"296484e55b15a3c6bf8fd936b225d63b","calendar_entries":"n/a","calendar_entry_events":"n/a","upper_estimate_answers":"n/a"}
+3. Migrate the scratch copy
+   applying 007_inventory_calendar
+   applying 008_forecast_upper_estimates
+   applied: 007_inventory_calendar, 008_forecast_upper_estimates
+4. Verify
+   not countable before migrating (older schema): calendar_entries -> 0, calendar_entry_events -> 0, upper_estimate_answers -> 0
+   inventory evidence: 0 legacy rows kept (none); 0 unverified values, 0 units
+   row counts and quarantine unchanged; schema current
+
+REHEARSAL PASSED.
+Next: stop the backend, run `npm run migrate`, then start it again.
+Keep nexus_rehearse_src_pre_migrate_20261013T165141.dump until the migrated app has been checked; restore it with:
+  dropdb nexus_rehearse_src && createdb nexus_rehearse_src && pg_restore -d nexus_rehearse_src --no-owner "/home/claude/nc/backend/backups/nexus_rehearse_src_pre_migrate_20261013T165141.dump"

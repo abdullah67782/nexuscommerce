@@ -1,39 +1,19 @@
 const express = require('express');
-const axios = require('axios');
 const pool = require('../config/db');
 const authMiddleware = require('../middleware/auth');
 const { findOwnedProduct } = require('../lib/ownership');
 const { isManualTrainingEnabled, TRAINING_DISABLED } = require('../lib/training');
-const { productHistory, addDays } = require('../lib/coverage');
+const { productHistory } = require('../lib/coverage');
 const { todayIn, defaultTimezone } = require('../lib/imports');
 
 const router = express.Router();
 const finetuneRouter = express.Router();
 
-const ML_SERVER = process.env.ML_SERVER_URL || 'http://localhost:8000';
-
-async function callMLServer(method, endpoint, data = null, timeout = 30000) {
-  try {
-    const url = `${ML_SERVER}${endpoint}`;
-    const config = { timeout };
-    const response = method === 'GET'
-      ? await axios.get(url, config)
-      : await axios.post(url, data, config);
-    return response.data;
-  } catch (err) {
-    if (err.code === 'ECONNREFUSED') {
-      throw new Error('ML server is not running. Start it with: python ml/main.py');
-    }
-    if (err.response) {
-      // Preserve the original status + body for 422 insufficient_history passthrough
-      const e = new Error(err.response.data?.detail || err.response.data?.message || 'ML server error');
-      e.mlStatus = err.response.status;
-      e.mlData = err.response.data;
-      throw e;
-    }
-    throw new Error(`ML server request failed: ${err.message}`);
-  }
-}
+// The ML client and the v2 forecast path live in lib/forecastService.js (shared with Stage 2).
+const { callMLServer, forecastFromHistory, explainV2 } = require('../lib/forecastService');
+const UE = require('../lib/upperEstimates');
+const SF = require('../lib/stockoutFlags');
+const CAL = require('../lib/calendar');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Forecast v2 — 7- and 28-day TOTALS for one product (switchable for review).
@@ -45,59 +25,6 @@ async function callMLServer(method, endpoint, data = null, timeout = 30000) {
 // ═══════════════════════════════════════════════════════════════════════════
 const isV2Enabled = () => process.env.FORECAST_V2_ENABLED === 'true';
 const V2_TIERS = { insufficient: 'fewer than 28 days', average: '28 to 179 days', model: '180 days or more' };
-
-const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
-
-const listPeriods = (periods, max = 3) => periods.slice(-max).map(p => (p.start === p.end ? p.start : `${p.start} to ${p.end}`)).join(', ')
-  + (periods.length > max ? ` and ${periods.length - max} earlier period${periods.length - max === 1 ? '' : 's'}` : '');
-
-function explainV2(history, result, today) {
-  const notes = [];
-  const usable = history.usable;
-  const tier = result.history.tier;
-  const { counts } = history;
-
-  if (counts.unconfirmed > 0) {
-    notes.push({ type: 'confirmation', text: `${plural(counts.unconfirmed, 'day')} have sales records that are not confirmed complete `
-      + `(${listPeriods(history.unconfirmed_periods)}). The records stay in your sales data, but a day with some records can still be `
-      + 'missing sales, so these days do not count as forecasting history. Confirm the period each upload covers on the Data Integration page.' });
-  }
-  const before = history.before_usable;
-  if (usable && before) {
-    notes.push({ type: 'cut', text: before.state === 'unconfirmed'
-      ? `Forecasting history starts on ${usable.start}, right after the unconfirmed records of ${before.start} to ${before.end}.`
-      : `Forecasting history starts on ${usable.start}. The ${plural(before.days, 'day')} before it (${before.start} to ${before.end}) `
-        + 'have no records and no confirmed period, so they are unknown, not zero.' });
-  }
-  const after = history.after_usable;
-  if (usable && after && after.unconfirmed_days > 0) {
-    notes.push({ type: 'after', text: `Sales recorded after ${usable.end} (up to ${after.end}) are not confirmed yet, `
-      + `so forecasts start on ${addDays(usable.end, 1)}.` });
-  }
-  if (counts.missing > 0 && !(before && before.state === 'missing' && before.days === counts.missing)) {
-    notes.push({ type: 'missing', text: `${plural(counts.missing, 'day')} since the first sale on ${history.first_sale} have no records and no `
-      + 'confirmed period. They are unknown and are never treated as zero.' });
-  }
-  if (!usable) {
-    notes.push({ type: 'tier', text: 'No confirmed days yet, so there is no forecast. A forecast needs at least 28 consecutive confirmed days.' });
-  } else if (tier === 'insufficient') {
-    notes.push({ type: 'tier', text: `Only ${plural(usable.days, 'consecutive confirmed day')} are available; at least 28 are needed for an estimate.` });
-  } else if (tier === 'average') {
-    notes.push({ type: 'tier', text: `${plural(usable.days, 'consecutive confirmed day')} of history (180 are needed for the model-based forecast). `
-      + 'This is an average-based estimate: average daily sales over the last 28 days × the number of days.' });
-  } else if (result.pattern) {
-    const text = result.pattern.group === 'rare'
-      ? 'It sells on fewer than 20% of days, so it uses the rare-sales method (TSB), which follows how often it sells and how much per sale.'
-      : 'It has at least 180 confirmed days and does not sell rarely, so it uses the shared forecasting model.';
-    notes.push({ type: 'method', text });
-  }
-  const start = result.forecasts[0]?.start;
-  if (start && start < today) {
-    notes.push({ type: 'stale', text: `Confirmed history ends on ${usable.end}, so forecasts start on ${start}, not today (${today}). `
-      + 'Upload and confirm newer sales for a forecast from today.' });
-  }
-  return notes;
-}
 
 router.get('/v2/config', authMiddleware, (req, res) => {
   res.json({ enabled: isV2Enabled(), horizons: [7, 28], tiers: V2_TIERS, history: 'confirmed days only' });
@@ -119,16 +46,18 @@ router.get('/v2/:productId', authMiddleware, async (req, res) => {
       notes: [{ type: 'tier', text: 'No sales are recorded for this product yet.' }], today, timezone });
   }
   let result;
-  if (!history.usable) {
-    result = { status: 'needs_confirmation', pattern: null, forecasts: [], models_release: null,
-      history: { usable_days: 0, first_day: null, last_day: null, tier: 'insufficient', required_days: { average: 28, model: 180 } } };
-  } else {
-    try {
-      result = await callMLServer('POST', '/v2/forecast',
-        { start: history.usable.start, quantities: history.usable.quantities }, 60000);
-    } catch (err) {
-      return res.status(503).json({ error: 'forecast_v2_unavailable', message: err.message });
-    }
+  try {
+    result = await forecastFromHistory(history);
+  } catch (err) {
+    return res.status(503).json({ error: 'forecast_v2_unavailable', message: err.message });
+  }
+  let flags = null;
+  let events = [];
+  try {
+    flags = await SF.forProduct(pool, req.user.id, productId, history);
+    events = await eventsInHorizon(req.user.id, product, result.forecasts || []);
+  } catch (err) {
+    console.error('Forecast notes error:', err.message);   // notes are context only; the forecast is still returned
   }
   res.json({
     version: 2,
@@ -143,10 +72,191 @@ router.get('/v2/:productId', authMiddleware, async (req, res) => {
     },
     pattern: result.pattern,
     forecasts: result.forecasts,
-    notes: explainV2(history, result, today),
+    notes: [...explainV2(history, result, today), ...(flags ? SF.notes(flags) : []), ...eventNotes(events)],
+    stockout_flags: flags,
+    events_in_horizon: events,
     today,
     timezone,
   });
+});
+
+// Events in the forecast period (Stage 3 proposal §5, label 'none'): no event effect passed its evaluation, so the
+// forecast is unchanged and each event is listed with "effect unknown". Seller entries are listed with their own
+// labels; they are applied in replenishment, never in the forecast.
+async function eventsInHorizon(sellerId, product, forecasts) {
+  const f28 = forecasts.find(f => f.horizon_days === 28) || forecasts[forecasts.length - 1];
+  if (!f28) return [];
+  const cal = await CAL.readAll(pool, sellerId);
+  const days = Math.round((Date.parse(`${f28.end}T00:00:00Z`) - Date.parse(`${f28.start}T00:00:00Z`)) / 86400000) + 1;
+  const mine = CAL.forProduct(cal, product, null, f28.start, days);
+  const holidays = mine.holidays.map(h => ({ kind: 'holiday', name: h.name, start: h.start, end: h.end, status: h.status,
+    label: 'none', effect_label: 'Effect unknown' }));
+  const entries = [...mine.closures, ...mine.demand_changes, ...mine.promotions_without_change].map(e => ({ kind: e.kind, name: e.title,
+    start: e.start_date, end: e.end_date, label: CAL.entryLabel(e), label_text: CAL.LABELS[CAL.entryLabel(e)],
+    demand_change_pct: e.demand_change_pct }));
+  return [...holidays, ...entries].sort((a, b) => a.start.localeCompare(b.start));
+}
+function eventNotes(events) {
+  if (!events.length) return [];
+  return [{ type: 'events', text: `In this period: ${events.map(e => `${e.name} (${e.start === e.end ? e.start : `${e.start} to ${e.end}`}; `
+    + `${e.kind === 'holiday' ? 'effect unknown' : e.label_text.toLowerCase()})`).join(', ')}. `
+    + 'The forecast does not include any event effect; changes you entered are applied in replenishment as your own assumptions.' }];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Upper demand estimates (upper-estimates-1, policy upper-estimates-policy-1).
+// One-sided 80%/90% UPPER estimates beside the unchanged v2 forecast, only where the
+// store, product and data conditions of the Stage 3 final evaluation hold (lib/upperEstimates.js
+// and ml/v2/upper_estimates.py). Display-only: never stored, never used by replenishment.
+//   GET /v2/:productId/upper-estimates
+//   GET /upper-estimates/settings            the seller's answers and the store-level checks
+//   PUT /upper-estimates/settings            { status: 'confirmed'|'withdrawn', acknowledge, version? }
+//   PUT /upper-estimates/products/:productId { department, version? }
+// ═══════════════════════════════════════════════════════════════════════════
+const ueFail = (res, status, error, message) => res.status(status).json({ error, message });
+
+router.get('/v2/:productId/upper-estimates', authMiddleware, async (req, res) => {
+  if (!isV2Enabled()) {
+    return res.status(404).json({ error: 'forecast_v2_disabled', message: 'Forecast v2 is switched off (FORECAST_V2_ENABLED).' });
+  }
+  try {
+    const productId = Number(req.params.productId);
+    const product = await findOwnedProduct(productId, req.user.id);
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    const store = await UE.storeChecks(pool, req.user.id, productId);
+    const base = {
+      policy_version: UE.POLICY_VERSION, kind: 'one-sided upper demand estimate',
+      product: { ...product, department: store.type?.department ?? null, department_version: store.type?.version ?? null },
+      checks: store.checks, departments: UE.DEPARTMENTS, limitations: [UE.LIMITATION], estimates: [], forecast: null,
+    };
+    if (store.reason) return res.json({ ...base, status: 'unavailable', reason: store.reason });
+    const history = await productHistory(pool, req.user.id, productId);
+    if (!history.usable) {
+      return res.json({ ...base, status: 'unavailable',
+        reason: { code: 'no_forecast', text: 'There is no forecast for this product yet, so there is no upper estimate.' } });
+    }
+    let r;
+    try {
+      r = await UE.fromHistory(history);
+    } catch (err) {
+      return res.json({ ...base, status: 'unavailable', reason: { code: 'service_unavailable', text: UE.REASONS.service_unavailable } });
+    }
+    res.json({
+      ...base,
+      version: r.version, ml_policy_version: r.policy_version, status: r.status, reason: r.reason,
+      forecast: { status: r.forecast.status, models_release: r.forecast.models_release, pattern: r.forecast.pattern,
+        history: { tier: r.forecast.history.tier, usable_days: r.forecast.history.usable_days }, forecasts: r.forecast.forecasts },
+      estimates: r.estimates, limitations: r.limitations, benchmark: r.benchmark,
+    });
+  } catch (err) {
+    console.error('Upper estimates error:', err.message);
+    res.status(500).json({ error: 'server_error', message: 'Error loading upper estimates.' });
+  }
+});
+
+router.get('/upper-estimates/settings', authMiddleware, async (req, res) => {
+  try {
+    const store = await UE.storeChecks(pool, req.user.id, null);
+    res.json({
+      enabled: UE.enabled(), policy_version: UE.POLICY_VERSION, profile: UE.PROFILE, profile_text: UE.PROFILE_TEXT,
+      status: store.settings?.status ?? null, updated_at: store.settings?.updated_at ?? null, version: store.settings?.version ?? null,
+      country: { code: store.country, confirmed: Boolean(store.country) }, checks: store.checks, reason: store.reason,
+      departments: UE.DEPARTMENTS, limitation: UE.LIMITATION,
+    });
+  } catch (err) {
+    console.error('Upper estimate settings error:', err.message);
+    res.status(500).json({ error: 'server_error', message: 'Error loading settings.' });
+  }
+});
+
+async function ueTx(fn) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const out = await fn(client);
+    await client.query('COMMIT');
+    return out;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+class UeError extends Error { constructor(status, body) { super(body.message); this.status = status; this.body = body; } }
+const versionOf = (raw) => (raw === undefined || raw === null || raw === '' ? null : Number(raw));
+
+router.put('/upper-estimates/settings', authMiddleware, async (req, res) => {
+  const sellerId = req.user.id;
+  const { status, acknowledge } = req.body || {};
+  if (!['confirmed', 'withdrawn'].includes(status)) return ueFail(res, 400, 'invalid_request', 'status must be "confirmed" or "withdrawn".');
+  if (status === 'confirmed' && acknowledge !== true) {
+    return ueFail(res, 400, 'acknowledgement_required', 'Confirm the store profile and that the estimates are not calibrated to your store (acknowledge: true).');
+  }
+  try {
+    const row = await ueTx(async (db) => {
+      await db.query('SELECT pg_advisory_xact_lock($1, $2)', [74010008, sellerId]);
+      if (status === 'confirmed') {
+        const country = await UE.readCountry(db, sellerId);
+        if (country !== 'US') {
+          const code = !country ? 'country_not_confirmed' : country === 'PK' ? 'market_pakistan' : 'market_not_evaluated';
+          throw new UeError(409, { error: code, message: UE.REASONS[code] });
+        }
+      }
+      const cur = await UE.readSettings(db, sellerId);
+      const want = versionOf(req.body.version);
+      if (cur && want === null) throw new UeError(428, { error: 'version_required', message: 'Send the settings version you are changing.' });
+      if (cur && want !== cur.version) throw new UeError(409, { error: 'version_conflict', message: 'The settings changed since you loaded them.', current_version: cur.version });
+      const { rows } = await db.query(
+        `INSERT INTO upper_estimate_settings (seller_id, profile, status, policy_version, updated_by)
+         VALUES ($1, $2, $3, $4, $1)
+         ON CONFLICT (seller_id) DO UPDATE SET profile = EXCLUDED.profile, status = EXCLUDED.status, policy_version = EXCLUDED.policy_version,
+           updated_by = EXCLUDED.updated_by, updated_at = NOW(), version = upper_estimate_settings.version + 1
+         RETURNING profile, status, policy_version, updated_at, version`, [sellerId, UE.PROFILE, status, UE.POLICY_VERSION]);
+      await db.query(`INSERT INTO upper_estimate_events (seller_id, event, before, after, actor) VALUES ($1, $2, $3, $4, $1)`,
+        [sellerId, status === 'confirmed' ? 'profile_confirmed' : 'profile_withdrawn', cur ? JSON.stringify(cur) : null,
+          JSON.stringify({ ...rows[0], profile_text: status === 'confirmed' ? UE.PROFILE_TEXT : null })]);
+      return rows[0];
+    });
+    res.json(row);
+  } catch (err) {
+    if (err instanceof UeError) return res.status(err.status).json(err.body);
+    console.error('Upper estimate settings error:', err.message);
+    res.status(500).json({ error: 'server_error', message: 'Error saving settings.' });
+  }
+});
+
+router.put('/upper-estimates/products/:productId', authMiddleware, async (req, res) => {
+  const sellerId = req.user.id;
+  const productId = Number(req.params.productId);
+  const department = req.body?.department;
+  try {
+    const product = await findOwnedProduct(productId, sellerId);
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    if (!Object.hasOwn(UE.DEPARTMENTS, department)) {
+      return ueFail(res, 400, 'invalid_request', `department must be one of: ${Object.keys(UE.DEPARTMENTS).join(', ')}.`);
+    }
+    const row = await ueTx(async (db) => {
+      await db.query('SELECT pg_advisory_xact_lock($1, $2)', [74010008, sellerId]);
+      const cur = await UE.readProductType(db, sellerId, productId);
+      const want = versionOf(req.body.version);
+      if (cur && want === null) throw new UeError(428, { error: 'version_required', message: 'Send the version you are changing.' });
+      if (cur && want !== cur.version) throw new UeError(409, { error: 'version_conflict', message: 'This product changed since you loaded it.', current_version: cur.version });
+      const { rows } = await db.query(
+        `INSERT INTO upper_estimate_product_types (seller_id, product_id, department, updated_by) VALUES ($1, $2, $3, $1)
+         ON CONFLICT (seller_id, product_id) DO UPDATE SET department = EXCLUDED.department, updated_by = EXCLUDED.updated_by,
+           updated_at = NOW(), version = upper_estimate_product_types.version + 1
+         RETURNING product_id, department, updated_at, version`, [sellerId, productId, department]);
+      await db.query(`INSERT INTO upper_estimate_events (seller_id, product_id, event, before, after, actor) VALUES ($1, $2, 'product_type_set', $3, $4, $1)`,
+        [sellerId, productId, cur ? JSON.stringify(cur) : null, JSON.stringify(rows[0])]);
+      return rows[0];
+    });
+    res.json(row);
+  } catch (err) {
+    if (err instanceof UeError) return res.status(err.status).json(err.body);
+    console.error('Upper estimate product type error:', err.message);
+    res.status(500).json({ error: 'server_error', message: 'Error saving the product department.' });
+  }
 });
 
 // ─── GET /api/forecast/metrics ─────────────────────────────────────────────

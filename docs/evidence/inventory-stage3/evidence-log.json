@@ -1,0 +1,940 @@
+{
+  "started_at": "2026-10-14T12:01:55.161Z",
+  "frontend": "http://localhost:3000",
+  "api": "http://localhost:5000/api",
+  "steps": [
+    {
+      "method": "POST",
+      "path": "/auth/register",
+      "status": 201,
+      "summary": null
+    },
+    {
+      "method": "POST",
+      "path": "/data/upload",
+      "status": 200,
+      "summary": null
+    },
+    {
+      "method": "GET",
+      "path": "/products",
+      "status": 200,
+      "summary": null
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/snapshots",
+      "status": 201,
+      "summary": null
+    },
+    {
+      "method": "POST",
+      "path": "/suppliers",
+      "status": 201,
+      "summary": null
+    },
+    {
+      "method": "PUT",
+      "path": "/products/76414/suppliers/7",
+      "status": 200,
+      "summary": null
+    },
+    {
+      "method": "PUT",
+      "path": "/products/76415/suppliers/7",
+      "status": 200,
+      "summary": null
+    },
+    {
+      "method": "POST",
+      "path": "/purchase-orders",
+      "status": 201,
+      "summary": null
+    },
+    {
+      "method": "POST",
+      "path": "/purchase-orders/8/approve",
+      "status": 200,
+      "summary": null
+    },
+    {
+      "method": "POST",
+      "path": "/purchase-orders/8/mark-ordered",
+      "status": 200,
+      "summary": null
+    },
+    {
+      "method": "POST",
+      "path": "/purchase-orders/8/receipts",
+      "status": 201,
+      "summary": null
+    },
+    {
+      "method": "POST",
+      "path": "/purchase-orders",
+      "status": 201,
+      "summary": null
+    },
+    {
+      "method": "POST",
+      "path": "/purchase-orders/9/approve",
+      "status": 200,
+      "summary": null
+    },
+    {
+      "method": "POST",
+      "path": "/purchase-orders/9/mark-ordered",
+      "status": 200,
+      "summary": null
+    },
+    {
+      "method": "PUT",
+      "path": "/calendar/settings",
+      "status": 200,
+      "summary": null
+    },
+    {
+      "method": "PUT",
+      "path": "/forecast/upper-estimates/settings",
+      "status": 200,
+      "summary": "confirmed"
+    },
+    {
+      "method": "PUT",
+      "path": "/forecast/upper-estimates/products/76414",
+      "status": 200,
+      "summary": null
+    },
+    {
+      "method": "PUT",
+      "path": "/forecast/upper-estimates/products/76415",
+      "status": 200,
+      "summary": null
+    },
+    {
+      "method": "PUT",
+      "path": "/forecast/upper-estimates/products/76416",
+      "status": 200,
+      "summary": null
+    },
+    {
+      "method": "PUT",
+      "path": "/forecast/upper-estimates/products/76417",
+      "status": 200,
+      "summary": null
+    },
+    {
+      "method": "GET",
+      "path": "/forecast/v2/76414/upper-estimates",
+      "status": 200,
+      "summary": "available"
+    },
+    {
+      "method": "GET",
+      "path": "/forecast/v2/76415/upper-estimates",
+      "status": 200,
+      "summary": "available"
+    },
+    {
+      "method": "GET",
+      "path": "/forecast/v2/76417/upper-estimates",
+      "status": 200,
+      "summary": "unavailable"
+    },
+    {
+      "method": "GET",
+      "path": "/forecast/v2/76416/upper-estimates",
+      "status": 200,
+      "summary": "unavailable"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/items/76414/replenishment",
+      "status": 200,
+      "summary": "provisional"
+    },
+    {
+      "method": "POST",
+      "path": "/calendar/entries",
+      "status": 201,
+      "summary": null
+    },
+    {
+      "method": "POST",
+      "path": "/calendar/entries",
+      "status": 201,
+      "summary": null
+    },
+    {
+      "method": "POST",
+      "path": "/calendar/entries",
+      "status": 201,
+      "summary": null
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/items/76414/replenishment",
+      "status": 200,
+      "summary": "provisional"
+    }
+  ],
+  "shots": [
+    {
+      "name": "01-upper-no-country",
+      "viewport": "phone",
+      "width": 390,
+      "captured_height": 1870,
+      "page_horizontal_overflow_px": 0,
+      "file": "01-upper-no-country-phone.png"
+    },
+    {
+      "name": "01-upper-no-country",
+      "viewport": "tablet",
+      "width": 768,
+      "captured_height": 1489,
+      "page_horizontal_overflow_px": 0,
+      "file": "01-upper-no-country-tablet.png"
+    },
+    {
+      "name": "01-upper-no-country",
+      "viewport": "desktop",
+      "width": 1440,
+      "captured_height": 1318,
+      "page_horizontal_overflow_px": 0,
+      "file": "01-upper-no-country-desktop.png"
+    },
+    {
+      "name": "02-upper-profile-step",
+      "viewport": "phone",
+      "width": 390,
+      "captured_height": 2022,
+      "page_horizontal_overflow_px": 0,
+      "file": "02-upper-profile-step-phone.png"
+    },
+    {
+      "name": "02-upper-profile-step",
+      "viewport": "tablet",
+      "width": 768,
+      "captured_height": 1577,
+      "page_horizontal_overflow_px": 0,
+      "file": "02-upper-profile-step-tablet.png"
+    },
+    {
+      "name": "02-upper-profile-step",
+      "viewport": "desktop",
+      "width": 1440,
+      "captured_height": 1406,
+      "page_horizontal_overflow_px": 0,
+      "file": "02-upper-profile-step-desktop.png"
+    },
+    {
+      "name": "03-upper-department-step",
+      "viewport": "phone",
+      "width": 390,
+      "captured_height": 1899,
+      "page_horizontal_overflow_px": 0,
+      "file": "03-upper-department-step-phone.png"
+    },
+    {
+      "name": "03-upper-department-step",
+      "viewport": "tablet",
+      "width": 768,
+      "captured_height": 1529,
+      "page_horizontal_overflow_px": 0,
+      "file": "03-upper-department-step-tablet.png"
+    },
+    {
+      "name": "03-upper-department-step",
+      "viewport": "desktop",
+      "width": 1440,
+      "captured_height": 1358,
+      "page_horizontal_overflow_px": 0,
+      "file": "03-upper-department-step-desktop.png"
+    },
+    {
+      "name": "04-upper-regular-80",
+      "viewport": "phone",
+      "width": 390,
+      "captured_height": 2756,
+      "page_horizontal_overflow_px": 0,
+      "file": "04-upper-regular-80-phone.png"
+    },
+    {
+      "name": "04-upper-regular-80",
+      "viewport": "tablet",
+      "width": 768,
+      "captured_height": 1860,
+      "page_horizontal_overflow_px": 0,
+      "file": "04-upper-regular-80-tablet.png"
+    },
+    {
+      "name": "04-upper-regular-80",
+      "viewport": "desktop",
+      "width": 1440,
+      "captured_height": 1613,
+      "page_horizontal_overflow_px": 0,
+      "file": "04-upper-regular-80-desktop.png"
+    },
+    {
+      "name": "05-upper-regular-90",
+      "viewport": "phone",
+      "width": 390,
+      "captured_height": 2756,
+      "page_horizontal_overflow_px": 0,
+      "file": "05-upper-regular-90-phone.png"
+    },
+    {
+      "name": "05-upper-regular-90",
+      "viewport": "tablet",
+      "width": 768,
+      "captured_height": 1860,
+      "page_horizontal_overflow_px": 0,
+      "file": "05-upper-regular-90-tablet.png"
+    },
+    {
+      "name": "05-upper-regular-90",
+      "viewport": "desktop",
+      "width": 1440,
+      "captured_height": 1613,
+      "page_horizontal_overflow_px": 0,
+      "file": "05-upper-regular-90-desktop.png"
+    },
+    {
+      "name": "06-upper-rare",
+      "viewport": "phone",
+      "width": 390,
+      "captured_height": 2795,
+      "page_horizontal_overflow_px": 0,
+      "file": "06-upper-rare-phone.png"
+    },
+    {
+      "name": "06-upper-rare",
+      "viewport": "tablet",
+      "width": 768,
+      "captured_height": 1900,
+      "page_horizontal_overflow_px": 0,
+      "file": "06-upper-rare-tablet.png"
+    },
+    {
+      "name": "06-upper-rare",
+      "viewport": "desktop",
+      "width": 1440,
+      "captured_height": 1613,
+      "page_horizontal_overflow_px": 0,
+      "file": "06-upper-rare-desktop.png"
+    },
+    {
+      "name": "07-upper-short-history",
+      "viewport": "phone",
+      "width": 390,
+      "captured_height": 2229,
+      "page_horizontal_overflow_px": 0,
+      "file": "07-upper-short-history-phone.png"
+    },
+    {
+      "name": "07-upper-short-history",
+      "viewport": "tablet",
+      "width": 768,
+      "captured_height": 1661,
+      "page_horizontal_overflow_px": 0,
+      "file": "07-upper-short-history-tablet.png"
+    },
+    {
+      "name": "07-upper-short-history",
+      "viewport": "desktop",
+      "width": 1440,
+      "captured_height": 1448,
+      "page_horizontal_overflow_px": 0,
+      "file": "07-upper-short-history-desktop.png"
+    },
+    {
+      "name": "08-upper-dormant",
+      "viewport": "phone",
+      "width": 390,
+      "captured_height": 2239,
+      "page_horizontal_overflow_px": 0,
+      "file": "08-upper-dormant-phone.png"
+    },
+    {
+      "name": "08-upper-dormant",
+      "viewport": "tablet",
+      "width": 768,
+      "captured_height": 1671,
+      "page_horizontal_overflow_px": 0,
+      "file": "08-upper-dormant-tablet.png"
+    },
+    {
+      "name": "08-upper-dormant",
+      "viewport": "desktop",
+      "width": 1440,
+      "captured_height": 1458,
+      "page_horizontal_overflow_px": 0,
+      "file": "08-upper-dormant-desktop.png"
+    },
+    {
+      "name": "09-calendar",
+      "viewport": "phone",
+      "width": 390,
+      "captured_height": 1214,
+      "page_horizontal_overflow_px": 0,
+      "file": "09-calendar-phone.png"
+    },
+    {
+      "name": "09-calendar",
+      "viewport": "tablet",
+      "width": 768,
+      "captured_height": 1235,
+      "page_horizontal_overflow_px": 0,
+      "file": "09-calendar-tablet.png"
+    },
+    {
+      "name": "09-calendar",
+      "viewport": "desktop",
+      "width": 1440,
+      "captured_height": 1049,
+      "page_horizontal_overflow_px": 0,
+      "file": "09-calendar-desktop.png"
+    },
+    {
+      "name": "10-outlook",
+      "viewport": "phone",
+      "width": 390,
+      "captured_height": 2542,
+      "page_horizontal_overflow_px": 0,
+      "file": "10-outlook-phone.png"
+    },
+    {
+      "name": "10-outlook",
+      "viewport": "tablet",
+      "width": 768,
+      "captured_height": 1877,
+      "page_horizontal_overflow_px": 0,
+      "file": "10-outlook-tablet.png"
+    },
+    {
+      "name": "10-outlook",
+      "viewport": "desktop",
+      "width": 1440,
+      "captured_height": 1826,
+      "page_horizontal_overflow_px": 0,
+      "file": "10-outlook-desktop.png"
+    },
+    {
+      "name": "11-supplier-performance",
+      "viewport": "phone",
+      "width": 390,
+      "captured_height": 1411,
+      "page_horizontal_overflow_px": 0,
+      "file": "11-supplier-performance-phone.png"
+    },
+    {
+      "name": "11-supplier-performance",
+      "viewport": "tablet",
+      "width": 768,
+      "captured_height": 1157,
+      "page_horizontal_overflow_px": 0,
+      "file": "11-supplier-performance-tablet.png"
+    },
+    {
+      "name": "11-supplier-performance",
+      "viewport": "desktop",
+      "width": 1440,
+      "captured_height": 1096,
+      "page_horizontal_overflow_px": 0,
+      "file": "11-supplier-performance-desktop.png"
+    }
+  ],
+  "user": {
+    "id": 24,
+    "name": "Evidence Seller",
+    "email": "evidence-stage3-1791979315174@nexus.local",
+    "role": "seller",
+    "created_at": "2026-10-14T12:01:55.314Z"
+  },
+  "seller": "evidence-stage3-1791979315174@nexus.local",
+  "products": {
+    "Evidence Mug": 76414,
+    "Evidence Pin": 76415,
+    "Evidence Vase": 76416,
+    "Evidence Jar": 76417
+  },
+  "upper_Evidence Mug": {
+    "status": "available",
+    "reason": null,
+    "estimates": [
+      {
+        "cell": "regular|7|0.8",
+        "method": "U0",
+        "upper": 30.220145313187977,
+        "forecast": 23.556867599487305
+      },
+      {
+        "cell": "regular|7|0.9",
+        "method": "U0",
+        "upper": 34.91118345662787,
+        "forecast": 23.556867599487305
+      },
+      {
+        "cell": "regular|28|0.8",
+        "method": "U0",
+        "upper": 111.9561631473845,
+        "forecast": 89.18592643737793
+      },
+      {
+        "cell": "regular|28|0.9",
+        "method": "U0",
+        "upper": 125.98875165615995,
+        "forecast": 89.18592643737793
+      }
+    ]
+  },
+  "upper_Evidence Pin": {
+    "status": "available",
+    "reason": null,
+    "estimates": [
+      {
+        "cell": "rare|7|0.8",
+        "method": "U3",
+        "upper": 2,
+        "forecast": 0.8327510097976174
+      },
+      {
+        "cell": "rare|7|0.9",
+        "method": "U3",
+        "upper": 2,
+        "forecast": 0.8327510097976174
+      },
+      {
+        "cell": "rare|28|0.8",
+        "method": "U0",
+        "upper": 7.334100026471283,
+        "forecast": 3.3310040391904696
+      },
+      {
+        "cell": "rare|28|0.9",
+        "method": "U1",
+        "upper": 9.301608419468124,
+        "forecast": 3.3310040391904696
+      }
+    ]
+  },
+  "upper_Evidence Jar": {
+    "status": "unavailable",
+    "reason": "short_history",
+    "estimates": []
+  },
+  "upper_Evidence Vase": {
+    "status": "unavailable",
+    "reason": "dormant",
+    "estimates": []
+  },
+  "stale_refusal": {
+    "status": 409,
+    "body": {
+      "error": "recommendation_stale",
+      "message": "Something this recommendation depends on has changed since it was shown. Review the recomputed result before creating a draft.",
+      "current": {
+        "product": {
+          "id": 76414,
+          "name": "Evidence Mug",
+          "category": "Home"
+        },
+        "recommendation_id": 33,
+        "inputs_sha256": "7c5266dfeafd5491528391f37cf6ca645dace78f0eae7b93204bc0fc63dd70ad",
+        "draft_order": null,
+        "engine_version": "replenishment-2",
+        "product_id": 76414,
+        "planning_date": "2026-10-14",
+        "timezone": "Asia/Karachi",
+        "scenario": null,
+        "status": "provisional",
+        "actionable": true,
+        "stock": {
+          "state": "last_known",
+          "on_hand": 30,
+          "counted_at": "2026-10-14T11:01:55.756Z",
+          "count_business_date": "2026-10-14",
+          "count_age_days": 0,
+          "stale_after_days": 7,
+          "movement_tracking": "absent",
+          "legacy_quantity": null,
+          "reconciliation": {
+            "state": "none",
+            "reason": null,
+            "same_instant_events": 0,
+            "events_without_count": 0,
+            "events": []
+          }
+        },
+        "sales_since_count": null,
+        "forecast": {
+          "status": "ok",
+          "origin": "2026-10-14",
+          "history_end": "2026-10-13",
+          "lag_days": 0,
+          "lag_state": "aligned",
+          "max_lag_days": 7,
+          "method": "shared_model",
+          "method_label": "Shared forecasting model (v2)",
+          "pattern_group": "regular",
+          "tier": "model",
+          "usable_days": 210,
+          "models_release": "nexus-v2-shared-20261008",
+          "totals": {
+            "7": 23.56,
+            "28": 89.19
+          },
+          "blocks": [
+            {
+              "horizon_days": 7,
+              "start": "2026-10-14",
+              "end": "2026-10-20",
+              "total": 23.56
+            },
+            {
+              "horizon_days": 28,
+              "start": "2026-10-14",
+              "end": "2026-11-10",
+              "total": 89.19
+            }
+          ],
+          "horizons_consistent": true,
+          "dates_timezone": "Asia/Karachi"
+        },
+        "incoming": {
+          "scheduled": [],
+          "overdue": [
+            {
+              "po_id": 9,
+              "quantity": 12,
+              "expected_arrival": "2026-10-01",
+              "status": "ordered",
+              "days_overdue": 13
+            }
+          ],
+          "undated": [],
+          "approved_not_sent": [],
+          "drafts": [],
+          "counted_units": 0,
+          "uncertain_units": 12
+        },
+        "supplier": {
+          "state": "ok",
+          "id": 7,
+          "name": "Evidence Supplier",
+          "source": "only_active_link",
+          "lead_time_days": 7,
+          "pack_size": 1,
+          "min_order_qty": 1,
+          "unit_cost": 4,
+          "currency": "USD"
+        },
+        "policy": {
+          "review_period_days": 7,
+          "review_period_source": "default",
+          "safety_stock_units": 0,
+          "safety_stock_source": "default"
+        },
+        "outlook": {
+          "7": {
+            "horizon_days": 7,
+            "start": "2026-10-14",
+            "end": "2026-10-20",
+            "covered_days": 7,
+            "complete": true,
+            "label": "7 days",
+            "demand": 20.19,
+            "incoming_counted": 0,
+            "stock_at_end": 9.81,
+            "shortage_units": 0,
+            "runs_short": false
+          },
+          "28": {
+            "horizon_days": 28,
+            "start": "2026-10-14",
+            "end": "2026-11-10",
+            "covered_days": 28,
+            "complete": true,
+            "label": "28 days",
+            "demand": 93.32,
+            "incoming_counted": 0,
+            "stock_at_end": 0,
+            "shortage_units": 63.32,
+            "runs_short": true
+          },
+          "basis": "A1",
+          "approximate_cover_days": 9,
+          "cover_note": null
+        },
+        "outlook_withheld": null,
+        "before_arrival": {
+          "order_expected": "2026-10-23",
+          "order_usable_from": "2026-10-24",
+          "usable_day": 11,
+          "stock_when_order_usable": 0,
+          "shortage_units": 0.82,
+          "runs_short": true
+        },
+        "suggestion": {
+          "window": {
+            "start": "2026-10-24",
+            "end": "2026-10-30",
+            "days": 7,
+            "first_day": 11,
+            "last_day": 17
+          },
+          "stock_when_order_usable": 0,
+          "demand_in_window": 28.13,
+          "incoming_in_window": 0,
+          "needed_to_avoid_shortage": 28.13,
+          "needed_for_safety_stock": 28.13,
+          "binding": "shortage_inside_window",
+          "binding_detail": {
+            "kind": "window_end"
+          },
+          "raw_need": 28.13,
+          "raw_units": 29,
+          "after_minimum": 29,
+          "minimum_adjustment": 0,
+          "pack_adjustment": 0,
+          "quantity": 29,
+          "cost": {
+            "amount": 116,
+            "currency": "USD"
+          },
+          "after_order": {
+            "quantity": 29,
+            "usable_from": "2026-10-24",
+            "shortage_in_window": 0,
+            "lowest_stock_in_window": 0.87,
+            "stock_at_window_end": 0.87,
+            "safety_stock_met": true,
+            "shortage_before_usable": 0.82,
+            "shortage_after_window_within_forecast": 33.5,
+            "outlook": {
+              "7": {
+                "horizon_days": 7,
+                "start": "2026-10-14",
+                "end": "2026-10-20",
+                "covered_days": 7,
+                "complete": true,
+                "label": "7 days",
+                "demand": 20.19,
+                "incoming_counted": 0,
+                "stock_at_end": 9.81,
+                "shortage_units": 0,
+                "runs_short": false
+              },
+              "28": {
+                "horizon_days": 28,
+                "start": "2026-10-14",
+                "end": "2026-11-10",
+                "covered_days": 28,
+                "complete": true,
+                "label": "28 days",
+                "demand": 93.32,
+                "incoming_counted": 29,
+                "stock_at_end": 0,
+                "shortage_units": 34.32,
+                "runs_short": true
+              }
+            }
+          }
+        },
+        "suggestion_withheld": null,
+        "alternative_if_uncertain_incoming_arrives": {
+          "label": "If the overdue and undated deliveries (12 unit(s)) are usable tomorrow",
+          "uncertain_units": 12,
+          "raw_need": 16.94,
+          "raw_units": 17,
+          "minimum_adjustment": 0,
+          "pack_adjustment": 0,
+          "quantity": 17
+        },
+        "sales_adjusted_scenario": null,
+        "draft_blocked": null,
+        "assumptions": [
+          {
+            "code": "A1",
+            "text": "The 7- and 28-day forecast totals are spread evenly inside each block (forecast days 1–7 and 8–28). The forecast gives no daily figures, so the day on which stock runs out is not known precisely."
+          },
+          {
+            "code": "A3",
+            "text": "Demand that cannot be met from stock is lost, not back-ordered."
+          },
+          {
+            "code": "A4",
+            "text": "Today counts as a full day of demand still to come; nothing assumes today's sales are finished."
+          },
+          {
+            "code": "C1",
+            "text": "On a closure day you entered, there are no sales and nothing is received; a delivery due then is usable from the next open day."
+          },
+          {
+            "code": "C2",
+            "text": "A demand change you entered multiplies the forecast on its dates. It is your assumption, not a prediction."
+          },
+          {
+            "code": "C3",
+            "text": "A supplier delay you entered adds its days to an order whose expected arrival falls inside its dates."
+          }
+        ],
+        "limitations": [
+          {
+            "code": "stock_last_known",
+            "text": "Stock is the last-known position: counted on 2026-10-14 (0 day(s) ago) plus recorded movements. No shipment feed is declared, so sales since the count are not subtracted."
+          },
+          {
+            "code": "review_period_default",
+            "text": "The review period of 7 days is the default, not your setting. The order is sized to last until the next review 7 days after it arrives."
+          },
+          {
+            "code": "no_safety_stock",
+            "text": "No safety stock is set, so the suggestion covers expected demand only. Actual sales above the forecast would cause a shortage."
+          }
+        ],
+        "warnings": [
+          {
+            "code": "incoming_overdue",
+            "po_id": 9,
+            "text": "PO-9: 12 unit(s) were expected on 2026-10-01 and are not received. They are not counted. Check with the supplier before ordering again."
+          }
+        ],
+        "missing": [],
+        "indicative_reasons": [],
+        "calendar": {
+          "country": "US",
+          "country_confirmed": true,
+          "holidays": [],
+          "holiday_effect": "not_known",
+          "holiday_effect_label": "Effect unknown",
+          "holiday_note": "Holidays are shown for planning; their effect on your sales is not known, so the forecast is not changed for them. Enter a closure or a demand change if you expect one.",
+          "applied": [
+            {
+              "id": 11,
+              "version": 1,
+              "kind": "closure",
+              "title": "Stocktake",
+              "start_date": "2026-10-18",
+              "end_date": "2026-10-18",
+              "scope": "all",
+              "demand_change_pct": null,
+              "extra_delay_days": null,
+              "effect": "closure",
+              "label": "declared_by_seller",
+              "planning_days": 1
+            },
+            {
+              "id": 10,
+              "version": 1,
+              "kind": "demand_scenario",
+              "title": "Back-to-school rush",
+              "start_date": "2026-10-23",
+              "end_date": "2026-10-28",
+              "scope": "all",
+              "demand_change_pct": 40,
+              "extra_delay_days": null,
+              "effect": "demand_change",
+              "label": "assumed_by_seller",
+              "planning_days": 6
+            }
+          ],
+          "promotions_without_change": [],
+          "supplier_delay": {
+            "label": "declared_by_seller",
+            "lead_time_days": 7,
+            "extra_days": 2,
+            "effective_lead_time_days": 9,
+            "entries": [
+              12
+            ],
+            "text": "Lead time 7 + 2 day(s) from the supplier delay you entered = 9 day(s)."
+          },
+          "incoming_in_supplier_delay": [],
+          "declared_lead_time_max_days": 10,
+          "late_delivery_scenario": {
+            "label": "If the order arrives at the supplier's declared slowest time (10 day(s) + 2 delay)",
+            "lead_time_days": 12,
+            "usable_from": "2026-10-27",
+            "shortage_before_usable": 13.94,
+            "quantity": 25,
+            "raw_units": 25
+          },
+          "order_by": {
+            "date": null,
+            "first_short_day": "2026-10-23",
+            "text": "Even an order placed today is usable only after the first projected shortage on 2026-10-23."
+          },
+          "quantity_without_seller_scenarios": {
+            "quantity": 22,
+            "raw_units": 22,
+            "label": "Without your demand changes (forecast only; closures still applied)"
+          }
+        },
+        "explanation": [
+          {
+            "step": 1,
+            "title": "Stock",
+            "text": "Starting stock is 30 units: the count of 2026-10-14 plus movements recorded since. It is a last-known figure, not a live one."
+          },
+          {
+            "step": 2,
+            "title": "Forecast",
+            "text": "Demand comes from the shared forecasting model (release nexus-v2-shared-20261008): 23.6 units for 2026-10-14 to 2026-10-20 and 89.2 units for 2026-10-14 to 2026-11-10. Confirmed sales end yesterday (2026-10-13), so the forecast starts today."
+          },
+          {
+            "step": 3,
+            "title": "Outlook",
+            "text": "Next 7 days (2026-10-14 to 2026-10-20): demand about 20.2, stock at the end about 9.8, no shortage. Next 28 days (2026-10-14 to 2026-11-10): demand about 93.3, stock at the end about 0, about 63.3 unit(s) short. The totals are spread evenly inside each forecast block (A1). Stock lasts roughly 9 day(s) under A1 — an approximation, not a date."
+          },
+          {
+            "step": 4,
+            "title": "Incoming orders",
+            "text": "not counted (overdue): PO-9: 12 units, expected 2026-10-01."
+          },
+          {
+            "step": 5,
+            "title": "Before a new order arrives",
+            "text": "With a lead time of 7 day(s), an order placed today is expected on 2026-10-23 and usable from 2026-10-24. Before then about 0.8 unit(s) of demand cannot be met. A new order cannot prevent this; ask the supplier about a faster delivery."
+          },
+          {
+            "step": 6,
+            "title": "Order quantity",
+            "text": "To avoid a shortage on every day of the review window (2026-10-24 to 2026-10-30), 28.1 more are needed. Whole units: 29 → 29 (USD 116). With this order: no shortage inside the window, lowest stock about 0.9, about 0.9 at the window's end."
+          },
+          {
+            "step": 7,
+            "title": "If uncertain deliveries arrive",
+            "text": "If the overdue and undated deliveries (12 unit(s)) are usable tomorrow, the quantity would be 17. The main suggestion does not assume they arrive."
+          },
+          {
+            "step": 8,
+            "title": "Calendar",
+            "text": "Closed 2026-10-18 to 2026-10-18 (\"Stocktake\"): no sales and nothing received on 1 planning day(s). Your assumption \"Back-to-school rush\": demand +40% on 6 planning day(s) (2026-10-23 to 2026-10-28). This is not a prediction. Lead time 7 + 2 day(s) from the supplier delay you entered = 9 day(s). Without your demand changes the quantity would be 22. If the order arrives at the supplier's declared slowest time (10 day(s) + 2 delay): usable from 2026-10-27, about 13.9 unit(s) short before then, quantity 25. Even an order placed today is usable only after the first projected shortage on 2026-10-23."
+          },
+          {
+            "step": 9,
+            "title": "Assumptions",
+            "text": "A1: The 7- and 28-day forecast totals are spread evenly inside each block (forecast days 1–7 and 8–28). The forecast gives no daily figures, so the day on which stock runs out is not known precisely. A3: Demand that cannot be met from stock is lost, not back-ordered. A4: Today counts as a full day of demand still to come; nothing assumes today's sales are finished. C1: On a closure day you entered, there are no sales and nothing is received; a delivery due then is usable from the next open day. C2: A demand change you entered multiplies the forecast on its dates. It is your assumption, not a prediction. C3: A supplier delay you entered adds its days to an order whose expected arrival falls inside its dates."
+          }
+        ]
+      }
+    },
+    "fingerprint_changed": true
+  },
+  "outlook_labels": {
+    "applied": [
+      [
+        "closure",
+        "declared_by_seller"
+      ],
+      [
+        "demand_change",
+        "assumed_by_seller"
+      ]
+    ],
+    "supplier_delay": "declared_by_seller",
+    "holiday_effect_label": "Effect unknown"
+  },
+  "finished_at": "2026-10-14T12:03:16.880Z"
+}

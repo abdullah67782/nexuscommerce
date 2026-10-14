@@ -1,0 +1,245 @@
+{
+  "base_r14": {
+    "7": {
+      "all": 40.70862911763406,
+      "event": 40.95812958914491,
+      "non_event": 40.56885456375192,
+      "bias_event": -1.3953280981843983,
+      "bias_all": -2.1909684550674178
+    },
+    "28": {
+      "all": 32.9490954011798,
+      "event": 32.95895173382878,
+      "non_event": 32.93295907857072,
+      "bias_event": -2.5458291786982787,
+      "bias_all": -2.809690514900997
+    }
+  },
+  "selected": {
+    "level": "pooled+category+store",
+    "alpha": 10.0,
+    "converged": true,
+    "parameters": 2100,
+    "wape_all_7": 40.70204011065783,
+    "wape_event_7": 40.94904389093365,
+    "wape_non_event_7": 40.563664247132635,
+    "bias_event_7": -1.5511676313332659,
+    "rel_event_improvement_7": 0.0002218289336548793,
+    "wape_all_28": 32.982758271221904,
+    "wape_event_28": 32.99099344719624,
+    "wape_non_event_28": 32.96927602980445,
+    "bias_event_28": -2.4794086757669636,
+    "rel_event_improvement_28": -0.0009721702809670363,
+    "score": -0.0003751706736560785
+  },
+  "selected_intervals": {
+    "7": {
+      "date_block_95": [
+        -0.006851100796634273,
+        0.0069330587160187146
+      ],
+      "product_cluster_95": [
+        -0.003927298788202229,
+        0.004007365369019515
+      ]
+    },
+    "28": {
+      "date_block_95": [
+        -0.004086364636881457,
+        0.001727539232120922
+      ],
+      "product_cluster_95": [
+        -0.004679761427672751,
+        0.0028833598150342114
+      ]
+    }
+  },
+  "usable_events": [
+    "Chanukah End",
+    "Christmas",
+    "Cinco De Mayo",
+    "ColumbusDay",
+    "Easter",
+    "Eid al-Fitr",
+    "EidAlAdha",
+    "Father's day",
+    "Halloween",
+    "IndependenceDay",
+    "LaborDay",
+    "LentStart",
+    "LentWeek2",
+    "MartinLutherKingDay",
+    "MemorialDay",
+    "Mother's day",
+    "NBAFinalsEnd",
+    "NBAFinalsStart",
+    "NewYear",
+    "OrthodoxChristmas",
+    "OrthodoxEaster",
+    "Pesach End",
+    "PresidentsDay",
+    "Purim End",
+    "Ramadan starts",
+    "StPatricksDay",
+    "SuperBowl",
+    "Thanksgiving",
+    "ValentinesDay",
+    "VeteransDay"
+  ],
+  "fit_occurrences": {
+    "Chanukah End": [
+      "2012-12-16",
+      "2013-12-05"
+    ],
+    "Christmas": [
+      "2012-12-25",
+      "2013-12-25"
+    ],
+    "Cinco De Mayo": [
+      "2013-05-05",
+      "2014-05-05"
+    ],
+    "ColumbusDay": [
+      "2012-10-08",
+      "2013-10-14"
+    ],
+    "Easter": [
+      "2013-03-31",
+      "2014-04-20"
+    ],
+    "Eid al-Fitr": [
+      "2012-08-19",
+      "2013-08-08"
+    ],
+    "EidAlAdha": [
+      "2012-10-26",
+      "2013-10-15"
+    ],
+    "Father's day": [
+      "2012-06-17",
+      "2013-06-16"
+    ],
+    "Halloween": [
+      "2012-10-31",
+      "2013-10-31"
+    ],
+    "IndependenceDay": [
+      "2012-07-04",
+      "2013-07-04"
+    ],
+    "LaborDay": [
+      "2012-09-03",
+      "2013-09-02"
+    ],
+    "LentStart": [
+      "2013-02-13",
+      "2014-03-05"
+    ],
+    "LentWeek2": [
+      "2013-02-20",
+      "2014-03-12"
+    ],
+    "MartinLutherKingDay": [
+      "2013-01-21",
+      "2014-01-20"
+    ],
+    "MemorialDay": [
+      "2013-05-27",
+      "2014-05-26"
+    ],
+    "Mother's day": [
+      "2013-05-12",
+      "2014-05-11"
+    ],
+    "NBAFinalsEnd": [
+      "2012-06-21",
+      "2013-06-20"
+    ],
+    "NBAFinalsStart": [
+      "2012-06-12",
+      "2013-06-06"
+    ],
+    "NewYear": [
+      "2013-01-01",
+      "2014-01-01"
+    ],
+    "OrthodoxChristmas": [
+      "2013-01-07",
+      "2014-01-07"
+    ],
+    "OrthodoxEaster": [
+      "2013-05-05",
+      "2014-04-20"
+    ],
+    "Pesach End": [
+      "2013-04-02",
+      "2014-04-22"
+    ],
+    "PresidentsDay": [
+      "2013-02-18",
+      "2014-02-17"
+    ],
+    "Purim End": [
+      "2013-02-24",
+      "2014-03-16"
+    ],
+    "Ramadan starts": [
+      "2012-07-20",
+      "2013-07-09"
+    ],
+    "StPatricksDay": [
+      "2013-03-17",
+      "2014-03-17"
+    ],
+    "SuperBowl": [
+      "2013-02-03",
+      "2014-02-02"
+    ],
+    "Thanksgiving": [
+      "2012-11-22",
+      "2013-11-28"
+    ],
+    "ValentinesDay": [
+      "2013-02-14",
+      "2014-02-14"
+    ],
+    "VeteransDay": [
+      "2012-11-11",
+      "2013-11-11"
+    ]
+  },
+  "sel_occurrences_primary": {
+    "Christmas": [
+      "2014-12-25"
+    ],
+    "Easter": [
+      "2015-04-05"
+    ],
+    "MemorialDay": [
+      "2015-05-25"
+    ],
+    "NewYear": [
+      "2015-01-01"
+    ],
+    "Thanksgiving": [
+      "2014-11-27"
+    ]
+  },
+  "sel_counts": {
+    "7": {
+      "windows": 96881,
+      "event_windows": 35411,
+      "series": 3273
+    },
+    "28": {
+      "windows": 87065,
+      "event_windows": 54714,
+      "series": 3271
+    }
+  },
+  "rows_not_adjusted_F_below_1": 31991,
+  "windows_with_more_than_one_event": {
+    "7": 27,
+    "28": 30
+  }
+}

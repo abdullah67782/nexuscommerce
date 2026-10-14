@@ -19,6 +19,11 @@ const MIGRATIONS_DIR = path.join(__dirname, '..', 'migrations');
 const LOCK_KEY = 74010001; // pg_advisory_lock key reserved for migrations
 
 const sha256 = (text) => crypto.createHash('sha256').update(text).digest('hex');
+// Line endings are not content: git (`* text=auto`) checks files out with CRLF on
+// Windows and LF elsewhere, so a checkout can change the bytes of an unchanged
+// migration. The checksum is taken over LF-normalised text; a checksum recorded
+// from the raw bytes (older installs, or a CRLF checkout) is still accepted.
+const normalise = (text) => text.replace(/\r\n/g, '\n');
 
 function listMigrations(dir = MIGRATIONS_DIR) {
   return fs.readdirSync(dir)
@@ -32,7 +37,8 @@ function listMigrations(dir = MIGRATIONS_DIR) {
         version: Number(file.slice(0, 3)),
         name: file.replace(/\.sql$/, ''),
         sql,
-        checksum: sha256(sql),
+        checksum: sha256(normalise(sql)),
+        rawChecksum: sha256(sql),
         down: fs.existsSync(downPath) ? fs.readFileSync(downPath, 'utf8') : null,
       };
     });
@@ -62,7 +68,7 @@ async function status(db, dir = MIGRATIONS_DIR) {
   const doneByVersion = new Map(done.map(r => [r.version, r]));
   const changed = done.filter(r => {
     const f = files.find(x => x.version === r.version);
-    return f && f.checksum !== r.checksum;
+    return f && r.checksum !== f.checksum && r.checksum !== f.rawChecksum;
   }).map(r => r.name);
   const missingFiles = done.filter(r => !files.some(f => f.version === r.version)).map(r => r.name);
   const pending = files.filter(f => !doneByVersion.has(f.version));

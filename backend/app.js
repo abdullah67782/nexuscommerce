@@ -10,6 +10,10 @@ const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
 const { router: forecastRoutes, finetuneRouter } = require('./routes/forecast');
 const storeRoutes = require('./routes/store');
+const inventoryRoutes = require('./routes/inventory');
+const purchasingRoutes = require('./routes/purchasing');
+const replenishmentRoutes = require('./routes/replenishment');
+const calendarRoutes = require('./routes/calendar');
 
 const app = express();
 
@@ -28,6 +32,10 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api', replenishmentRoutes); // Stage 2: /inventory/replenishment…, /purchase-orders/from-recommendation
+app.use('/api/calendar', calendarRoutes); // Stage 3a: store calendar, seller scenarios, supplier delays
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api', purchasingRoutes);
 app.use('/api', dataRoutes);
 app.use('/api/forecast', forecastRoutes);
 app.use('/api/finetune', finetuneRouter);

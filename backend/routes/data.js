@@ -1,7 +1,4 @@
 const express = require('express');
-const multer = require('multer');
-const csvParser = require('csv-parser');
-const XLSX = require('xlsx');
 const fs = require('fs');
 const path = require('path');
 const pool = require('../config/db');
@@ -11,78 +8,12 @@ const {
   replayOf, insertSales, addVersion, recomputeFreshness, productResolver, freshnessScore,
   defaultTimezone, isValidTimezone,
 } = require('../lib/imports');
+const { revokeBatch } = require('../lib/stockLedger');
 const { CoverageError, parseCoverage, checkCoverage, recordCoverage, revokeForImport, confirmExistingImport } = require('../lib/coverage');
 
 const router = express.Router();
 
-// ─── Multer Configuration ────────────────────────────────────────────────────
-const uploadsDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
-});
-
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = [
-    'text/csv',
-    'application/json',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-excel',
-  ];
-  const allowedExts = ['.csv', '.json', '.xlsx', '.xls'];
-  const ext = path.extname(file.originalname).toLowerCase();
-  (allowedTypes.includes(file.mimetype) || allowedExts.includes(ext))
-    ? cb(null, true)
-    : cb(new Error('Only CSV, JSON, and Excel (.xlsx) files are supported'), false);
-};
-
-const upload = multer({ storage, fileFilter, limits: { fileSize: 50 * 1024 * 1024 } });
-
-// ─── File Parsers ────────────────────────────────────────────────────────────
-
-function parseCSV(filePath) {
-  return new Promise((resolve, reject) => {
-    const rows = [];
-    fs.createReadStream(filePath)
-      .pipe(csvParser())
-      .on('data', (row) => rows.push(row))
-      .on('end', () => resolve(rows))
-      .on('error', (err) => reject(err));
-  });
-}
-
-function parseJSON(filePath) {
-  return new Promise((resolve, reject) => {
-    try {
-      const raw = fs.readFileSync(filePath, 'utf-8');
-      const data = JSON.parse(raw);
-      resolve(Array.isArray(data) ? data : [data]);
-    } catch (err) { reject(err); }
-  });
-}
-
-function parseExcel(filePath) {
-  return new Promise((resolve, reject) => {
-    try {
-      const workbook = XLSX.readFile(filePath);
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      resolve(XLSX.utils.sheet_to_json(sheet));
-    } catch (err) { reject(err); }
-  });
-}
-
-async function parseFile(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
-  switch (ext) {
-    case '.csv':  return parseCSV(filePath);
-    case '.json': return parseJSON(filePath);
-    case '.xlsx':
-    case '.xls':  return parseExcel(filePath);
-    default: throw new Error(`Unsupported file format: ${ext}`);
-  }
-}
+const { upload, parseFile } = require('../lib/files');
 
 // ─── Data Cleaning Utilities ─────────────────────────────────────────────────
 // Every row keeps its original data-row number (1 = first row after the
@@ -91,6 +22,7 @@ async function parseFile(filePath) {
 // removed for being identical: genuine identical orders are kept, and replays
 // of the same file are stopped by import identity instead (lib/imports.js).
 const ROW = Symbol('sourceRow');
+const STOCK_COLUMNS = ['stock_level', 'reorder_threshold'];
 
 function normalizeKeys(rows) {
   return rows.map((row, i) => {
@@ -324,23 +256,6 @@ router.post('/data/upload', authMiddleware, upload.single('file'), async (req, r
       } else {
         withoutDate++;
       }
-
-      // Inventory snapshot: the last row for a product wins (unchanged behaviour).
-      // A missing stock level leaves the stored one unchanged.
-      const stockLevel = parseFloat(row.stock_level);
-      if (!isNaN(stockLevel)) {
-        const reorder = parseFloat(row.reorder_threshold) || 10;
-        const inv = await client.query('SELECT id FROM inventory WHERE product_id = $1', [productId]);
-        if (inv.rows.length) {
-          await client.query(
-            'UPDATE inventory SET stock_level = $1, reorder_threshold = $2, updated_at = NOW() WHERE product_id = $3',
-            [stockLevel, reorder, productId]);
-        } else {
-          await client.query(
-            'INSERT INTO inventory (product_id, stock_level, reorder_threshold) VALUES ($1, $2, $3)',
-            [productId, stockLevel, reorder]);
-        }
-      }
     }
 
     // Large orders are kept; they are flagged for the seller to review.
@@ -389,6 +304,8 @@ router.post('/data/upload', authMiddleware, upload.single('file'), async (req, r
       sellerId, importId: uploadId, added: result.inserted, skipped: result.alreadyImported, rejected,
     });
     const total = report.total_records;
+    // D1: sales files never write stock. Stock columns are reported, not used.
+    const stockColumns = STOCK_COLUMNS.filter(c => cleanedRows.some(r => c in r));
     const qualityScore = total > 0 ? Number((((total - rejected) / total) * 100).toFixed(2)) : 100;
     const summary = {
       message:            'File uploaded and processed successfully',
@@ -406,6 +323,12 @@ router.post('/data/upload', authMiddleware, upload.single('file'), async (req, r
       source_id:          source.id,
       source_timezone:    source.timezone,
       coverage:           coverageSummary,
+      stock_columns_ignored: stockColumns.length ? {
+        columns: stockColumns,
+        message: 'Stock levels and reorder thresholds in sales files are not used: a sales export does not say when '
+          + 'stock was counted. Record stock on the Inventory page (stock count form or stock-count file) and set '
+          + 'thresholds there.',
+      } : null,
       date_help: invalidDates.length ? {
         message: `${invalidDates.length} row(s) have dates that could not be read safely. Dates such as 03/04/2026 are `
           + 'ambiguous (3 April or March 4?), so they are not guessed. Write dates as YYYY-MM-DD, for example 2026-04-03.',
@@ -490,7 +413,7 @@ router.get('/data/quality', authMiddleware, async (req, res) => {
                 COALESCE(uv.rows_rejected, 0) AS rejected
          FROM data_uploads du
          LEFT JOIN upload_versions uv ON uv.upload_id = du.id
-         WHERE du.uploaded_by = $1
+         WHERE du.uploaded_by = $1 AND du.source <> 'stock_count'
          ORDER BY du.uploaded_at DESC LIMIT 1`;
     const params = [req.user.id];
     const result = await pool.query(query, params);
@@ -610,36 +533,71 @@ router.post('/data/rollback/:uploadId', authMiddleware, async (req, res) => {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: 'This upload is already rolled back' });
     }
+    // Sales imports and stock-count files share ONE version sequence, so a newer
+    // version of either kind must be rolled back first.
     const mostRecent = await client.query(
-      `SELECT upload_id FROM upload_versions
-       WHERE seller_id = $1 AND is_rolled_back = false
-       ORDER BY version_number DESC LIMIT 1`,
+      `SELECT uv.upload_id, uv.version_number, du.source FROM upload_versions uv
+       JOIN data_uploads du ON du.id = uv.upload_id
+       WHERE uv.seller_id = $1 AND uv.is_rolled_back = false
+       ORDER BY uv.version_number DESC LIMIT 1`,
       [sellerId]);
     if (!mostRecent.rows.length || mostRecent.rows[0].upload_id !== uploadId) {
       await client.query('ROLLBACK');
-      return res.status(400).json({ error: 'Only the most recent upload can be rolled back' });
+      const latest = mostRecent.rows[0];
+      const kind = (src) => (src === 'stock_count' ? 'stock-count file' : 'sales import');
+      return res.status(400).json({
+        error: 'Only the most recent upload can be rolled back',
+        message: latest
+          ? `Version #${latest.version_number} (a ${kind(latest.source)}) is newer. Sales imports and stock-count files `
+            + 'share one version history, and only the latest active version can be rolled back. Roll back newer versions first.'
+          : 'Only the most recent upload can be rolled back.',
+        latest_version: latest ? { version_number: latest.version_number, upload_id: latest.upload_id, kind: kind(latest.source) } : null,
+      });
     }
 
-    const delSales = await client.query('DELETE FROM sales WHERE upload_id = $1 RETURNING id', [uploadId]);
+    const { rows: kindRows } = await client.query('SELECT source FROM data_uploads WHERE id = $1', [uploadId]);
+    const isStockCount = kindRows[0]?.source === 'stock_count';
+    let delSales = { rows: [] };
+    let snapshotsRevoked = 0;
+    if (isStockCount) {
+      // A stock-count file: its counts are revoked (kept as evidence, no longer
+      // used); counts it had superseded become active again. No sales or products.
+      const { rows: batches } = await client.query(
+        "SELECT id FROM stock_snapshot_batches WHERE seller_id = $1 AND upload_id = $2 AND status = 'active'", [sellerId, uploadId]);
+      for (const b of batches) {
+        snapshotsRevoked += await revokeBatch(client, { sellerId, userId: sellerId, batchId: b.id, reason: 'rollback' });
+      }
+    } else {
+      delSales = await client.query('DELETE FROM sales WHERE upload_id = $1 RETURNING id', [uploadId]);
 
-    // Products created by this import that no longer have any sales. Their
-    // inventory and forecast rows reference them, so remove those first.
-    const orphanProducts = `SELECT id FROM products
-       WHERE upload_id = $1 AND user_id = $2
-         AND id NOT IN (SELECT DISTINCT product_id FROM sales WHERE product_id IS NOT NULL)`;
-    await client.query(`DELETE FROM inventory WHERE product_id IN (${orphanProducts})`, [uploadId, sellerId]);
-    await client.query(`DELETE FROM forecasts WHERE product_id IN (${orphanProducts})`, [uploadId, sellerId]);
-    await client.query(`DELETE FROM products WHERE id IN (${orphanProducts})`, [uploadId, sellerId]);
+      // Products created by this import that no longer have any sales — unless
+      // stock or purchasing facts refer to them (counts, movements, settings,
+      // legacy inventory rows, supplier terms, purchase-order lines, logged
+      // replenishment recommendations): those are evidence and the product is kept.
+      const orphanProducts = `SELECT p.id FROM products p
+         WHERE p.upload_id = $1 AND p.user_id = $2
+           AND NOT EXISTS (SELECT 1 FROM sales s WHERE s.product_id = p.id)
+           AND NOT EXISTS (SELECT 1 FROM stock_snapshots ss WHERE ss.product_id = p.id)
+           AND NOT EXISTS (SELECT 1 FROM stock_movements sm WHERE sm.product_id = p.id)
+           AND NOT EXISTS (SELECT 1 FROM inventory_policies ip WHERE ip.product_id = p.id)
+           AND NOT EXISTS (SELECT 1 FROM inventory i WHERE i.product_id = p.id)
+           AND NOT EXISTS (SELECT 1 FROM product_suppliers ps WHERE ps.product_id = p.id)
+           AND NOT EXISTS (SELECT 1 FROM purchase_order_lines pl WHERE pl.product_id = p.id)
+           AND NOT EXISTS (SELECT 1 FROM replenishment_recommendations rr WHERE rr.product_id = p.id)`;
+      await client.query(`DELETE FROM forecasts WHERE product_id IN (${orphanProducts})`, [uploadId, sellerId]);
+      await client.query(`DELETE FROM products WHERE id IN (${orphanProducts})`, [uploadId, sellerId]);
+    }
 
     await client.query(
       `UPDATE upload_versions SET is_rolled_back = true, rollback_at = NOW()
        WHERE upload_id = $1 AND seller_id = $2`, [uploadId, sellerId]);
     await client.query(`UPDATE data_uploads SET status = 'rolled_back' WHERE id = $1`, [uploadId]);
-    const revoked = await revokeForImport(client, { sellerId, importId: uploadId }); // its coverage no longer holds
+    const revoked = isStockCount ? 0 : await revokeForImport(client, { sellerId, importId: uploadId }); // its coverage no longer holds
 
     await recomputeFreshness(client, sellerId);
     await client.query('COMMIT');
-    res.json({ status: 'success', rolled_back_rows: delSales.rows.length, coverage_revoked: revoked });
+    res.json({ status: 'success', kind: isStockCount ? 'stock_count' : 'sales', rolled_back_rows: delSales.rows.length,
+      coverage_revoked: revoked, stock_counts_revoked: snapshotsRevoked });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
     console.error('Rollback error:', err.message);
@@ -689,12 +647,10 @@ router.get('/data/freshness', authMiddleware, async (req, res) => {
 // ─── GET /api/products ───────────────────────────────────────────────────────
 router.get('/products', authMiddleware, async (req, res) => {
   try {
+    // Stock is not part of a product row any more: see /api/inventory/items.
     const result = await pool.query(
-      `SELECT p.id, p.name, p.category, p.current_price, p.created_at,
-              COALESCE(i.stock_level, 0)        AS stock_level,
-              COALESCE(i.reorder_threshold, 10) AS reorder_threshold
+      `SELECT p.id, p.name, p.category, p.current_price, p.created_at
        FROM products p
-       LEFT JOIN inventory i ON p.id = i.product_id
        WHERE p.user_id = $1
        ORDER BY p.id
        LIMIT 200`,
@@ -707,30 +663,7 @@ router.get('/products', authMiddleware, async (req, res) => {
   }
 });
 
-// ─── GET /api/inventory/alerts ───────────────────────────────────────────────
-router.get('/inventory/alerts', authMiddleware, async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT p.name AS product_name, i.stock_level, i.reorder_threshold,
-             CASE 
-               WHEN i.stock_level = 0 THEN 'critical'
-               WHEN i.stock_level <= i.reorder_threshold / 2 THEN 'high'
-               ELSE 'medium'
-             END as risk_level,
-             'Restock immediately' as recommended_action
-      FROM inventory i
-      JOIN products p ON p.id = i.product_id
-      WHERE i.stock_level <= i.reorder_threshold
-        AND p.user_id = $1
-      ORDER BY i.stock_level ASC
-      LIMIT 10
-    `, [req.user.id]);
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Inventory alerts error:', err.message);
-    res.status(500).json({ error: 'Error fetching inventory alerts' });
-  }
-});
+// /api/inventory/alerts moved to routes/inventory.js (rebuilt on the stock ledger).
 
 // ─── GET /api/sales ──────────────────────────────────────────────────────────
 router.get('/sales', authMiddleware, async (req, res) => {
@@ -782,7 +715,7 @@ router.get('/dashboard/stats', authMiddleware, async (req, res) => {
       pool.query(`SELECT COUNT(*) AS total_sales_records ${ownSales}`, [sellerId]),
       pool.query(`SELECT COALESCE(SUM(s.revenue), 0) AS total_revenue ${ownSales}`, [sellerId]),
       pool.query(
-        'SELECT quality_score FROM data_uploads WHERE uploaded_by = $1 ORDER BY uploaded_at DESC LIMIT 1',
+        "SELECT quality_score FROM data_uploads WHERE uploaded_by = $1 AND source <> 'stock_count' ORDER BY uploaded_at DESC LIMIT 1",
         [sellerId]
       ),
       pool.query(`SELECT MIN(s.sale_date) AS earliest_date, MAX(s.sale_date) AS latest_date ${ownSales}`, [sellerId]),

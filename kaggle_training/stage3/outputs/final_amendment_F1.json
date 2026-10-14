@@ -1,0 +1,18 @@
+{
+  "amendment_id": "nexus-stage3-final-protocol-v1-amendment-F1",
+  "base_protocol_sha256": "8c385172f651bef23b40cbb75a8508af8d3ffbc62c54781914406c3472a445af",
+  "approved_by": "architect (Codex), after the development-anchored cap was frozen",
+  "status_label": "RESEARCH ONLY (amendment F1): decision protection does not authorise promotion",
+  "changes": [
+    "The development-relative excess-stock cap (5/4 x the selected method's worst development ratio) is a RESEARCH STABILITY CHECK: it tests whether final behaviour stays within development behaviour. It is not an acceptable-cost criterion.",
+    "All decision-protection results (A2 and A0) are research-only. Their checks are computed and reported exactly as in protocol v1, but no result, pass or fail, authorises a safety-stock suggestion, a promotion or any production change.",
+    "Promotion of decision protection requires, in a future protocol with its own reservation: (i) a sequential inventory evaluation (multi-cycle replay with the Stage 2 engine: carried stock, open orders, lead times, review cycles), and (ii) an acceptable-cost criterion fixed in advance (for example shortage versus holding cost, or a seller-set trade-off)."
+  ],
+  "unchanged": [
+    "A2 and A0 selections",
+    "cap values",
+    "coverage, shortage and excess computations",
+    "all other gates of protocol v1"
+  ],
+  "frozen_at": "2026-10-13T12:56:01+00:00"
+}

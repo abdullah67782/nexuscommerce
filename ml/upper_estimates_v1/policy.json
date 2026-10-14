@@ -1,0 +1,457 @@
+{
+  "version": "upper-estimates-1",
+  "policy_version": "upper-estimates-policy-1",
+  "kind": "one-sided upper demand estimate",
+  "evaluated_release": "nexus-v2-shared-20261008",
+  "evaluated_routes": {
+    "regular": "shared_model",
+    "occasional": "shared_model",
+    "rare": "tsb"
+  },
+  "min_history_days": 180,
+  "levels": [
+    0.8,
+    0.9
+  ],
+  "horizons": [
+    7,
+    28
+  ],
+  "benchmark": {
+    "name": "M5 (US Walmart)",
+    "stores": 10,
+    "states": [
+      "CA",
+      "TX",
+      "WI"
+    ],
+    "departments": [
+      "foods",
+      "household",
+      "hobbies"
+    ],
+    "products": "90 held-back products x 10 stores",
+    "windows_within": [
+      "2015-11-01",
+      "2016-05-22"
+    ],
+    "series": 900
+  },
+  "cells": {
+    "regular|7|0.8": {
+      "method": "U0",
+      "method_label": "Forecast-error ratio from benchmark history",
+      "benchmark": {
+        "coverage": {
+          "exact": "19/24",
+          "value": 0.7916666667
+        },
+        "coverage_event_windows": {
+          "exact": "130/161",
+          "value": 0.8074534161
+        },
+        "coverage_other_windows": {
+          "exact": "557/710",
+          "value": 0.7845070423
+        },
+        "windows": 2064,
+        "series": 118,
+        "coverage_date_block_95": [
+          0.7679200462,
+          0.8100955434
+        ],
+        "tolerance_points": 5,
+        "target": 0.8
+      },
+      "parameter": {
+        "ratio_quantile": 1.271340702828067
+      }
+    },
+    "regular|7|0.9": {
+      "method": "U0",
+      "method_label": "Forecast-error ratio from benchmark history",
+      "benchmark": {
+        "coverage": {
+          "exact": "621/688",
+          "value": 0.9026162791
+        },
+        "coverage_event_windows": {
+          "exact": "585/644",
+          "value": 0.9083850932
+        },
+        "coverage_other_windows": {
+          "exact": "9/10",
+          "value": 0.9
+        },
+        "windows": 2064,
+        "series": 118,
+        "coverage_date_block_95": [
+          0.8822163161,
+          0.9192397929
+        ],
+        "tolerance_points": 5,
+        "target": 0.9
+      },
+      "parameter": {
+        "ratio_quantile": 1.4623682483582563
+      }
+    },
+    "regular|28|0.8": {
+      "method": "U0",
+      "method_label": "Forecast-error ratio from benchmark history",
+      "benchmark": {
+        "coverage": {
+          "exact": "743/911",
+          "value": 0.8155872667
+        },
+        "coverage_event_windows": {
+          "exact": "27/34",
+          "value": 0.7941176471
+        },
+        "coverage_other_windows": {
+          "exact": "649/768",
+          "value": 0.8450520833
+        },
+        "windows": 1822,
+        "series": 113,
+        "coverage_date_block_95": [
+          0.7833442742,
+          0.85099911
+        ],
+        "tolerance_points": 5,
+        "target": 0.8
+      },
+      "parameter": {
+        "ratio_quantile": 1.2524810423255723
+      }
+    },
+    "regular|28|0.9": {
+      "method": "U0",
+      "method_label": "Forecast-error ratio from benchmark history",
+      "benchmark": {
+        "coverage": {
+          "exact": "827/911",
+          "value": 0.9077936334
+        },
+        "coverage_event_windows": {
+          "exact": "472/527",
+          "value": 0.8956356736
+        },
+        "coverage_other_windows": {
+          "exact": "355/384",
+          "value": 0.9244791667
+        },
+        "windows": 1822,
+        "series": 113,
+        "coverage_date_block_95": [
+          0.8833327586,
+          0.9401742715
+        ],
+        "tolerance_points": 5,
+        "target": 0.9
+      },
+      "parameter": {
+        "ratio_quantile": 1.4080772540972528
+      }
+    },
+    "occasional|7|0.8": {
+      "method": "U2",
+      "method_label": "Quantile model with conformal correction",
+      "benchmark": {
+        "coverage": {
+          "exact": "2971/3746",
+          "value": 0.7931126535
+        },
+        "coverage_event_windows": {
+          "exact": "949/1173",
+          "value": 0.8090366581
+        },
+        "coverage_other_windows": {
+          "exact": "2022/2573",
+          "value": 0.7858530898
+        },
+        "windows": 14984,
+        "series": 647,
+        "coverage_date_block_95": [
+          0.7879262582,
+          0.798308408
+        ],
+        "tolerance_points": 5,
+        "target": 0.8
+      },
+      "parameter": {
+        "booster": "U2_h7_p0.8.json",
+        "correction": -0.009476707935647255
+      }
+    },
+    "occasional|7|0.9": {
+      "method": "U0",
+      "method_label": "Forecast-error ratio from benchmark history",
+      "benchmark": {
+        "coverage": {
+          "exact": "13393/14984",
+          "value": 0.8938200747
+        },
+        "coverage_event_windows": {
+          "exact": "352/391",
+          "value": 0.9002557545
+        },
+        "coverage_other_windows": {
+          "exact": "9169/10292",
+          "value": 0.8908861251
+        },
+        "windows": 14984,
+        "series": 647,
+        "coverage_date_block_95": [
+          0.8914094146,
+          0.896749929
+        ],
+        "tolerance_points": 5,
+        "target": 0.9
+      },
+      "parameter": {
+        "ratio_quantile": 1.655105793081786
+      }
+    },
+    "occasional|28|0.8": {
+      "method": "U0",
+      "method_label": "Forecast-error ratio from benchmark history",
+      "benchmark": {
+        "coverage": {
+          "exact": "2145/2686",
+          "value": 0.7985852569
+        },
+        "coverage_event_windows": {
+          "exact": "2099/2603",
+          "value": 0.806377257
+        },
+        "coverage_other_windows": {
+          "exact": "4428/5621",
+          "value": 0.787760185
+        },
+        "windows": 13430,
+        "series": 637,
+        "coverage_date_block_95": [
+          0.7893429668,
+          0.8050699913
+        ],
+        "tolerance_points": 5,
+        "target": 0.8
+      },
+      "parameter": {
+        "ratio_quantile": 1.315140986416432
+      }
+    },
+    "occasional|28|0.9": {
+      "method": "U0",
+      "method_label": "Forecast-error ratio from benchmark history",
+      "benchmark": {
+        "coverage": {
+          "exact": "6076/6715",
+          "value": 0.9048399106
+        },
+        "coverage_event_windows": {
+          "exact": "7094/7809",
+          "value": 0.9084389807
+        },
+        "coverage_other_windows": {
+          "exact": "5058/5621",
+          "value": 0.8998398861
+        },
+        "windows": 13430,
+        "series": 637,
+        "coverage_date_block_95": [
+          0.8974658251,
+          0.909493961
+        ],
+        "tolerance_points": 5,
+        "target": 0.9
+      },
+      "parameter": {
+        "ratio_quantile": 1.5729972623618207
+      }
+    },
+    "rare|7|0.8": {
+      "method": "U3",
+      "method_label": "Rare-sales simulation (TSB bootstrap, 400 draws)",
+      "benchmark": {
+        "coverage": {
+          "exact": "3425/4227",
+          "value": 0.8102673291
+        },
+        "coverage_event_windows": {
+          "exact": "2074/2519",
+          "value": 0.8233425963
+        },
+        "coverage_other_windows": {
+          "exact": "4776/5935",
+          "value": 0.8047177759
+        },
+        "windows": 8454,
+        "series": 393,
+        "coverage_date_block_95": [
+          0.799501856,
+          0.8228610445
+        ],
+        "tolerance_points": 10,
+        "target": 0.8
+      },
+      "parameter": {
+        "draws": 400,
+        "history_days_for_sizes": 180,
+        "beta": 0.1
+      }
+    },
+    "rare|7|0.9": {
+      "method": "U3",
+      "method_label": "Rare-sales simulation (TSB bootstrap, 400 draws)",
+      "benchmark": {
+        "coverage": {
+          "exact": "2475/2818",
+          "value": 0.8782824698
+        },
+        "coverage_event_windows": {
+          "exact": "203/229",
+          "value": 0.8864628821
+        },
+        "coverage_other_windows": {
+          "exact": "5192/5935",
+          "value": 0.8748104465
+        },
+        "windows": 8454,
+        "series": 393,
+        "coverage_date_block_95": [
+          0.8705998076,
+          0.8883397259
+        ],
+        "tolerance_points": 10,
+        "target": 0.9
+      },
+      "parameter": {
+        "draws": 400,
+        "history_days_for_sizes": 180,
+        "beta": 0.1
+      }
+    },
+    "rare|28|0.8": {
+      "method": "U0",
+      "method_label": "Forecast-error ratio from benchmark history",
+      "benchmark": {
+        "coverage": {
+          "exact": "5966/7551",
+          "value": 0.7900940273
+        },
+        "coverage_event_windows": {
+          "exact": "3381/4238",
+          "value": 0.7977819726
+        },
+        "coverage_other_windows": {
+          "exact": "2585/3313",
+          "value": 0.7802595835
+        },
+        "windows": 7551,
+        "series": 390,
+        "coverage_date_block_95": [
+          0.7688402641,
+          0.804637137
+        ],
+        "tolerance_points": 10,
+        "target": 0.8
+      },
+      "parameter": {
+        "ratio_quantile": 1.9242882137854234
+      }
+    },
+    "rare|28|0.9": {
+      "method": "U1",
+      "method_label": "Conformal score from benchmark history",
+      "benchmark": {
+        "coverage": {
+          "exact": "6707/7551",
+          "value": 0.8882267249
+        },
+        "coverage_event_windows": {
+          "exact": "1894/2119",
+          "value": 0.8938178386
+        },
+        "coverage_other_windows": {
+          "exact": "2919/3313",
+          "value": 0.8810745548
+        },
+        "windows": 7551,
+        "series": 390,
+        "coverage_date_block_95": [
+          0.8665633107,
+          0.9023653749
+        ],
+        "tolerance_points": 10,
+        "target": 0.9
+      },
+      "parameter": {
+        "score_quantile": 2.8689567475147055
+      }
+    }
+  },
+  "not_supported": {
+    "dormant": {
+      "text": "No upper-estimate method met the benchmark checks for products with no sales in the last 180 days.",
+      "final_cells": [
+        {
+          "cell": "dormant|7|0.8",
+          "reason": "no development selection (no suggestion)"
+        },
+        {
+          "cell": "dormant|7|0.9",
+          "reason": "no development selection (no suggestion)"
+        },
+        {
+          "cell": "dormant|28|0.8",
+          "reason": "no development selection (no suggestion)"
+        },
+        {
+          "cell": "dormant|28|0.9",
+          "reason": "within_tolerance_non_event"
+        }
+      ]
+    },
+    "short_history": {
+      "text": "Products with fewer than 180 confirmed days could not be validated: the benchmark had only 86 windows from 11 products.",
+      "final_cells": [
+        {
+          "cell": "short_history|7|0.8",
+          "reason": "windows_ge_200, series_ge_30"
+        },
+        {
+          "cell": "short_history|7|0.9",
+          "reason": "windows_ge_200, series_ge_30"
+        },
+        {
+          "cell": "short_history|28|0.8",
+          "reason": "within_tolerance_non_event, windows_ge_200, series_ge_30"
+        },
+        {
+          "cell": "short_history|28|0.9",
+          "reason": "within_tolerance_event, windows_ge_200, series_ge_30"
+        }
+      ]
+    },
+    "pakistan": {
+      "text": "Pakistan results were descriptive only: 90% and 28-day estimates were outside the coverage tolerance and very wide."
+    }
+  },
+  "limitations": [
+    "Evaluated on US Walmart benchmark data; not calibrated to your store.",
+    "The benchmark is the M5 data set: food, household and hobby products in 10 Walmart stores in California, Texas and Wisconsin. The one-time check used 7- and 28-day windows from November 2015 to May 2016.",
+    "This is a one-sided upper estimate of demand, not a range: there is no lower estimate. It is not a guarantee and not an order quantity.",
+    "In the benchmark it was checked only as \"actual sales at or below the estimate\"; how often that holds for your products can differ (other prices, promotions, customers or stock-outs).",
+    "Sales recorded while out of stock understate demand, so the estimate can be low for products that often run out.",
+    "Your reorder suggestions and your safety stock do not use this estimate."
+  ],
+  "source": {
+    "protocol_sha256": "8c385172f651bef23b40cbb75a8508af8d3ffbc62c54781914406c3472a445af",
+    "package_manifest_sha256": "6c11d581e14427a97d690582606128471c350097f0ecee2ffc93d07ba75d440e",
+    "final_evaluation_sha256sums": "16d1d9a691a6aad8e30a2942e8c2e93dcdcdb414e3e5f6ab4850f84de38547c1",
+    "us_totals_cells_sha256": "2d15a9decce1dd94e7235af6852c1a5256425e0325a3c7316e9a924f9b214edd",
+    "gates_summary_sha256": "09932b5e287047b501320b0a8f19449ca5f18d4a6ce77d51fea65fa79bccf0b0"
+  }
+}

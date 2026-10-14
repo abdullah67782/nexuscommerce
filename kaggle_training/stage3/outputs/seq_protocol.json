@@ -1,0 +1,191 @@
+{
+  "protocol_id": "nexus-stage3-seq-protocol-v1",
+  "status": "frozen",
+  "written_at": "2026-10-14T11:37:05+00:00",
+  "purpose": "Does ordering with the frozen AI purchasing-protection selections, repeated over many review cycles, reduce lost sales enough to pay for the extra stock it holds, and does it beat the seller's own safety stock?",
+  "governance": {
+    "amendment_F1": "decision protection stays research-only; no result here authorises promotion (promotion_authorised false)",
+    "pass_means": "an implementation review of OPTIONAL, seller-approved advice for that segment and level only",
+    "clearance": "owner's direct instruction of 2026-10-14 to finish the module (the architect's clearance was still pending; the owner's instruction takes precedence). The development rehearsal selected nothing and changed no gate.",
+    "no_new_candidates": "the candidates are the frozen A2 selections of protocol v1 (sha 8c385172f651bef23b40cbb75a8508af8d3ffbc62c54781914406c3472a445af); nothing is selected or tuned here"
+  },
+  "base_release": {
+    "release": "nexus-v2-shared-20261008",
+    "models": {
+      "7": "527438cea9132213f6a09f94905b5ebff4756c435e7b5cf2cc2ec71eb24a5041",
+      "28": "8916771384e4fa8f3d0dfecdc7901fe6d49fefe8fc6ff1ea74a9a71cc1bec2bf"
+    }
+  },
+  "candidates": {
+    "regular|0.9": {
+      "segment": "regular",
+      "level": 0.9,
+      "method": "D2@0.9"
+    },
+    "occasional|0.9": {
+      "segment": "occasional",
+      "level": 0.9,
+      "method": "D2c@0.9"
+    },
+    "rare|0.8": {
+      "segment": "rare",
+      "level": 0.8,
+      "method": "D2c@0.8"
+    },
+    "rare|0.9": {
+      "segment": "rare",
+      "level": 0.9,
+      "method": "D2c@0.9"
+    },
+    "short_history|0.8": {
+      "segment": "short_history",
+      "level": 0.8,
+      "method": "D2c@0.8"
+    },
+    "short_history|0.9": {
+      "segment": "short_history",
+      "level": 0.9,
+      "method": "D2c@0.9"
+    }
+  },
+  "comparators": {
+    "D0": "Stage 2 quantity on the point forecast (A1), safety stock 0",
+    "seller_rule": "Stage 2 quantity with a seller-set safety stock of k days of average daily sales over the 28 days before the replay, fixed at the start, k in [2, 4, 7, 10, 14]"
+  },
+  "replay": {
+    "development": [
+      "2015-05-03",
+      "2015-10-31"
+    ],
+    "final": [
+      "2015-11-23",
+      "2016-05-22"
+    ],
+    "days": 182,
+    "pairs_L_R": [
+      [
+        3,
+        7
+      ],
+      [
+        7,
+        7
+      ],
+      [
+        3,
+        14
+      ],
+      [
+        7,
+        14
+      ],
+      [
+        14,
+        7
+      ]
+    ],
+    "kappas": [
+      0.5,
+      1.0,
+      1.5
+    ],
+    "primary_kappa": 1.0,
+    "review_forecasts": "frozen release served at every review day on history up to that day",
+    "order_usable": "day t + L + 1 (A2)",
+    "lost_sales": "unmet demand is lost (A3); a lower bound where stock-outs are unknown",
+    "starting_stock": "kappa x forecast for the first L + 1 + R days (A1; T28/28 rate when T28 < T7), rounded",
+    "inconsistent_forecast": "T28 < T7: no policy orders at that review (the engine gives no quantity)",
+    "paths": "100 analogue paths per series and review (own windows; pooled by category and segment below 6); D2c zeroes 25 December; seeded per series and review",
+    "cell_rule": "a cell's method is used at a review only when the product is in the cell's segment then; otherwise D0. The cell is evaluated on the series in its segment at the start of the replay.",
+    "pack_and_moq": "1 and 1",
+    "ordering_cost": "not modelled (no data)",
+    "unit_value": "M5 weekly sell price (cost is not in the data)"
+  },
+  "data": {
+    "development": "consumed 180 + development_extra 150 products x 10 stores, guarded loaders, days <= 2015-10-31",
+    "final": "reservation nexus-stage3-seq-m5-v1: 150 never-read products x 10 stores (outputs/reservation_seq_m5.json)",
+    "excluded": "series with fewer than 28 days of history at the replay start (reported, never replaced)"
+  },
+  "assumptions": {
+    "primary": {
+      "margin": 0.3,
+      "annual_holding_rate": 0.25
+    },
+    "sensitivity": {
+      "margin": [
+        0.15,
+        0.3,
+        0.45
+      ],
+      "annual_holding_rate": [
+        0.15,
+        0.25,
+        0.4
+      ]
+    },
+    "decides": "only the primary pair"
+  },
+  "gates": {
+    "G1": ">= 30 series and >= 200 series x pair replays in the cell",
+    "G2": "lost units below D0, pooled over the five pairs at kappa 1; product-cluster and 28-day date-block 95% bootstrap intervals (B = 1000) of the reduction both above 0",
+    "G3": "net benefit = margin x value of avoided lost sales - holding rate / 365 x extra stock value-days > 0 at the primary assumptions; both 95% intervals above 0",
+    "G4": "at the candidate's stock-holding value the seller-rule curve S(0..14 days) (linear interpolation) loses at least as much sales value; a candidate holding more than S(14) fails",
+    "G5": "at kappa 0.5 and 1.5 the reduction and the primary net benefit stay above 0",
+    "G6": ">= 2000 sampled final-run decisions (D0 and a seller rule) recomputed by backend/lib/replenishment/engine.js equal the replay exactly",
+    "all": "a cell passes only if G1\u2013G6 all hold"
+  },
+  "seeds": {
+    "replay": 7,
+    "gates": 11,
+    "parity_sample": 2026
+  },
+  "environment": {
+    "python": "3.12",
+    "numpy": "1.26.4",
+    "pandas": "2.2.2",
+    "scipy": "1.17.1",
+    "xgboost": "3.4.1",
+    "node": "required"
+  },
+  "execution": {
+    "entry": "kaggle_training/stage3/sequential/seq_final.py",
+    "preflight": "python seq_final.py preflight --out <empty dir>",
+    "final": "python seq_final.py execute-once --confirm <sha256(seq_protocol.json)> --lock-dir <persistent dir> --out <empty dir>",
+    "rerun_protection": "hash checks; preflight; O_CREAT|O_EXCL lock; non-empty output refused; aborted runs keep the lock"
+  },
+  "development_reference": {
+    "dev_results_sha256": "bdee14fef61fffb89d5bd32c42254d690ce8e03b624d74cbe77713edf7e08396",
+    "note": "development rehearsal (cloud, not evidence)"
+  },
+  "hashes": {
+    "kaggle_training/stage3/sequential/replay.py": "b7afed5a3abe2c6c38a39dcc9bdee27239018f017baeeb184b9779174f489845",
+    "kaggle_training/stage3/sequential/evaluate.py": "3db9a9cc05460fb8670f8bd1a59a36eb512714f737ebe48c21901dcff1661796",
+    "kaggle_training/stage3/sequential/seq_core.py": "40ab0f358dcf7147d654319256a64c24fa6a65b7fdedba0966b603d581514802",
+    "kaggle_training/stage3/sequential/seq_data.py": "ae1f5dbd6effeff2bef2b00216fb513f3a371e4bb9447591255979dd91d54399",
+    "kaggle_training/stage3/sequential/seq_final_access.py": "086320b0848149adf8fcf112c350c800689c5163e0e5ed0d5986cd1f61fc86a2",
+    "kaggle_training/stage3/sequential/seq_final.py": "71c7d8797d534baea37d2d0c0c1cc96f6235def3c3e56de55ac01fb887b003a4",
+    "kaggle_training/stage3/sequential/seq_protocol_spec.py": "aec1455b7c9bfbf7f4cd3c0a551b0bb1fe89a865473c97dca27c181c94f9992c",
+    "kaggle_training/stage3/sequential/engine_parity.js": "9353855ca762edc0e3153d9a4d68b174bc7170e3d88bec4b4673b2a4931c4ef5",
+    "kaggle_training/stage3/sequential/seq_dev.py": "bf412eeee5d3cd3da2828bbbfc2ac56c4c92682f662ef79f77dd65351819e7d1",
+    "kaggle_training/stage3/final/common.py": "c585cf8a72731d75821cef5d98983ebecfb52aadd322d93e1598d4d4ed70bc8c",
+    "kaggle_training/stage3/served.py": "86ff3cd13a20c782fed8ce1f4afc4669795ebc113c88a891ee912e6eeaaad1e0",
+    "kaggle_training/stage3/data_access.py": "839405e7c3639aee87fe9c6905075f1e49668fdc2755982aa9c8b7ac64552f5a",
+    "kaggle_training/stage3/events.py": "add8af5e9df9baaa32527857b6bb856c9d71b8bcb46c9f2673b56bbe927e84fa",
+    "kaggle_training/stage3/u2_artifacts.py": "242941430314446d4d2aed5fbc9fdc8b5b77650ed5ab2a7e82f2b66b8d642162",
+    "kaggle_training/stage3/e1_layer.py": "290616ba8b07e2cb6e399820371c0a58f21e52e0a8b672a61df5bd2a61729767",
+    "backend/lib/replenishment/engine.js": "048e7e6cd60fe6c54f3ddfecbcae7676812b8788d438f9724c209b59744d3b85",
+    "ml/v2/forecast.py": "5b9c8d9e2f80158a93bdf40eb99114c0db6919196be2d7ea7226005fd572203e",
+    "ml/v2/features.py": "359a1af066c56c1c2b9dc6dd68f51dc1870a279bf1b99d8571c14f1270ad4d12",
+    "ml/v2/methods.py": "b7ac7a08b4e32b799bcc8394e2a7e289cecb6c1bb1c10cf15d1f994e95f02a93",
+    "ml/v2/registry.py": "a5a6a38a8578a54c372fb40b5072a70990dbabd80602ca3116829806454c46b6",
+    "ml/models_v2/manifest.json": "800ff78e560fc74b553623b03ce401cb34c50b992564814ae3385ecdc88cd26b",
+    "data/m5/calendar.csv": "d12b5914ef03e66649adf5dd9e996e6602251c22b7a6af8f1f7e3aa12f8860f5",
+    "ml/models_v2/shared_total_7.json": "527438cea9132213f6a09f94905b5ebff4756c435e7b5cf2cc2ec71eb24a5041",
+    "ml/models_v2/shared_total_28.json": "8916771384e4fa8f3d0dfecdc7901fe6d49fefe8fc6ff1ea74a9a71cc1bec2bf",
+    "kaggle_training/stage3/outputs/final_protocol.json": "8c385172f651bef23b40cbb75a8508af8d3ffbc62c54781914406c3472a445af",
+    "kaggle_training/stage3/outputs/reservation_m5.json": "ba8f1a1b4c28af627679274ce7979bbd0aae7b284c4ea3129184e9f2e968d3ab",
+    "kaggle_training/stage3/outputs/reservation_seq_m5.json": "419efa3ee72d5df0f20f12f4fb4c529aa932b7097fdf5ffdb2b8ebda5b1e1a93",
+    "data/m5/sales_train_evaluation.csv.zip": "7c2e7770397258a4b2531ececdcb2f7c6ec5321d8af856a52289265d281ed941",
+    "data/m5/sell_prices.csv.zip": "f58bfc7bf8422e4d8493d461cd4f26f3ed627e204c129228ef5a7326e41b6de7"
+  }
+}

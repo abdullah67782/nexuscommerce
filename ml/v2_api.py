@@ -6,6 +6,9 @@ POST /v2/forecast  { start: 'YYYY-MM-DD', quantities: [daily totals, oldest firs
   totals, their dates, the method and the history tier — never a daily breakdown,
   accuracy figure or confidence interval.
 GET  /v2/status    whether the approved models load (hash-checked manifest).
+POST /v2/upper-estimates  same request as /v2/forecast. Returns that forecast unchanged plus one-sided 80%/90%
+  upper demand estimates (upper-estimates-1) for the 12 approved cells, or an unavailable reason. The backend
+  enforces market and store/product applicability before calling it.
 """
 from datetime import date
 from typing import List
@@ -15,6 +18,7 @@ from pydantic import BaseModel, Field
 
 from v2.forecast import forecast_totals, history_tier
 from v2.registry import ModelRegistryError, get_models
+from v2.upper_estimates import UpperEstimatesError, get_artifacts, upper_estimates
 
 router = APIRouter(prefix="/v2", tags=["forecast v2"])
 
@@ -39,6 +43,25 @@ def forecast(req: ForecastRequest):
         raise HTTPException(status_code=422, detail=str(exc))
     result["models_release"] = release
     return result
+
+
+@router.post("/upper-estimates")
+def upper(req: ForecastRequest):
+    models, release = None, None
+    if history_tier(len(req.quantities)) == "model":
+        try:
+            models, manifest = get_models()
+            release = manifest["release"]
+        except ModelRegistryError as exc:
+            raise HTTPException(status_code=503, detail=f"v2 models unavailable: {exc}")
+    try:
+        artifacts = get_artifacts()
+    except UpperEstimatesError as exc:
+        raise HTTPException(status_code=503, detail=f"upper-estimate artifacts unavailable: {exc}")
+    try:
+        return upper_estimates(req.start, req.quantities, models, release, artifacts)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
 
 
 @router.get("/status")

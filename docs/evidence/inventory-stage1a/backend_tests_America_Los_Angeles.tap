@@ -1,0 +1,754 @@
+TAP version 13
+# Connected to PostgreSQL database
+# Subtest: product list only contains the seller’s own products
+ok 1 - product list only contains the seller’s own products
+  ---
+  duration_ms: 444.774025
+  type: 'test'
+  ...
+# Subtest: sales history only contains the seller’s own sales
+ok 2 - sales history only contains the seller’s own sales
+  ---
+  duration_ms: 15.422464
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Subtest: dashboard stats and data quality are per seller
+ok 3 - dashboard stats and data quality are per seller
+  ---
+  duration_ms: 24.722238
+  type: 'test'
+  ...
+# Subtest: inventory alerts are per seller
+ok 4 - inventory alerts are per seller
+  ---
+  duration_ms: 13.783881
+  type: 'test'
+  ...
+# Subtest: ownerless products are invisible to every seller
+ok 5 - ownerless products are invisible to every seller
+  ---
+  duration_ms: 15.993564
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Subtest: register creates an account and returns a token
+ok 6 - register creates an account and returns a token
+  ---
+  duration_ms: 221.301999
+  type: 'test'
+  ...
+# Subtest: register rejects a duplicate email and missing fields
+ok 7 - register rejects a duplicate email and missing fields
+  ---
+  duration_ms: 100.500412
+  type: 'test'
+  ...
+# Subtest: login succeeds with the right password and fails otherwise
+ok 8 - login succeeds with the right password and fails otherwise
+  ---
+  duration_ms: 249.422492
+  type: 'test'
+  ...
+# Subtest: protected routes reject missing, invalid and expired tokens
+ok 9 - protected routes reject missing, invalid and expired tokens
+  ---
+  duration_ms: 22.482007
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Subtest: missing, non-numeric and fractional quantities are rejected; nothing is imputed
+ok 10 - missing, non-numeric and fractional quantities are rejected; nothing is imputed
+  ---
+  duration_ms: 461.983642
+  type: 'test'
+  ...
+# Subtest: unusually large orders are kept and flagged, never removed
+ok 11 - unusually large orders are kept and flagged, never removed
+  ---
+  duration_ms: 249.817777
+  type: 'test'
+  ...
+# Subtest: ambiguous dates are rejected with the accepted formats
+ok 12 - ambiguous dates are rejected with the accepted formats
+  ---
+  duration_ms: 258.369679
+  type: 'test'
+  ...
+# Subtest: new sources default to Asia/Karachi; a source timezone can be changed for future imports
+ok 13 - new sources default to Asia/Karachi; a source timezone can be changed for future imports
+  ---
+  duration_ms: 326.559132
+  type: 'test'
+  ...
+# Subtest: a confirmed export with no sales is accepted only with coverage for all products
+ok 14 - a confirmed export with no sales is accepted only with coverage for all products
+  ---
+  duration_ms: 349.967116
+  type: 'test'
+  ...
+# Subtest: coverage rows must lie in the period and may not overlap earlier data of the same source
+ok 15 - coverage rows must lie in the period and may not overlap earlier data of the same source
+  ---
+  duration_ms: 328.355181
+  type: 'test'
+  ...
+# Subtest: a file with rejected rows cannot be confirmed as complete
+ok 16 - a file with rejected rows cannot be confirmed as complete
+  ---
+  duration_ms: 330.319782
+  type: 'test'
+  ...
+# Subtest: new rows inside a confirmed period need an explicit append
+ok 17 - new rows inside a confirmed period need an explicit append
+  ---
+  duration_ms: 329.16625
+  type: 'test'
+  ...
+# Subtest: rolling back an import revokes its coverage
+ok 18 - rolling back an import revokes its coverage
+  ---
+  duration_ms: 302.992722
+  type: 'test'
+  ...
+# Subtest: store connect: confirmed coverage, including an empty delivery
+ok 19 - store connect: confirmed coverage, including an empty delivery
+  ---
+  duration_ms: 236.749865
+  type: 'test'
+  ...
+# Subtest: history: only confirmed days count; records outside confirmation stay visible but unconfirmed
+ok 20 - history: only confirmed days count; records outside confirmation stay visible but unconfirmed
+  ---
+  duration_ms: 282.907333
+  type: 'test'
+  ...
+# Subtest: history: 180 days with records but no confirmation give 0 usable days (reported case)
+ok 21 - history: 180 days with records but no confirmation give 0 usable days (reported case)
+  ---
+  duration_ms: 351.49632
+  type: 'test'
+  ...
+# Subtest: history: records after the last confirmed day do not extend it
+ok 22 - history: records after the last confirmed day do not extend it
+  ---
+  duration_ms: 267.471934
+  type: 'test'
+  ...
+# Subtest: history: a revoked period no longer counts
+ok 23 - history: a revoked period no longer counts
+  ---
+  duration_ms: 273.138885
+  type: 'test'
+  ...
+# Subtest: an upload already stored can be confirmed afterwards, under the same rules
+ok 24 - an upload already stored can be confirmed afterwards, under the same rules
+  ---
+  duration_ms: 305.062869
+  type: 'test'
+  ...
+# Subtest: v2 endpoint is off unless switched on, and only serves the owner
+ok 25 - v2 endpoint is off unless switched on, and only serves the owner
+  ---
+  duration_ms: 267.170581
+  type: 'test'
+  ...
+# Subtest: v2 endpoint sends only confirmed history and explains what is excluded
+ok 26 - v2 endpoint sends only confirmed history and explains what is excluded
+  ---
+  duration_ms: 323.388265
+  type: 'test'
+  ...
+# Subtest: v2 endpoint: insufficient history returns no forecast; the ML server being down is a clear 503
+ok 27 - v2 endpoint: insufficient history returns no forecast; the ML server being down is a clear 503
+  ---
+  duration_ms: 268.671172
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Subtest: owner gets a forecast; the request reaches the ML server with their seller id
+ok 28 - owner gets a forecast; the request reaches the ML server with their seller id
+  ---
+  duration_ms: 414.769001
+  type: 'test'
+  ...
+# Subtest: another seller gets 404 for someone else's product and the ML server is never called
+ok 29 - another seller gets 404 for someone else's product and the ML server is never called
+  ---
+  duration_ms: 5.590682
+  type: 'test'
+  ...
+# Subtest: unknown and malformed product ids are rejected
+ok 30 - unknown and malformed product ids are rejected
+  ---
+  duration_ms: 6.14296
+  type: 'test'
+  ...
+# Subtest: insufficient history from the ML server is passed through as 422
+ok 31 - insufficient history from the ML server is passed through as 422
+  ---
+  duration_ms: 8.276639
+  type: 'test'
+  ...
+# Subtest: forecast-vs-actual only uses the seller’s own forecast rows
+ok 32 - forecast-vs-actual only uses the seller’s own forecast rows
+  ---
+  duration_ms: 10.244472
+  type: 'test'
+  ...
+# Subtest: model metrics are per seller
+ok 33 - model metrics are per seller
+  ---
+  duration_ms: 8.052393
+  type: 'test'
+  ...
+# Subtest: fine-tune status is requested for the logged-in seller only
+ok 34 - fine-tune status is requested for the logged-in seller only
+  ---
+  duration_ms: 11.38275
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Subtest: identical rows in a file are kept, with their original row numbers
+ok 35 - identical rows in a file are kept, with their original row numbers
+  ---
+  duration_ms: 403.88775
+  type: 'test'
+  ...
+# Subtest: operation ids: same id replays, reused id with other content conflicts, new id is a new operation
+ok 36 - operation ids: same id replays, reused id with other content conflicts, new id is a new operation
+  ---
+  duration_ms: 297.168139
+  type: 'test'
+  ...
+# Subtest: a rolled-back file keeps its identity: a retry never restores it, a new operation can
+ok 37 - a rolled-back file keeps its identity: a retry never restores it, a new operation can
+  ---
+  duration_ms: 292.03146
+  type: 'test'
+  ...
+# Subtest: files with a line_id column use line identity across uploads
+ok 38 - files with a line_id column use line identity across uploads
+  ---
+  duration_ms: 243.861945
+  type: 'test'
+  ...
+# Subtest: xlsx date cells (Excel serial numbers) become the right calendar day
+ok 39 - xlsx date cells (Excel serial numbers) become the right calendar day
+  ---
+  duration_ms: 258.588907
+  type: 'test'
+  ...
+# Subtest: ambiguous or invalid date formats are rejected, not guessed
+ok 40 - ambiguous or invalid date formats are rejected, not guessed
+  ---
+  duration_ms: 248.70784
+  type: 'test'
+  ...
+# Subtest: line ids: re-delivered lines are skipped, new lines imported
+ok 41 - line ids: re-delivered lines are skipped, new lines imported
+  ---
+  duration_ms: 261.397816
+  type: 'test'
+  ...
+# Subtest: a line id that arrives with changed contents is an explicit conflict and nothing is written
+ok 42 - a line id that arrives with changed contents is an explicit conflict and nothing is written
+  ---
+  duration_ms: 260.326395
+  type: 'test'
+  ...
+# Subtest: line ids are scoped to a connection; other connections and sellers are independent
+ok 43 - line ids are scoped to a connection; other connections and sellers are independent
+  ---
+  duration_ms: 253.783999
+  type: 'test'
+  ...
+# Subtest: overlap is only checked within the same source
+ok 44 - overlap is only checked within the same source
+  ---
+  duration_ms: 232.241981
+  type: 'test'
+  ...
+# Subtest: sale dates are business days in the connection timezone
+ok 45 - sale dates are business days in the connection timezone
+  ---
+  duration_ms: 198.209556
+  type: 'test'
+  ...
+# Subtest: a rolled-back store import keeps its identity
+ok 46 - a rolled-back store import keeps its identity
+  ---
+  duration_ms: 235.778593
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Subtest: concurrent file uploads, store imports and a rollback keep versions unique and data consistent
+ok 47 - concurrent file uploads, store imports and a rollback keep versions unique and data consistent
+  ---
+  duration_ms: 370.991523
+  type: 'test'
+  ...
+# Subtest: freshness is recomputed after imports and rollbacks
+ok 48 - freshness is recomputed after imports and rollbacks
+  ---
+  duration_ms: 263.078521
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Subtest: 1. missing stock, a measured zero and an unverified legacy value stay distinct
+ok 49 - 1. missing stock, a measured zero and an unverified legacy value stay distinct
+  ---
+  duration_ms: 376.05847
+  type: 'test'
+  ...
+# Subtest: 2–3. count → shipment → newer count: no double deduction; revoking the newer count recomputes
+ok 50 - 2–3. count → shipment → newer count: no double deduction; revoking the newer count recomputes
+  ---
+  duration_ms: 282.228497
+  type: 'test'
+  ...
+# Subtest: an event at exactly the count instant is inside the count and flagged for review
+ok 51 - an event at exactly the count instant is inside the count and flagged for review
+  ---
+  duration_ms: 221.091782
+  type: 'test'
+  ...
+# Subtest: 4. a shipment replay changes nothing; a conflicting replay is refused and records nothing
+ok 52 - 4. a shipment replay changes nothing; a conflicting replay is refused and records nothing
+  ---
+  duration_ms: 228.754722
+  type: 'test'
+  ...
+# Subtest: count identity: replay, already-recorded value, conflicting value, explicit supersession and its undo
+ok 53 - count identity: replay, already-recorded value, conflicting value, explicit supersession and its undo
+  ---
+  duration_ms: 246.341581
+  type: 'test'
+  ...
+# Subtest: 5. historical sales uploads leave inventory unchanged and say why stock columns are ignored
+ok 54 - 5. historical sales uploads leave inventory unchanged and say why stock columns are ignored
+  ---
+  duration_ms: 276.501255
+  type: 'test'
+  ...
+# Subtest: 6. another seller can neither read nor modify the records
+ok 55 - 6. another seller can neither read nor modify the records
+  ---
+  duration_ms: 392.126062
+  type: 'test'
+  ...
+# Subtest: movement tracking is reported separately from count age
+ok 56 - movement tracking is reported separately from count age
+  ---
+  duration_ms: 193.905816
+  type: 'test'
+  ...
+# Subtest: feed coverage is evaluated per source interval; no feed declaration makes tracking complete
+ok 57 - feed coverage is evaluated per source interval; no feed declaration makes tracking complete
+  ---
+  duration_ms: 227.287517
+  type: 'test'
+  ...
+# Subtest: same-instant movements: manual and other-source events need review; only the same connector is exempt
+ok 58 - same-instant movements: manual and other-source events need review; only the same connector is exempt
+  ---
+  duration_ms: 251.112319
+  type: 'test'
+  ...
+# Subtest: rolling back across import kinds explains the shared version history
+ok 59 - rolling back across import kinds explains the shared version history
+  ---
+  duration_ms: 174.826196
+  type: 'test'
+  ...
+# Subtest: stale and inconsistent positions; per-product tolerance
+ok 60 - stale and inconsistent positions; per-product tolerance
+  ---
+  duration_ms: 218.332705
+  type: 'test'
+  ...
+# Subtest: manual adjustments: signs, reasons, kinds and identity
+ok 61 - manual adjustments: signs, reasons, kinds and identity
+  ---
+  duration_ms: 241.768726
+  type: 'test'
+  ...
+# Subtest: count validation: offsets, future, negative, fractional, duplicates, physical-stock sources
+ok 62 - count validation: offsets, future, negative, fractional, duplicates, physical-stock sources
+  ---
+  duration_ms: 223.378867
+  type: 'test'
+  ...
+# Subtest: stock-count files: rejected rows reported, an import version, rollback revokes, sales untouched
+ok 63 - stock-count files: rejected rows reported, an import version, rollback revokes, sales untouched
+  ---
+  duration_ms: 238.858736
+  type: 'test'
+  ...
+# Subtest: a sales rollback keeps products that have stock facts
+ok 64 - a sales rollback keeps products that have stock facts
+  ---
+  duration_ms: 198.293016
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Subtest: the pool really has one connection
+ok 65 - the pool really has one connection
+  ---
+  duration_ms: 250.137938
+  type: 'test'
+  ...
+# Subtest: an identical store-connect retry is replayed on a one-connection pool
+ok 66 - an identical store-connect retry is replayed on a one-connection pool
+  ---
+  duration_ms: 200.33843
+  type: 'test'
+  ...
+# Subtest: concurrent retries while the pool is saturated all succeed
+ok 67 - concurrent retries while the pool is saturated all succeed
+  ---
+  duration_ms: 182.815822
+  type: 'test'
+  ...
+# Subtest: upload, rollback and forecasting work on a one-connection pool
+ok 68 - upload, rollback and forecasting work on a one-connection pool
+  ---
+  duration_ms: 199.095597
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Subtest: new rows that contradict provenance are refused by the database
+ok 69 - new rows that contradict provenance are refused by the database
+  ---
+  duration_ms: 346.617902
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Subtest: the owner’s sales history excludes rows imported by another seller
+ok 70 - the owner’s sales history excludes rows imported by another seller
+  ---
+  duration_ms: 12.475879
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Subtest: dashboard totals exclude the conflicting row
+ok 71 - dashboard totals exclude the conflicting row
+  ---
+  duration_ms: 15.500267
+  type: 'test'
+  ...
+# Subtest: forecast-vs-actual does not use the conflicting row as an actual
+ok 72 - forecast-vs-actual does not use the conflicting row as an actual
+  ---
+  duration_ms: 7.731026
+  type: 'test'
+  ...
+# Subtest: freshness totals exclude the conflicting row
+ok 73 - freshness totals exclude the conflicting row
+  ---
+  duration_ms: 25.934265
+  type: 'test'
+  ...
+# Subtest: the shared attributed_sales view (also used by the ML server) excludes it
+ok 74 - the shared attributed_sales view (also used by the ML server) excludes it
+  ---
+  duration_ms: 1.980399
+  type: 'test'
+  ...
+# Subtest: the importing seller does not gain access either
+ok 75 - the importing seller does not gain access either
+  ---
+  duration_ms: 6.604707
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Subtest: only the most recent upload can be rolled back, and only once
+ok 76 - only the most recent upload can be rolled back, and only once
+  ---
+  duration_ms: 403.947868
+  type: 'test'
+  ...
+# Subtest: rolling back a sales file with stock columns: no inventory was written, unreferenced products removed
+ok 77 - rolling back a sales file with stock columns: no inventory was written, unreferenced products removed
+  ---
+  duration_ms: 173.849227
+  type: 'test'
+  ...
+# Subtest: a seller cannot roll back another seller's upload
+ok 78 - a seller cannot roll back another seller's upload
+  ---
+  duration_ms: 254.889797
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Subtest: connecting a store imports sales and does not start fine-tuning
+ok 79 - connecting a store imports sales and does not start fine-tuning
+  ---
+  duration_ms: 286.153765
+  type: 'test'
+  ...
+# Subtest: each import gets one import record, a version and provenance on every row
+ok 80 - each import gets one import record, a version and provenance on every row
+  ---
+  duration_ms: 160.223426
+  type: 'test'
+  ...
+# Subtest: retrying the same payload without revenue does not duplicate sales
+ok 81 - retrying the same payload without revenue does not duplicate sales
+  ---
+  duration_ms: 169.507296
+  type: 'test'
+  ...
+# Subtest: an explicit import_id is idempotent, and reusing it for different data is refused
+ok 82 - an explicit import_id is idempotent, and reusing it for different data is refused
+  ---
+  duration_ms: 173.500001
+  type: 'test'
+  ...
+# Subtest: a new import_id with rows already imported is refused unless the import says append
+ok 83 - a new import_id with rows already imported is refused unless the import says append
+  ---
+  duration_ms: 174.552077
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Connected to PostgreSQL database
+# Subtest: concurrent identical retries create exactly one import
+ok 84 - concurrent identical retries create exactly one import
+  ---
+  duration_ms: 176.908351
+  type: 'test'
+  ...
+# Subtest: product names that collide with JavaScript object properties import normally
+ok 85 - product names that collide with JavaScript object properties import normally
+  ---
+  duration_ms: 154.670497
+  type: 'test'
+  ...
+# Subtest: invalid sale rows are counted as rejected, not imported
+ok 86 - invalid sale rows are counted as rejected, not imported
+  ---
+  duration_ms: 127.418329
+  type: 'test'
+  ...
+# Subtest: store connect requires login, a non-empty sales list and a sane import_id
+ok 87 - store connect requires login, a non-empty sales list and a sane import_id
+  ---
+  duration_ms: 144.521222
+  type: 'test'
+  ...
+# Subtest: two genuine identical orders in one import are both kept (with and without revenue)
+ok 88 - two genuine identical orders in one import are both kept (with and without revenue)
+  ---
+  duration_ms: 160.852448
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Subtest: starting training is refused and never reaches the ML server
+ok 89 - starting training is refused and never reaches the ML server
+  ---
+  duration_ms: 192.177592
+  type: 'test'
+  ...
+# Subtest: training status still works and says training is disabled
+ok 90 - training status still works and says training is disabled
+  ---
+  duration_ms: 23.140466
+  type: 'test'
+  ...
+# Subtest: training can only be re-enabled explicitly through configuration
+ok 91 - training can only be re-enabled explicitly through configuration
+  ---
+  duration_ms: 9.888385
+  type: 'test'
+  ...
+# Subtest: training endpoints still require login
+ok 92 - training endpoints still require login
+  ---
+  duration_ms: 6.451138
+  type: 'test'
+  ...
+# Subtest: legacy database (built by the old initDb) with existing data
+ok 93 - legacy database (built by the old initDb) with existing data
+  ---
+  duration_ms: 81.447948
+  type: 'test'
+  ...
+# Subtest: migrating records the existing baseline and applies 002 without losing rows
+ok 94 - migrating records the existing baseline and applies 002 without losing rows
+  ---
+  duration_ms: 32.968764
+  type: 'test'
+  ...
+# Subtest: after 002: identical genuine rows are allowed, provenance violations are not
+ok 95 - after 002: identical genuine rows are allowed, provenance violations are not
+  ---
+  duration_ms: 8.516359
+  type: 'test'
+  ...
+# Subtest: 003 applies on top of 002 without changing rows, and restarting cannot undo either
+ok 96 - 003 applies on top of 002 without changing rows, and restarting cannot undo either
+  ---
+  duration_ms: 26.72584
+  type: 'test'
+  ...
+# Subtest: 003 enforces one seller across coverage, source, import and listed products
+ok 97 - 003 enforces one seller across coverage, source, import and listed products
+  ---
+  duration_ms: 20.104375
+  type: 'test'
+  ...
+# Subtest: 003 reverses cleanly (sales kept), and reversal stays latest-first
+ok 98 - 003 reverses cleanly (sales kept), and reversal stays latest-first
+  ---
+  duration_ms: 15.497116
+  type: 'test'
+  ...
+# Subtest: reversal of 002 refuses while genuine identical rows exist, and changes nothing
+ok 99 - reversal of 002 refuses while genuine identical rows exist, and changes nothing
+  ---
+  duration_ms: 7.37208
+  type: 'test'
+  ...
+# Subtest: reversal of 002 works once the data allows it, and 002 + 003 can be re-applied
+ok 100 - reversal of 002 works once the data allows it, and 002 + 003 can be re-applied
+  ---
+  duration_ms: 75.173603
+  type: 'test'
+  ...
+# Subtest: an edited, already-applied migration is detected and blocks both migrate and startup
+ok 101 - an edited, already-applied migration is detected and blocks both migrate and startup
+  ---
+  duration_ms: 10.601029
+  type: 'test'
+  ...
+# Subtest: a checkout with CRLF line endings is not an edited migration
+ok 102 - a checkout with CRLF line endings is not an edited migration
+  ---
+  duration_ms: 8.239856
+  type: 'test'
+  ...
+# Subtest: old-style database with legacy inventory rows, migrated to 003
+ok 103 - old-style database with legacy inventory rows, migrated to 003
+  ---
+  duration_ms: 118.938642
+  type: 'test'
+  ...
+# Subtest: 004 keeps every legacy row as evidence, with an explicit outcome
+ok 104 - 004 keeps every legacy row as evidence, with an explicit outcome
+  ---
+  duration_ms: 43.278062
+  type: 'test'
+  ...
+# Subtest: migrated values are unverified, keep their provenance, and are never a baseline
+ok 105 - migrated values are unverified, keep their provenance, and are never a baseline
+  ---
+  duration_ms: 7.985769
+  type: 'test'
+  ...
+# Subtest: 004 constraints
+ok 106 - 004 constraints
+  ---
+  duration_ms: 58.818216
+  type: 'test'
+  ...
+# Subtest: 004 reverses while it holds only migrated values; the legacy table is intact
+ok 107 - 004 reverses while it holds only migrated values; the legacy table is intact
+  ---
+  duration_ms: 62.303747
+  type: 'test'
+  ...
+# Subtest: 004 refuses to reverse after a recorded count, and changes nothing
+ok 108 - 004 refuses to reverse after a recorded count, and changes nothing
+  ---
+  duration_ms: 14.296973
+  type: 'test'
+  ...
+# Subtest: 004 refuses to reverse after a movement, and changes nothing
+ok 109 - 004 refuses to reverse after a movement, and changes nothing
+  ---
+  duration_ms: 7.336728
+  type: 'test'
+  ...
+# Subtest: 004 refuses to reverse after a seller setting, and changes nothing
+ok 110 - 004 refuses to reverse after a seller setting, and changes nothing
+  ---
+  duration_ms: 8.126228
+  type: 'test'
+  ...
+# Connected to PostgreSQL database
+# Subtest: CSV upload stores sales, creates version 1 and reports quality
+ok 111 - CSV upload stores sales, creates version 1 and reports quality
+  ---
+  duration_ms: 446.920131
+  type: 'test'
+  ...
+# Subtest: re-sending the same file without an operation id replays the original import
+ok 112 - re-sending the same file without an operation id replays the original import
+  ---
+  duration_ms: 226.191542
+  type: 'test'
+  ...
+# Subtest: invalid rows are rejected and recorded as anomalies the seller can resolve
+ok 113 - invalid rows are rejected and recorded as anomalies the seller can resolve
+  ---
+  duration_ms: 294.525437
+  type: 'test'
+  ...
+# Error: Only CSV, JSON, and Excel (.xlsx) files are supported
+#     at fileFilter (/home/claude/nc/backend/lib/files.js:29:10)
+#     at wrappedFileFilter (/home/claude/nc/backend/node_modules/multer/index.js:45:7)
+#     at Multipart.<anonymous> (/home/claude/nc/backend/node_modules/multer/lib/make-middleware.js:183:7)
+#     at Multipart.emit (node:events:519:28)
+#     at HeaderParser.cb (/home/claude/nc/backend/node_modules/busboy/lib/types/multipart.js:358:14)
+#     at HeaderParser.push (/home/claude/nc/backend/node_modules/busboy/lib/types/multipart.js:162:20)
+#     at SBMH.ssCb [as _cb] (/home/claude/nc/backend/node_modules/busboy/lib/types/multipart.js:394:37)
+#     at feed (/home/claude/nc/backend/node_modules/streamsearch/lib/sbmh.js:219:14)
+#     at SBMH.push (/home/claude/nc/backend/node_modules/streamsearch/lib/sbmh.js:104:16)
+#     at Multipart._write (/home/claude/nc/backend/node_modules/busboy/lib/types/multipart.js:567:19)
+# Subtest: unsupported file types are refused and store nothing
+ok 114 - unsupported file types are refused and store nothing
+  ---
+  duration_ms: 170.377574
+  type: 'test'
+  ...
+# Subtest: two sellers uploading the same product name get separate products
+ok 115 - two sellers uploading the same product name get separate products
+  ---
+  duration_ms: 302.646524
+  type: 'test'
+  ...
+# Subtest: product names that collide with JavaScript object properties upload normally
+ok 116 - product names that collide with JavaScript object properties upload normally
+  ---
+  duration_ms: 190.037157
+  type: 'test'
+  ...
+# Subtest: re-uploading the same file without a revenue column does not duplicate sales
+ok 117 - re-uploading the same file without a revenue column does not duplicate sales
+  ---
+  duration_ms: 206.135067
+  type: 'test'
+  ...
+1..117
+# tests 117
+# suites 0
+# pass 117
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 26533.354292

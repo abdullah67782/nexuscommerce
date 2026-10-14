@@ -9,3 +9,7 @@ ml/models/** binary
 *.png binary
 *.ico binary
 *.ipynb -text
+
+# Upper-estimate artifacts and the parity fixture are hash-checked: keep them byte-for-byte.
+ml/upper_estimates_v1/** -text
+ml/tests/fixtures/** -text

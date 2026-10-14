@@ -1,0 +1,722 @@
+{
+ "Smoke Mug": {
+  "policy_version": "upper-estimates-policy-1",
+  "kind": "one-sided upper demand estimate",
+  "product": {
+   "id": 1,
+   "name": "Smoke Mug",
+   "category": "Home",
+   "department": "household",
+   "department_version": 1
+  },
+  "checks": [
+   {
+    "code": "disabled",
+    "ok": true,
+    "text": "Upper estimates switched on"
+   },
+   {
+    "code": "country_not_confirmed",
+    "ok": true,
+    "text": "Store country confirmed by you"
+   },
+   {
+    "code": "market_not_evaluated",
+    "ok": true,
+    "text": "Store in the US (the benchmark market)"
+   },
+   {
+    "code": "profile_not_confirmed",
+    "ok": true,
+    "text": "Store profile matches the benchmark (confirmed by you)"
+   },
+   {
+    "code": "product_type_not_set",
+    "ok": true,
+    "text": "Product department chosen"
+   },
+   {
+    "code": "product_type_not_covered",
+    "ok": true,
+    "text": "Product is a food, household or hobby product"
+   }
+  ],
+  "departments": {
+   "foods": "Food and grocery",
+   "household": "Household",
+   "hobbies": "Hobbies, toys and crafts",
+   "not_covered": "None of these"
+  },
+  "limitations": [
+   "Evaluated on US Walmart benchmark data; not calibrated to your store.",
+   "The benchmark is the M5 data set: food, household and hobby products in 10 Walmart stores in California, Texas and Wisconsin. The one-time check used 7- and 28-day windows from November 2015 to May 2016.",
+   "This is a one-sided upper estimate of demand, not a range: there is no lower estimate. It is not a guarantee and not an order quantity.",
+   "In the benchmark it was checked only as \"actual sales at or below the estimate\"; how often that holds for your products can differ (other prices, promotions, customers or stock-outs).",
+   "Sales recorded while out of stock understate demand, so the estimate can be low for products that often run out.",
+   "Your reorder suggestions and your safety stock do not use this estimate."
+  ],
+  "estimates": [
+   {
+    "horizon_days": 7,
+    "start": "2026-10-13",
+    "end": "2026-10-19",
+    "level": 0.8,
+    "cell": "regular|7|0.8",
+    "upper_units": 30.15843913859526,
+    "forecast_units": 23.508331298828125,
+    "method": "U0",
+    "method_label": "Forecast-error ratio from benchmark history",
+    "benchmark": {
+     "coverage": {
+      "exact": "19/24",
+      "value": 0.7916666667
+     },
+     "coverage_event_windows": {
+      "exact": "130/161",
+      "value": 0.8074534161
+     },
+     "coverage_other_windows": {
+      "exact": "557/710",
+      "value": 0.7845070423
+     },
+     "windows": 2064,
+     "series": 118,
+     "coverage_date_block_95": [
+      0.7679200462,
+      0.8100955434
+     ],
+     "tolerance_points": 5,
+     "target": 0.8
+    }
+   },
+   {
+    "horizon_days": 7,
+    "start": "2026-10-13",
+    "end": "2026-10-19",
+    "level": 0.9,
+    "cell": "regular|7|0.9",
+    "upper_units": 34.840205511651114,
+    "forecast_units": 23.508331298828125,
+    "method": "U0",
+    "method_label": "Forecast-error ratio from benchmark history",
+    "benchmark": {
+     "coverage": {
+      "exact": "621/688",
+      "value": 0.9026162791
+     },
+     "coverage_event_windows": {
+      "exact": "585/644",
+      "value": 0.9083850932
+     },
+     "coverage_other_windows": {
+      "exact": "9/10",
+      "value": 0.9
+     },
+     "windows": 2064,
+     "series": 118,
+     "coverage_date_block_95": [
+      0.8822163161,
+      0.9192397929
+     ],
+     "tolerance_points": 5,
+     "target": 0.9
+    }
+   },
+   {
+    "horizon_days": 28,
+    "start": "2026-10-13",
+    "end": "2026-11-09",
+    "level": 0.8,
+    "cell": "regular|28|0.8",
+    "upper_units": 110.92335028225345,
+    "forecast_units": 88.36131286621094,
+    "method": "U0",
+    "method_label": "Forecast-error ratio from benchmark history",
+    "benchmark": {
+     "coverage": {
+      "exact": "743/911",
+      "value": 0.8155872667
+     },
+     "coverage_event_windows": {
+      "exact": "27/34",
+      "value": 0.7941176471
+     },
+     "coverage_other_windows": {
+      "exact": "649/768",
+      "value": 0.8450520833
+     },
+     "windows": 1822,
+     "series": 113,
+     "coverage_date_block_95": [
+      0.7833442742,
+      0.85099911
+     ],
+     "tolerance_points": 5,
+     "target": 0.8
+    }
+   },
+   {
+    "horizon_days": 28,
+    "start": "2026-10-13",
+    "end": "2026-11-09",
+    "level": 0.9,
+    "cell": "regular|28|0.9",
+    "upper_units": 124.8276320431798,
+    "forecast_units": 88.36131286621094,
+    "method": "U0",
+    "method_label": "Forecast-error ratio from benchmark history",
+    "benchmark": {
+     "coverage": {
+      "exact": "827/911",
+      "value": 0.9077936334
+     },
+     "coverage_event_windows": {
+      "exact": "472/527",
+      "value": 0.8956356736
+     },
+     "coverage_other_windows": {
+      "exact": "355/384",
+      "value": 0.9244791667
+     },
+     "windows": 1822,
+     "series": 113,
+     "coverage_date_block_95": [
+      0.8833327586,
+      0.9401742715
+     ],
+     "tolerance_points": 5,
+     "target": 0.9
+    }
+   }
+  ],
+  "forecast": {
+   "status": "ok",
+   "models_release": "nexus-v2-shared-20261008",
+   "pattern": {
+    "group": "regular",
+    "selling_day_percent": 100,
+    "window_days": 180
+   },
+   "history": {
+    "tier": "model",
+    "usable_days": 210
+   },
+   "forecasts": [
+    {
+     "horizon_days": 7,
+     "start": "2026-10-13",
+     "end": "2026-10-19",
+     "total_units": 23.508331298828125,
+     "method": "shared_model",
+     "method_label": "Shared forecasting model (v2)"
+    },
+    {
+     "horizon_days": 28,
+     "start": "2026-10-13",
+     "end": "2026-11-09",
+     "total_units": 88.36131286621094,
+     "method": "shared_model",
+     "method_label": "Shared forecasting model (v2)"
+    }
+   ]
+  },
+  "version": "upper-estimates-1",
+  "ml_policy_version": "upper-estimates-policy-1",
+  "status": "available",
+  "reason": null,
+  "benchmark": {
+   "name": "M5 (US Walmart)",
+   "stores": 10,
+   "states": [
+    "CA",
+    "TX",
+    "WI"
+   ],
+   "departments": [
+    "foods",
+    "household",
+    "hobbies"
+   ],
+   "products": "90 held-back products x 10 stores",
+   "windows_within": [
+    "2015-11-01",
+    "2016-05-22"
+   ],
+   "series": 900
+  }
+ },
+ "Smoke Pin": {
+  "policy_version": "upper-estimates-policy-1",
+  "kind": "one-sided upper demand estimate",
+  "product": {
+   "id": 2,
+   "name": "Smoke Pin",
+   "category": "Crafts",
+   "department": "hobbies",
+   "department_version": 1
+  },
+  "checks": [
+   {
+    "code": "disabled",
+    "ok": true,
+    "text": "Upper estimates switched on"
+   },
+   {
+    "code": "country_not_confirmed",
+    "ok": true,
+    "text": "Store country confirmed by you"
+   },
+   {
+    "code": "market_not_evaluated",
+    "ok": true,
+    "text": "Store in the US (the benchmark market)"
+   },
+   {
+    "code": "profile_not_confirmed",
+    "ok": true,
+    "text": "Store profile matches the benchmark (confirmed by you)"
+   },
+   {
+    "code": "product_type_not_set",
+    "ok": true,
+    "text": "Product department chosen"
+   },
+   {
+    "code": "product_type_not_covered",
+    "ok": true,
+    "text": "Product is a food, household or hobby product"
+   }
+  ],
+  "departments": {
+   "foods": "Food and grocery",
+   "household": "Household",
+   "hobbies": "Hobbies, toys and crafts",
+   "not_covered": "None of these"
+  },
+  "limitations": [
+   "Evaluated on US Walmart benchmark data; not calibrated to your store.",
+   "The benchmark is the M5 data set: food, household and hobby products in 10 Walmart stores in California, Texas and Wisconsin. The one-time check used 7- and 28-day windows from November 2015 to May 2016.",
+   "This is a one-sided upper estimate of demand, not a range: there is no lower estimate. It is not a guarantee and not an order quantity.",
+   "In the benchmark it was checked only as \"actual sales at or below the estimate\"; how often that holds for your products can differ (other prices, promotions, customers or stock-outs).",
+   "Sales recorded while out of stock understate demand, so the estimate can be low for products that often run out.",
+   "Your reorder suggestions and your safety stock do not use this estimate."
+  ],
+  "estimates": [
+   {
+    "horizon_days": 7,
+    "start": "2026-10-13",
+    "end": "2026-10-19",
+    "level": 0.8,
+    "cell": "rare|7|0.8",
+    "upper_units": 2,
+    "forecast_units": 0.8327510097976174,
+    "method": "U3",
+    "method_label": "Rare-sales simulation (TSB bootstrap, 400 draws)",
+    "benchmark": {
+     "coverage": {
+      "exact": "3425/4227",
+      "value": 0.8102673291
+     },
+     "coverage_event_windows": {
+      "exact": "2074/2519",
+      "value": 0.8233425963
+     },
+     "coverage_other_windows": {
+      "exact": "4776/5935",
+      "value": 0.8047177759
+     },
+     "windows": 8454,
+     "series": 393,
+     "coverage_date_block_95": [
+      0.799501856,
+      0.8228610445
+     ],
+     "tolerance_points": 10,
+     "target": 0.8
+    }
+   },
+   {
+    "horizon_days": 7,
+    "start": "2026-10-13",
+    "end": "2026-10-19",
+    "level": 0.9,
+    "cell": "rare|7|0.9",
+    "upper_units": 2,
+    "forecast_units": 0.8327510097976174,
+    "method": "U3",
+    "method_label": "Rare-sales simulation (TSB bootstrap, 400 draws)",
+    "benchmark": {
+     "coverage": {
+      "exact": "2475/2818",
+      "value": 0.8782824698
+     },
+     "coverage_event_windows": {
+      "exact": "203/229",
+      "value": 0.8864628821
+     },
+     "coverage_other_windows": {
+      "exact": "5192/5935",
+      "value": 0.8748104465
+     },
+     "windows": 8454,
+     "series": 393,
+     "coverage_date_block_95": [
+      0.8705998076,
+      0.8883397259
+     ],
+     "tolerance_points": 10,
+     "target": 0.9
+    }
+   },
+   {
+    "horizon_days": 28,
+    "start": "2026-10-13",
+    "end": "2026-11-09",
+    "level": 0.8,
+    "cell": "rare|28|0.8",
+    "upper_units": 7.334100026471283,
+    "forecast_units": 3.3310040391904696,
+    "method": "U0",
+    "method_label": "Forecast-error ratio from benchmark history",
+    "benchmark": {
+     "coverage": {
+      "exact": "5966/7551",
+      "value": 0.7900940273
+     },
+     "coverage_event_windows": {
+      "exact": "3381/4238",
+      "value": 0.7977819726
+     },
+     "coverage_other_windows": {
+      "exact": "2585/3313",
+      "value": 0.7802595835
+     },
+     "windows": 7551,
+     "series": 390,
+     "coverage_date_block_95": [
+      0.7688402641,
+      0.804637137
+     ],
+     "tolerance_points": 10,
+     "target": 0.8
+    }
+   },
+   {
+    "horizon_days": 28,
+    "start": "2026-10-13",
+    "end": "2026-11-09",
+    "level": 0.9,
+    "cell": "rare|28|0.9",
+    "upper_units": 9.301608419468124,
+    "forecast_units": 3.3310040391904696,
+    "method": "U1",
+    "method_label": "Conformal score from benchmark history",
+    "benchmark": {
+     "coverage": {
+      "exact": "6707/7551",
+      "value": 0.8882267249
+     },
+     "coverage_event_windows": {
+      "exact": "1894/2119",
+      "value": 0.8938178386
+     },
+     "coverage_other_windows": {
+      "exact": "2919/3313",
+      "value": 0.8810745548
+     },
+     "windows": 7551,
+     "series": 390,
+     "coverage_date_block_95": [
+      0.8665633107,
+      0.9023653749
+     ],
+     "tolerance_points": 10,
+     "target": 0.9
+    }
+   }
+  ],
+  "forecast": {
+   "status": "ok",
+   "models_release": "nexus-v2-shared-20261008",
+   "pattern": {
+    "group": "rare",
+    "selling_day_percent": 10,
+    "window_days": 180
+   },
+   "history": {
+    "tier": "model",
+    "usable_days": 210
+   },
+   "forecasts": [
+    {
+     "horizon_days": 7,
+     "start": "2026-10-13",
+     "end": "2026-10-19",
+     "total_units": 0.8327510097976174,
+     "method": "tsb",
+     "method_label": "Rare-sales method (TSB)"
+    },
+    {
+     "horizon_days": 28,
+     "start": "2026-10-13",
+     "end": "2026-11-09",
+     "total_units": 3.3310040391904696,
+     "method": "tsb",
+     "method_label": "Rare-sales method (TSB)"
+    }
+   ]
+  },
+  "version": "upper-estimates-1",
+  "ml_policy_version": "upper-estimates-policy-1",
+  "status": "available",
+  "reason": null,
+  "benchmark": {
+   "name": "M5 (US Walmart)",
+   "stores": 10,
+   "states": [
+    "CA",
+    "TX",
+    "WI"
+   ],
+   "departments": [
+    "foods",
+    "household",
+    "hobbies"
+   ],
+   "products": "90 held-back products x 10 stores",
+   "windows_within": [
+    "2015-11-01",
+    "2016-05-22"
+   ],
+   "series": 900
+  }
+ },
+ "Smoke Vase": {
+  "policy_version": "upper-estimates-policy-1",
+  "kind": "one-sided upper demand estimate",
+  "product": {
+   "id": 3,
+   "name": "Smoke Vase",
+   "category": "Home",
+   "department": "household",
+   "department_version": 1
+  },
+  "checks": [
+   {
+    "code": "disabled",
+    "ok": true,
+    "text": "Upper estimates switched on"
+   },
+   {
+    "code": "country_not_confirmed",
+    "ok": true,
+    "text": "Store country confirmed by you"
+   },
+   {
+    "code": "market_not_evaluated",
+    "ok": true,
+    "text": "Store in the US (the benchmark market)"
+   },
+   {
+    "code": "profile_not_confirmed",
+    "ok": true,
+    "text": "Store profile matches the benchmark (confirmed by you)"
+   },
+   {
+    "code": "product_type_not_set",
+    "ok": true,
+    "text": "Product department chosen"
+   },
+   {
+    "code": "product_type_not_covered",
+    "ok": true,
+    "text": "Product is a food, household or hobby product"
+   }
+  ],
+  "departments": {
+   "foods": "Food and grocery",
+   "household": "Household",
+   "hobbies": "Hobbies, toys and crafts",
+   "not_covered": "None of these"
+  },
+  "limitations": [
+   "Evaluated on US Walmart benchmark data; not calibrated to your store.",
+   "The benchmark is the M5 data set: food, household and hobby products in 10 Walmart stores in California, Texas and Wisconsin. The one-time check used 7- and 28-day windows from November 2015 to May 2016.",
+   "This is a one-sided upper estimate of demand, not a range: there is no lower estimate. It is not a guarantee and not an order quantity.",
+   "In the benchmark it was checked only as \"actual sales at or below the estimate\"; how often that holds for your products can differ (other prices, promotions, customers or stock-outs).",
+   "Sales recorded while out of stock understate demand, so the estimate can be low for products that often run out.",
+   "Your reorder suggestions and your safety stock do not use this estimate."
+  ],
+  "estimates": [],
+  "forecast": {
+   "status": "ok",
+   "models_release": "nexus-v2-shared-20261008",
+   "pattern": {
+    "group": "dormant",
+    "selling_day_percent": 0,
+    "window_days": 180
+   },
+   "history": {
+    "tier": "model",
+    "usable_days": 210
+   },
+   "forecasts": [
+    {
+     "horizon_days": 7,
+     "start": "2026-10-13",
+     "end": "2026-10-19",
+     "total_units": 0.49788814783096313,
+     "method": "shared_model",
+     "method_label": "Shared forecasting model (v2)"
+    },
+    {
+     "horizon_days": 28,
+     "start": "2026-10-13",
+     "end": "2026-11-09",
+     "total_units": 6.769132137298584,
+     "method": "shared_model",
+     "method_label": "Shared forecasting model (v2)"
+    }
+   ]
+  },
+  "version": "upper-estimates-1",
+  "ml_policy_version": "upper-estimates-policy-1",
+  "status": "unavailable",
+  "reason": {
+   "code": "dormant",
+   "text": "This product has had no sales in the last 180 days. No upper-estimate method met the benchmark checks for such products, so only the forecast is shown."
+  },
+  "benchmark": {
+   "name": "M5 (US Walmart)",
+   "stores": 10,
+   "states": [
+    "CA",
+    "TX",
+    "WI"
+   ],
+   "departments": [
+    "foods",
+    "household",
+    "hobbies"
+   ],
+   "products": "90 held-back products x 10 stores",
+   "windows_within": [
+    "2015-11-01",
+    "2016-05-22"
+   ],
+   "series": 900
+  }
+ },
+ "Smoke Jar": {
+  "policy_version": "upper-estimates-policy-1",
+  "kind": "one-sided upper demand estimate",
+  "product": {
+   "id": 4,
+   "name": "Smoke Jar",
+   "category": "Home",
+   "department": "household",
+   "department_version": 1
+  },
+  "checks": [
+   {
+    "code": "disabled",
+    "ok": true,
+    "text": "Upper estimates switched on"
+   },
+   {
+    "code": "country_not_confirmed",
+    "ok": true,
+    "text": "Store country confirmed by you"
+   },
+   {
+    "code": "market_not_evaluated",
+    "ok": true,
+    "text": "Store in the US (the benchmark market)"
+   },
+   {
+    "code": "profile_not_confirmed",
+    "ok": true,
+    "text": "Store profile matches the benchmark (confirmed by you)"
+   },
+   {
+    "code": "product_type_not_set",
+    "ok": true,
+    "text": "Product department chosen"
+   },
+   {
+    "code": "product_type_not_covered",
+    "ok": true,
+    "text": "Product is a food, household or hobby product"
+   }
+  ],
+  "departments": {
+   "foods": "Food and grocery",
+   "household": "Household",
+   "hobbies": "Hobbies, toys and crafts",
+   "not_covered": "None of these"
+  },
+  "limitations": [
+   "Evaluated on US Walmart benchmark data; not calibrated to your store.",
+   "The benchmark is the M5 data set: food, household and hobby products in 10 Walmart stores in California, Texas and Wisconsin. The one-time check used 7- and 28-day windows from November 2015 to May 2016.",
+   "This is a one-sided upper estimate of demand, not a range: there is no lower estimate. It is not a guarantee and not an order quantity.",
+   "In the benchmark it was checked only as \"actual sales at or below the estimate\"; how often that holds for your products can differ (other prices, promotions, customers or stock-outs).",
+   "Sales recorded while out of stock understate demand, so the estimate can be low for products that often run out.",
+   "Your reorder suggestions and your safety stock do not use this estimate."
+  ],
+  "estimates": [],
+  "forecast": {
+   "status": "ok",
+   "models_release": null,
+   "pattern": null,
+   "history": {
+    "tier": "average",
+    "usable_days": 100
+   },
+   "forecasts": [
+    {
+     "horizon_days": 7,
+     "start": "2026-10-13",
+     "end": "2026-10-19",
+     "total_units": 7,
+     "method": "average_28",
+     "method_label": "Average-based estimate"
+    },
+    {
+     "horizon_days": 28,
+     "start": "2026-10-13",
+     "end": "2026-11-09",
+     "total_units": 28,
+     "method": "average_28",
+     "method_label": "Average-based estimate"
+    }
+   ]
+  },
+  "version": "upper-estimates-1",
+  "ml_policy_version": "upper-estimates-policy-1",
+  "status": "unavailable",
+  "reason": {
+   "code": "short_history",
+   "text": "Upper estimates need at least 180 confirmed days of history. Products with less history could not be validated in the benchmark (only 86 windows from 11 products), so only the forecast is shown."
+  },
+  "benchmark": {
+   "name": "M5 (US Walmart)",
+   "stores": 10,
+   "states": [
+    "CA",
+    "TX",
+    "WI"
+   ],
+   "departments": [
+    "foods",
+    "household",
+    "hobbies"
+   ],
+   "products": "90 held-back products x 10 stores",
+   "windows_within": [
+    "2015-11-01",
+    "2016-05-22"
+   ],
+   "series": 900
+  }
+ }
+}

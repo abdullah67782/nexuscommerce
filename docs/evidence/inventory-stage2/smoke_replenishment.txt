@@ -1,0 +1,27 @@
+Smoke-test seller: smoke-replenishment-1791573281279@nexus.local (new, separate from your real sellers). Planning date 2026-10-10 (Asia/Karachi).
+
+PASS  forecast: 28-day average, starts today, 14 / 56
+PASS  outlook covers 7 and 28 days from today
+PASS  provisional: 4 left when usable on day 9, window 14 → order 10
+PASS  after the order: no shortage in the window
+PASS  scenario (review 14): 24, labelled not saved, not actionable
+PASS  settings unchanged by the scenario
+PASS  draft created from the recommendation
+PASS  retry returns the same draft
+PASS  no second draft while the draft is unplaced
+PASS  stock unchanged by all of this
+PASS  after a new count the older recommendation is stale (nothing created)
+PASS  only the one (cancelled) draft exists
+PASS  reconciliation: starts actionable
+PASS  reconciliation: movement at the count instant → Stock tab needs review
+PASS  reconciliation: indicative, not actionable, fingerprint changed
+PASS  reconciliation: older recommendation refused as stale
+PASS  reconciliation: current recommendation not actionable
+PASS  reconciliation: a new count resolves it
+PASS  timezone: sales in America/Los_Angeles, stock in Asia/Karachi → needs information
+PASS  timezone: no projection, quantity or draft; facts kept
+PASS  timezone: older recommendation refused as stale
+PASS  timezone: matching again → actionable
+PASS  still only the one (cancelled) draft
+
+23/23 checks passed. Seller smoke-replenishment-1791573281279@nexus.local.

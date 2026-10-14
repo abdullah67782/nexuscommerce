@@ -1,0 +1,67 @@
+{
+  "recipe": {
+    "n_estimators": 250,
+    "max_depth": 5,
+    "learning_rate": 0.05,
+    "min_child_weight": 20,
+    "subsample": 0.85,
+    "objective": "reg:quantileerror",
+    "tree_method": "hist",
+    "n_jobs": 2,
+    "random_state": 42
+  },
+  "device": "cpu",
+  "xgboost": "3.4.1",
+  "training": "FIT_A (R12) + FIT_B (R13) weekly rows",
+  "conformal_calibration_dev": "CAL (R14) 2014-06..10",
+  "models": {
+    "7|0.8": {
+      "file": "U2_h7_p0.8.json",
+      "sha256": "2153c5d9aae68badd65f8abdc6b4821b6da5513f7649a1f80a9d17996296df27",
+      "dev_corrections": {
+        "regular": -0.001557477236686422,
+        "occasional": 0.0008972627244074882,
+        "rare": -0.011690328138869166,
+        "dormant": -0.01297567524271126,
+        "short_history": 0.0467190980911254
+      },
+      "dev_sel_reproduction_max_abs_diff": 0.0
+    },
+    "28|0.8": {
+      "file": "U2_h28_p0.8.json",
+      "sha256": "f3d9ce7a5c3e1793a1a6c11967aa109a85e746993780cc49189cd626bc3335ab",
+      "dev_corrections": {
+        "regular": -0.007330690725502409,
+        "occasional": 0.003856018419271301,
+        "rare": 0.02904562883204287,
+        "dormant": -0.13806071420055316,
+        "short_history": 0.08054468506260926
+      },
+      "dev_sel_reproduction_max_abs_diff": 0.0
+    },
+    "7|0.9": {
+      "file": "U2_h7_p0.9.json",
+      "sha256": "c9881ea7d37ed49a829866bf5972213abda709f5cbd37cba4b0b692004c53fd2",
+      "dev_corrections": {
+        "regular": -0.029406129625334065,
+        "occasional": 0.004406919457229153,
+        "rare": -0.008562820307539631,
+        "dormant": -0.13410953104351797,
+        "short_history": 0.1072162389755249
+      },
+      "dev_sel_reproduction_max_abs_diff": 0.0
+    },
+    "28|0.9": {
+      "file": "U2_h28_p0.9.json",
+      "sha256": "9a55d971882797bff52efc88a98252972e7658aefd25ec6b9c14a54c43bb196d",
+      "dev_corrections": {
+        "regular": -0.05468687920746218,
+        "occasional": -0.012758524309979702,
+        "rare": 0.06577698881972172,
+        "dormant": -0.15453198569813564,
+        "short_history": 0.12499761581420898
+      },
+      "dev_sel_reproduction_max_abs_diff": 0.0
+    }
+  }
+}

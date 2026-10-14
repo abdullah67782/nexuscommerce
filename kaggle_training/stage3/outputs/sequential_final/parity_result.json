@@ -1,0 +1,8 @@
+{
+ "engine_version": "replenishment-1",
+ "decisions": 3005,
+ "equal": 3005,
+ "mismatches": [],
+ "mismatch_count": 0,
+ "exact": true
+}

@@ -1,0 +1,362 @@
+{
+  "1_queue": {
+    "planning_date": "2026-10-09",
+    "counts": {
+      "total": 5,
+      "needs_information": 2,
+      "shortage_before_arrival": 2,
+      "shortage_within_7": 2,
+      "order_suggested": 2,
+      "indicative": 1,
+      "provisional": 2,
+      "unavailable": 0
+    },
+    "rows": [
+      {
+        "status": "provisional",
+        "suggested_quantity": 30,
+        "shortage_7_units": 5.75,
+        "shortage_28_units": 86,
+        "before_arrival_shortage": 1.93,
+        "next_step": "Review the suggestion and create a draft order.",
+        "product": "Ceramic Mug Set"
+      },
+      {
+        "status": "indicative",
+        "suggested_quantity": 30,
+        "shortage_7_units": 12.73,
+        "shortage_28_units": 80.6,
+        "before_arrival_shortage": 16.5,
+        "next_step": "Upload and confirm recent sales.",
+        "product": "Pashmina Shawl"
+      },
+      {
+        "status": "provisional",
+        "suggested_quantity": 40,
+        "shortage_7_units": 0,
+        "shortage_28_units": 91.41,
+        "before_arrival_shortage": 0,
+        "next_step": "Review the suggestion and create a draft order.",
+        "product": "Lawn Suit 3-Piece"
+      },
+      {
+        "status": "needs_information",
+        "suggested_quantity": null,
+        "shortage_7_units": 0,
+        "shortage_28_units": 0,
+        "before_arrival_shortage": null,
+        "next_step": "Link a supplier on the Suppliers tab.",
+        "product": "Bridal Clutch"
+      },
+      {
+        "status": "needs_information",
+        "suggested_quantity": null,
+        "shortage_7_units": null,
+        "shortage_28_units": null,
+        "before_arrival_shortage": null,
+        "next_step": "Upload and confirm more sales history.",
+        "product": "Prayer Mat"
+      }
+    ]
+  },
+  "2_lawn": {
+    "status": "provisional",
+    "actionable": true,
+    "recommendation_id": 3,
+    "inputs_sha256": "18950b51a860c780e7eac32f19c4cbe98a13890e070090e26cd81fe821b70842",
+    "stock": {
+      "state": "last_known",
+      "on_hand": 70,
+      "counted_at": "2026-10-08T14:53:53.618Z",
+      "count_business_date": "2026-10-08",
+      "count_age_days": 1,
+      "stale_after_days": 7,
+      "movement_tracking": "partial",
+      "legacy_quantity": 80,
+      "reconciliation": {
+        "state": "none",
+        "reason": null,
+        "same_instant_events": 0,
+        "events_without_count": 0,
+        "events": []
+      }
+    },
+    "outlook": {
+      "7": {
+        "horizon_days": 7,
+        "start": "2026-10-09",
+        "end": "2026-10-15",
+        "covered_days": 7,
+        "complete": true,
+        "label": "7 days",
+        "demand": 41.97,
+        "incoming_counted": 1,
+        "stock_at_end": 29.03,
+        "shortage_units": 0,
+        "runs_short": false
+      },
+      "28": {
+        "horizon_days": 28,
+        "start": "2026-10-09",
+        "end": "2026-11-05",
+        "covered_days": 28,
+        "complete": true,
+        "label": "28 days",
+        "demand": 162.41,
+        "incoming_counted": 1,
+        "stock_at_end": 0,
+        "shortage_units": 91.41,
+        "runs_short": true
+      },
+      "basis": "A1",
+      "approximate_cover_days": 12,
+      "cover_note": null
+    },
+    "before_arrival": {
+      "order_expected": "2026-10-19",
+      "order_usable_from": "2026-10-20",
+      "usable_day": 12,
+      "stock_when_order_usable": 6.09,
+      "shortage_units": 0,
+      "runs_short": false
+    },
+    "suggestion": {
+      "window": {
+        "start": "2026-10-20",
+        "end": "2026-10-26",
+        "days": 7,
+        "first_day": 12,
+        "last_day": 18
+      },
+      "stock_when_order_usable": 6.09,
+      "demand_in_window": 40.15,
+      "incoming_in_window": 0,
+      "needed_to_avoid_shortage": 34.06,
+      "needed_for_safety_stock": 34.06,
+      "binding": "shortage_inside_window",
+      "binding_detail": {
+        "kind": "window_end"
+      },
+      "raw_need": 34.06,
+      "raw_units": 35,
+      "after_minimum": 35,
+      "minimum_adjustment": 0,
+      "pack_adjustment": 5,
+      "quantity": 40,
+      "cost": {
+        "amount": 112000,
+        "currency": "PKR"
+      },
+      "after_order": {
+        "quantity": 40,
+        "usable_from": "2026-10-20",
+        "shortage_in_window": 0,
+        "lowest_stock_in_window": 5.94,
+        "stock_at_window_end": 5.94,
+        "safety_stock_met": true,
+        "shortage_before_usable": 0,
+        "shortage_after_window_within_forecast": 51.41,
+        "outlook": {
+          "7": {
+            "horizon_days": 7,
+            "start": "2026-10-09",
+            "end": "2026-10-15",
+            "covered_days": 7,
+            "complete": true,
+            "label": "7 days",
+            "demand": 41.97,
+            "incoming_counted": 1,
+            "stock_at_end": 29.03,
+            "shortage_units": 0,
+            "runs_short": false
+          },
+          "28": {
+            "horizon_days": 28,
+            "start": "2026-10-09",
+            "end": "2026-11-05",
+            "covered_days": 28,
+            "complete": true,
+            "label": "28 days",
+            "demand": 162.41,
+            "incoming_counted": 41,
+            "stock_at_end": 0,
+            "shortage_units": 51.41,
+            "runs_short": true
+          }
+        }
+      }
+    },
+    "assumptions": [
+      {
+        "code": "A1",
+        "text": "The 7- and 28-day forecast totals are spread evenly inside each block (forecast days 1\u20137 and 8\u201328). The forecast gives no daily figures, so the day on which stock runs out is not known precisely."
+      },
+      {
+        "code": "A2",
+        "text": "A delivery is usable the day after its expected arrival date."
+      },
+      {
+        "code": "A3",
+        "text": "Demand that cannot be met from stock is lost, not back-ordered."
+      },
+      {
+        "code": "A4",
+        "text": "Today counts as a full day of demand still to come; nothing assumes today's sales are finished."
+      }
+    ],
+    "limitations": [
+      {
+        "code": "stock_last_known",
+        "text": "Stock is the last-known position: counted on 2026-10-08 (1 day(s) ago) plus recorded movements. Some sales since the count came from a source or day that no declared shipment feed covers."
+      },
+      {
+        "code": "review_period_default",
+        "text": "The review period of 7 days is the default, not your setting. The order is sized to last until the next review 7 days after it arrives."
+      },
+      {
+        "code": "no_safety_stock",
+        "text": "No safety stock is set, so the suggestion covers expected demand only. Actual sales above the forecast would cause a shortage."
+      }
+    ]
+  },
+  "3_scenario": {
+    "tables_unchanged": true,
+    "log_unchanged": true,
+    "policy_after": {
+      "reorder_threshold": 40,
+      "stale_after_days": 7,
+      "provenance": "seller",
+      "threshold_source": "seller",
+      "review_period_days": 7,
+      "review_period_source": "default",
+      "safety_stock_units": 0,
+      "safety_stock_source": "default"
+    }
+  },
+  "4_draft": {
+    "order": "6|draft|3",
+    "retry_status": 200,
+    "retry_replayed": true,
+    "orders_for_recommendation": "1",
+    "stock_movements_unchanged": true,
+    "line": "1|40",
+    "after": {
+      "status": "provisional",
+      "actionable": false,
+      "draft_blocked": {
+        "code": "unplaced_order_exists",
+        "po_ids": [
+          6
+        ],
+        "text": "PO-6 for this product is not placed yet. Review, place or cancel it before creating another draft."
+      },
+      "draft_button": 0
+    }
+  },
+  "5_mug": {
+    "status": "provisional",
+    "warnings": [
+      {
+        "code": "incoming_overdue",
+        "po_id": 5,
+        "text": "PO-5: 12 unit(s) were expected on 2026-10-05 and are not received. They are not counted. Check with the supplier before ordering again."
+      }
+    ],
+    "before_arrival": {
+      "order_expected": "2026-10-14",
+      "order_usable_from": "2026-10-15",
+      "usable_day": 7,
+      "stock_when_order_usable": 0,
+      "shortage_units": 1.93,
+      "runs_short": true
+    },
+    "alternative_if_uncertain_incoming_arrives": {
+      "label": "If the overdue and undated deliveries (12 unit(s)) are usable tomorrow",
+      "uncertain_units": 12,
+      "raw_need": 16.68,
+      "raw_units": 17,
+      "minimum_adjustment": 0,
+      "pack_adjustment": 1,
+      "quantity": 18
+    },
+    "quantity": 30,
+    "raw_need": 26.75
+  },
+  "6_stale": {
+    "orders_unchanged": true,
+    "notice_shown": true
+  },
+  "7_pashmina": {
+    "status": "indicative",
+    "actionable": false,
+    "lag": 3,
+    "outlook28": {
+      "start": "2026-10-09",
+      "end": "2026-11-02",
+      "covered_days": 25,
+      "label": "25 days covered (of 28)"
+    },
+    "outlook7": {
+      "start": "2026-10-09",
+      "end": "2026-10-15",
+      "covered_days": 7
+    },
+    "draft_button": 0
+  },
+  "8_clutch": {
+    "status": "needs_information",
+    "missing": [
+      "supplier_missing"
+    ],
+    "indicative": [
+      "stock_stale"
+    ],
+    "cover": null,
+    "method": "tsb"
+  },
+  "10_reconciliation": {
+    "movement_status": 201,
+    "free_before": [
+      "provisional",
+      true
+    ],
+    "after": [
+      "indicative",
+      false,
+      "needs_review"
+    ],
+    "fingerprint_changed": true,
+    "older_recommendation": [
+      409,
+      "recommendation_stale"
+    ],
+    "draft_button": 0
+  },
+  "11_timezone": {
+    "status": "needs_information",
+    "missing": [
+      "timezone_mismatch"
+    ],
+    "outlook": null,
+    "suggestion": null,
+    "forecast_totals": {
+      "7": 26.75,
+      "28": 107
+    },
+    "dates_timezone": "America/Los_Angeles",
+    "stock_on_hand": 40,
+    "queue_counts": {
+      "total": 5,
+      "needs_information": 5,
+      "shortage_before_arrival": 0,
+      "shortage_within_7": 0,
+      "order_suggested": 0,
+      "indicative": 0,
+      "provisional": 0,
+      "unavailable": 0
+    }
+  },
+  "9_console_errors": [
+    "[error] Failed to load resource: the server responded with a status of 409 (Conflict)"
+  ]
+}

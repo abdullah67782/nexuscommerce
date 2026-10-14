@@ -64,6 +64,7 @@ export default function DashboardPage() {
   const [products, setProducts] = useState([]);
   const [metrics, setMetrics] = useState([]);
   const [alerts, setAlerts] = useState([]);
+  const [alertsError, setAlertsError] = useState(false);
   const [quality, setQuality] = useState({ score: 0, clean_records: 0, duplicates: 0, outliers: 0, last_upload: null });
   const [freshness, setFreshness] = useState(null);
   const [criticalAnomalies, setCriticalAnomalies] = useState(0);
@@ -105,13 +106,13 @@ export default function DashboardPage() {
       }
       if (prodsR.status === 'fulfilled') setProducts(prodsR.value.data?.products || []);
       if (metricsR.status === 'fulfilled') setMetrics(metricsR.value.data || []);
-      if (alertsR.status === 'fulfilled') setAlerts(alertsR.value.data || []);
+      if (alertsR.status === 'fulfilled') { setAlerts(alertsR.value.data || []); setAlertsError(false); } else setAlertsError(true);
       if (qualityR.status === 'fulfilled') setQuality(q => qualityR.value.data || q);
       if (freshnessR.status === 'fulfilled') setFreshness(freshnessR.value.data);
       if (anomR.status === 'fulfilled') setCriticalAnomalies(anomR.value.data?.total ?? 0);
       if (versionsR.status === 'fulfilled') {
         const versions = versionsR.value.data?.versions || [];
-        const latest = versions.find((v) => !v.is_rolled_back);
+        const latest = versions.find((v) => !v.is_rolled_back && v.source !== 'stock_count');
         if (latest) setVersionInfo(latest);
       }
 
@@ -122,7 +123,7 @@ export default function DashboardPage() {
     }
   }, [selectedProduct, dateRange]);
 
-  useEffect(() => { fetchAll(); const t = setInterval(() => fetchAll(true), 60000); return () => clearInterval(t); }, [fetchAll]);
+  useEffect(() => { queueMicrotask(() => fetchAll()); const t = setInterval(() => fetchAll(true), 60000); return () => clearInterval(t); }, [fetchAll]);
   useEffect(() => { if (!loading) fetchSales(selectedProduct, dateRange); }, [selectedProduct, dateRange]); // eslint-disable-line
 
   // ── Derived signals (all from the responses above) ──────────────────────
@@ -131,7 +132,9 @@ export default function DashboardPage() {
   const v2 = useForecastV2Enabled() === true;
   const accuracy = !Array.isArray(metrics) && metrics?.accuracy != null ? metrics.accuracy : null;
   const hasPersonalModel = accuracy != null;
-  const alertList = useMemo(() => (Array.isArray(alerts) ? [...alerts].sort((a, b) => (RISK_ORDER[a.risk_level?.toLowerCase()] ?? 9) - (RISK_ORDER[b.risk_level?.toLowerCase()] ?? 9)) : []), [alerts]);
+  // Unknown stock is never a risk level of its own: it is counted separately, never shown as zero.
+  const unknownStock = useMemo(() => (Array.isArray(alerts) ? alerts.filter(a => a.risk_level === 'unknown') : []), [alerts]);
+  const alertList = useMemo(() => (Array.isArray(alerts) ? alerts.filter(a => a.risk_level !== 'unknown').sort((a, b) => (RISK_ORDER[a.risk_level?.toLowerCase()] ?? 9) - (RISK_ORDER[b.risk_level?.toLowerCase()] ?? 9)) : []), [alerts]);
   const criticalAlerts = alertList.filter(a => a.risk_level?.toLowerCase() === 'critical');
   const highAlerts = alertList.filter(a => a.risk_level?.toLowerCase() === 'high');
   const momentum = useMemo(() => salesMomentum(salesData), [salesData]);
@@ -153,6 +156,9 @@ export default function DashboardPage() {
       why: `That is below its reorder point of ${fmtNum(a.reorder_threshold)}. ${a.recommended_action || 'Restock soon to avoid missed sales.'}`,
       action: { label: 'Plan restock', href: '/inventory' },
     }));
+    if (unknownStock.length) {
+      items.push({ id: 'unknown-stock', severity: 'info', title: `${unknownStock.length} ${unknownStock.length === 1 ? 'product has' : 'products have'} no stock count`, why: 'Their stock is unknown, not zero, so they cannot be checked against a reorder point. Record a count on the Inventory page.', action: { label: 'Record stock', href: '/inventory' } });
+    }
     if (criticalAlerts.length > 3) items.push({ id: 'crit-more', severity: 'critical', title: `${criticalAlerts.length - 3} more products at critical stock`, why: 'Review the full list to decide what to reorder first.', action: { label: 'Open inventory', href: '/inventory' } });
     if (highAlerts.length) {
       items.push({ id: 'high', severity: 'warning', title: `${highAlerts.length} ${highAlerts.length === 1 ? 'product is' : 'products are'} close to running low`, why: `${highAlerts.slice(0, 3).map(a => a.product_name).join(', ')}${highAlerts.length > 3 ? '…' : ''} — schedule a reorder this week to stay ahead of demand.`, action: { label: 'Review stock', href: '/inventory' } });
@@ -172,7 +178,7 @@ export default function DashboardPage() {
     }
     const rank = { critical: 0, warning: 1, info: 2 };
     return items.sort((a, b) => rank[a.severity] - rank[b.severity]);
-  }, [criticalAnomalies, criticalAlerts, highAlerts, momentum, freshScore, daysOld, qualityScore, hasPersonalModel, selectedProduct, v2]);
+  }, [criticalAnomalies, criticalAlerts, highAlerts, unknownStock, momentum, freshScore, daysOld, qualityScore, hasPersonalModel, selectedProduct, v2]);
 
   const criticalCount = attention.filter(i => i.severity === 'critical').length;
 
@@ -332,10 +338,12 @@ export default function DashboardPage() {
         {/* ── 4. Risks + data health ──────────────────────────────────── */}
         <div className="overview-bottom">
           <Panel as="section" aria-labelledby="risks-title">
-            <PanelHeader title="Inventory risks" titleId="risks-title" description="Products at or below their reorder point, most urgent first">
+            <PanelHeader title="Inventory risks" titleId="risks-title" description="Counted products at or below their reorder point, most urgent first. Figures are physical stock from counts, not stock available to sell">
               <Button variant="ghost" size="sm" href="/inventory" iconRight={<HiArrowRight />}>All inventory</Button>
             </PanelHeader>
-            {loading ? <div className="panel-body"><Skeleton height={140} /></div> : alertList.length ? (
+            {loading ? <div className="panel-body"><Skeleton height={140} /></div> : alertsError ? (
+              <EmptyState icon={<HiOutlineArrowPath />} title="Inventory could not be loaded" action={<Button variant="secondary" size="sm" onClick={() => fetchAll(true)}>Retry</Button>}>The stock figures did not load, so no risk is shown. This does not mean stock is healthy.</EmptyState>
+            ) : alertList.length ? (
               <div className="table-scroll" style={{ maxHeight: 340 }}>
                 <table className="data-table">
                   <thead>
@@ -346,7 +354,7 @@ export default function DashboardPage() {
                       const tone = RISK_TONE[a.risk_level?.toLowerCase()] || 'info';
                       return (
                         <tr key={i}>
-                          <td className="is-strong">{a.product_name}</td>
+                          <td className="is-strong">{a.product_name}{a.position_type === 'last_known' && <span className="list-row-aside" style={{ display: 'block', fontWeight: 400 }}>last count {a.last_count_at ? new Date(a.last_count_at).toLocaleDateString() : ''}</span>}</td>
                           <td>
                             <div className="stock-cell">
                               <span className="num"><strong>{fmtNum(a.stock_level)}</strong> / {fmtNum(a.reorder_threshold)}</span>
@@ -361,7 +369,10 @@ export default function DashboardPage() {
                   </tbody>
                 </table>
               </div>
-            ) : <EmptyState icon={<HiOutlineShieldCheck />} title="No stock risks">No product is at or below its reorder point.</EmptyState>}
+            ) : <EmptyState icon={<HiOutlineShieldCheck />} title="No stock risks">No counted product is at or below its reorder point.</EmptyState>}
+            {!loading && !alertsError && unknownStock.length > 0 && (
+              <div className="panel-foot panel-foot-start"><span className="side-note">{unknownStock.length} {unknownStock.length === 1 ? 'product has' : 'products have'} no stock count: stock unknown, not zero.</span></div>
+            )}
           </Panel>
 
           <Panel as="section" aria-labelledby="health-title">

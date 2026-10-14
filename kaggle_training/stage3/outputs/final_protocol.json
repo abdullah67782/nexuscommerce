@@ -1,0 +1,458 @@
+{
+  "protocol_id": "nexus-stage3-final-protocol-v1",
+  "status": "frozen before any calibration artifact is generated and before any reserved outcome is read",
+  "frozen_at": "2026-10-12T21:16:41+00:00",
+  "production_unchanged": [
+    "nexus-v2-shared-20261008 models and hashes",
+    "routing rule",
+    "replenishment-1",
+    "no production integration or model replacement is authorised by this protocol"
+  ],
+  "base_release": {
+    "release": "nexus-v2-shared-20261008",
+    "models": {
+      "7": "527438cea9132213f6a09f94905b5ebff4756c435e7b5cf2cc2ec71eb24a5041",
+      "28": "8916771384e4fa8f3d0dfecdc7901fe6d49fefe8fc6ff1ea74a9a71cc1bec2bf"
+    }
+  },
+  "corrections": {
+    "1_exact_thresholds": "every tolerance, count and ratio check uses unrounded integer/Fraction arithmetic (final/common.py); displayed values are never compared",
+    "2_shortage_excess_gate": "Per selected (segment, level): in every cell, shortage avoided per decision versus D0 > 0 and (mean end stock - D0 mean end stock) / (D0 mean lost units - mean lost units) <= cap, exactly; cap = 5/4 x the selected method's worst development ratio over all A2 cells; plus the date-block 95% interval of the pooled per-decision shortage reduction (kappa = 1) above 0.",
+    "3_decision_specific_quantities": "Every candidate is evaluated on the order quantity it produces for each decision. Q_method - Q_D0 is not a safety stock: with Stage 2's daily checkpoints a safety-stock setting SS changes the quantity to max(-min balance, SS - end balance), which is not Q_D0 + SS in general. Any later implementation must reproduce the evaluated quantity for each decision.",
+    "4_executable_protocol": "final/final_runner.py implements this protocol end to end; rehearsed on development stand-ins before freezing calibration"
+  },
+  "decisions_applied": {
+    "D1": "E1c carried into the US final run, reported under the event gates",
+    "D2": "kappa-robust rule A2 (amendment A2), original A0 selections preserved and reported",
+    "D3": "Pakistan E1 only for Independence Day and Eid al-Adha (two fit occurrences each), alpha = 10",
+    "D4": "calibration plan and this protocol frozen; calibration artifacts hashed before final outcomes"
+  },
+  "selections": {
+    "totals_uncertainty": {
+      "regular|7|0.8": "U0",
+      "regular|7|0.9": "U0",
+      "regular|28|0.8": "U0",
+      "regular|28|0.9": "U0",
+      "occasional|7|0.8": "U2",
+      "occasional|7|0.9": "U0",
+      "occasional|28|0.8": "U0",
+      "occasional|28|0.9": "U0",
+      "rare|7|0.8": "U3",
+      "rare|7|0.9": "U3",
+      "rare|28|0.8": "U0",
+      "rare|28|0.9": "U1",
+      "dormant|7|0.8": null,
+      "dormant|7|0.9": null,
+      "dormant|28|0.8": null,
+      "dormant|28|0.9": "U2",
+      "short_history|7|0.8": "U2",
+      "short_history|7|0.9": "U2",
+      "short_history|28|0.8": "U0",
+      "short_history|28|0.9": "U1"
+    },
+    "decision_A0_original": {
+      "regular|0.8": "D1@0.8",
+      "regular|0.9": "D1@0.9",
+      "occasional|0.8": "D2c@0.8",
+      "occasional|0.9": "D1@0.9",
+      "rare|0.8": "D2c@0.8",
+      "rare|0.9": "D2c@0.9",
+      "dormant|0.8": null,
+      "dormant|0.9": null,
+      "short_history|0.8": "D2c@0.8",
+      "short_history|0.9": "D2c@0.9"
+    },
+    "decision_A2_kappa_robust": {
+      "regular|0.8": null,
+      "regular|0.9": "D2@0.9",
+      "occasional|0.8": null,
+      "occasional|0.9": "D2c@0.9",
+      "rare|0.8": "D2c@0.8",
+      "rare|0.9": "D2c@0.9",
+      "dormant|0.8": null,
+      "dormant|0.9": null,
+      "short_history|0.8": "D2c@0.8",
+      "short_history|0.9": "D2c@0.9"
+    },
+    "decision_authorising_rule": "A2_kappa_robust",
+    "decision_caps": {
+      "regular|0.9": {
+        "method": "D2@0.9",
+        "dev_worst_ratio": {
+          "exact": "99459/24245",
+          "value": 4.102247886162095
+        },
+        "dev_worst_cell": {
+          "scenario": "none",
+          "L": 14,
+          "R": 7,
+          "kappa": 1.0,
+          "avoided_per_decision": {
+            "exact": "24245/7539",
+            "value": 3.215943759119247
+          },
+          "excess_per_decision": {
+            "exact": "33153/2513",
+            "value": 13.192598487863112
+          }
+        },
+        "cap": {
+          "exact": "99459/19396",
+          "value": 5.127809857702619
+        }
+      },
+      "occasional|0.9": {
+        "method": "D2c@0.9",
+        "dev_worst_ratio": {
+          "exact": "59676/10571",
+          "value": 5.645255888752247
+        },
+        "dev_worst_cell": {
+          "scenario": "none",
+          "L": 14,
+          "R": 7,
+          "kappa": 1.0,
+          "avoided_per_decision": {
+            "exact": "42284/47207",
+            "value": 0.8957146185946999
+          },
+          "excess_per_decision": {
+            "exact": "238704/47207",
+            "value": 5.0565382252632025
+          }
+        },
+        "cap": {
+          "exact": "74595/10571",
+          "value": 7.056569860940308
+        }
+      },
+      "rare|0.8": {
+        "method": "D2c@0.8",
+        "dev_worst_ratio": {
+          "exact": "11686/745",
+          "value": 15.685906040268456
+        },
+        "dev_worst_cell": {
+          "scenario": "none",
+          "L": 7,
+          "R": 7,
+          "kappa": 1.0,
+          "avoided_per_decision": {
+            "exact": "745/27144",
+            "value": 0.027446212791040377
+          },
+          "excess_per_decision": {
+            "exact": "5843/13572",
+            "value": 0.4305187150014736
+          }
+        },
+        "cap": {
+          "exact": "5843/298",
+          "value": 19.607382550335572
+        }
+      },
+      "rare|0.9": {
+        "method": "D2c@0.9",
+        "dev_worst_ratio": {
+          "exact": "307/34",
+          "value": 9.029411764705882
+        },
+        "dev_worst_cell": {
+          "scenario": "none",
+          "L": 7,
+          "R": 7,
+          "kappa": 1.0,
+          "avoided_per_decision": {
+            "exact": "85/522",
+            "value": 0.16283524904214558
+          },
+          "excess_per_decision": {
+            "exact": "1535/1044",
+            "value": 1.4703065134099618
+          }
+        },
+        "cap": {
+          "exact": "1535/136",
+          "value": 11.286764705882353
+        }
+      },
+      "short_history|0.8": {
+        "method": "D2c@0.8",
+        "dev_worst_ratio": {
+          "exact": "4587/712",
+          "value": 6.442415730337078
+        },
+        "dev_worst_cell": {
+          "scenario": "none",
+          "L": 14,
+          "R": 7,
+          "kappa": 1.0,
+          "avoided_per_decision": {
+            "exact": "356/1439",
+            "value": 0.2473940236275191
+          },
+          "excess_per_decision": {
+            "exact": "4587/2878",
+            "value": 1.593815149409312
+          }
+        },
+        "cap": {
+          "exact": "22935/2848",
+          "value": 8.053019662921349
+        }
+      },
+      "short_history|0.9": {
+        "method": "D2c@0.9",
+        "dev_worst_ratio": {
+          "exact": "11347/1448",
+          "value": 7.836325966850829
+        },
+        "dev_worst_cell": {
+          "scenario": "none",
+          "L": 14,
+          "R": 7,
+          "kappa": 1.0,
+          "avoided_per_decision": {
+            "exact": "724/1439",
+            "value": 0.5031271716469771
+          },
+          "excess_per_decision": {
+            "exact": "11347/2878",
+            "value": 3.9426685198054203
+          }
+        },
+        "cap": {
+          "exact": "56735/5792",
+          "value": 9.795407458563536
+        }
+      }
+    },
+    "event_us": "E1c (25 December closure: F x (h - closed days)/h for F >= 1); learned E1 not carried",
+    "event_pk": {
+      "events": [
+        "Independence Day",
+        "Eid al-Adha"
+      ],
+      "alpha": 10,
+      "form": "F x exp(x . beta) for F >= 1"
+    },
+    "safety_stock_targets": [
+      0.8,
+      0.9
+    ]
+  },
+  "us": {
+    "products": "reservation nexus-stage3-m5-v1 holdout: 90 products x 10 stores, launch = first price week",
+    "final_windows_within": [
+      "2015-11-01",
+      "2016-05-22"
+    ],
+    "origins": "every 7 days from the first date",
+    "horizons": [
+      7,
+      28
+    ],
+    "rehearsal_windows_within": [
+      "2014-11-01",
+      "2015-05-31"
+    ],
+    "rehearsal_products": "development_extra (150)",
+    "calibration": {
+      "script": "final/calibrate.py --market us",
+      "products": "consumed (180) + development_extra (150) x 10 stores",
+      "windows_within": [
+        "2015-06-01",
+        "2015-10-31"
+      ],
+      "origins": "every 7 days",
+      "quantities": [
+        "U0 and U1 quantiles per segment x horizon x level",
+        "U2 conformal corrections (selected CPU boosters)",
+        "D1 r_p"
+      ]
+    },
+    "decision_track": {
+      "pairs": [
+        [
+          3,
+          7
+        ],
+        [
+          7,
+          7
+        ],
+        [
+          3,
+          14
+        ],
+        [
+          7,
+          14
+        ],
+        [
+          14,
+          7
+        ]
+      ],
+      "excluded": "L14/R14 (29 days > 28)",
+      "kappa": "1 for every pair; 0.5 and 1.5 on (7, 7)",
+      "scenarios": [
+        "none",
+        "mid"
+      ],
+      "paths": 100,
+      "success": "no shortage on any day of the review window a..a+R-1 (a = L + 2) on actual daily sales",
+      "shortage_before_arrival": "reported separately",
+      "lost_units": "lower bound where stockouts are unknown"
+    }
+  },
+  "pakistan": {
+    "series": "15 named categories (uncategorised reported separately); recorded order quantities (no order status)",
+    "source_sha256": "103727e1c7a1670003de5102f25c33734f5cb1a988526ec264c8aec79fb39fb9",
+    "final_windows_within": [
+      "2018-01-01",
+      "2018-08-28"
+    ],
+    "rehearsal_windows_within": [
+      "2017-07-01",
+      "2017-12-31"
+    ],
+    "final_event_dates": [
+      [
+        "New Year",
+        "2018-01-01",
+        false
+      ],
+      [
+        "Pakistan Day",
+        "2018-03-23",
+        false
+      ],
+      [
+        "Labour Day",
+        "2018-05-01",
+        false
+      ],
+      [
+        "Ramadan start",
+        "2018-05-17",
+        true
+      ],
+      [
+        "Eid al-Fitr",
+        "2018-06-16",
+        true
+      ],
+      [
+        "Independence Day",
+        "2018-08-14",
+        false
+      ],
+      [
+        "Eid al-Adha",
+        "2018-08-22",
+        true
+      ]
+    ],
+    "final_event_sources": {
+      "New Year 2018-01-01": "fixed date",
+      "Pakistan Day 2018-03-23": "fixed public holiday",
+      "Labour Day 2018-05-01": "fixed public holiday",
+      "Ramadan start 2018-05-17": "first fast in Pakistan, 17 May 2018 (Ruet-e-Hilal); lunar spread applies before d-1",
+      "Eid al-Fitr 2018-06-16": "Pakistan, Saturday 16 June 2018 (Ruet-e-Hilal); lunar spread applies before d-1",
+      "Independence Day 2018-08-14": "fixed public holiday",
+      "Eid al-Adha 2018-08-22": "Pakistan declared Eid al-Adha on 22 August 2018 (Ruet-e-Hilal); lunar spread applies before d-1"
+    },
+    "calibration": {
+      "script": "final/calibrate.py --market pk",
+      "uncertainty_windows_within": [
+        "2017-07-01",
+        "2017-12-31"
+      ],
+      "e1_fit_windows_within": [
+        "2016-07-29",
+        "2017-12-31"
+      ]
+    },
+    "uncertainty": "U0/U1 coverage is descriptive only: 15 category series are below the 30-series requirement and are not inventory units"
+  },
+  "gates": {
+    "event": "event-window WAPE >= 5% better than the frozen release at both horizons; overall and non-event WAPE no worse than +0.5 points; |event bias| not larger; date-block and product (US) / category (PK) cluster 95% intervals of the relative improvement above 0; >= 2 fit occurrences per adjusted event. PK event windows = windows overlapping [d-7, d+3] of the adjusted events.",
+    "totals_uncertainty": "for the selected method of each cell: exact |hits - p*n| <= tol*n in event AND non-event windows; >= 200 windows; >= 30 series; >= 2 distinct primary-event occurrences in the cell's event windows",
+    "decision_protection": "A2 cells: exact coverage tolerance in every cell; >= 200 decisions per cell; shortage avoided > 0 and excess-per-avoided ratio <= the frozen cap in every cell; pooled shortage-reduction date-block 95% interval above 0",
+    "parity": "max |served - ml/v2 forecast_totals| < 1e-3 units on 300 sampled US forecasts (< 1e-2 for PK category totals); otherwise stop",
+    "scope": "a pass authorises a suggestion only for the evaluated market, segment, horizon and level; no production change is authorised"
+  },
+  "coverage_definition": "share of windows whose actual total is <= the method's upper p-quantile (one-sided); windows without a v2 forecast are excluded",
+  "statistics": {
+    "date_block_days": 28,
+    "bootstrap_B": 500,
+    "cluster": "products (US), categories (PK)"
+  },
+  "seeds": {
+    "decisions": 20261015,
+    "u3": 7,
+    "bootstrap": 20261017
+  },
+  "execution": {
+    "runner": "kaggle_training/stage3/final/final_runner.py",
+    "rehearsal": "python final_runner.py --rehearse --calibration <dir> --out <dir>",
+    "final": "python final_runner.py --execute-once --confirm <sha256(final_protocol.json)> --calibration <dir> --calibration-freeze-sha <sha256(calibration_freeze.json)> --pakistan-source <csv> --lock-dir <dir> --out <empty dir>",
+    "rerun_protection": "hash checks; lock file created with O_CREAT|O_EXCL; non-empty output refused; the returned evidence is accepted once, matched to the calibration freeze and protocol hashes",
+    "calibration_freeze": "calibration_freeze.json lists the verified calibration artifacts with hashes; made after verification of the Kaggle output and before the final package"
+  },
+  "development_reference": {
+    "what": "development values (cloud development run) that the Kaggle package must reproduce",
+    "files": {
+      "FIT_A.csv.gz": "34989133382d94e8f0b31ed2b158d4788bccc2decc63311c646b87549189a65d",
+      "FIT_B.csv.gz": "579c0fb0fb61dd86a1635984c6303ec3b1afee1f831e77e28018a8b476d7b616",
+      "CAL.csv.gz": "2f6b20a514f64a8111ea7799fdb9e577a816efe4735df418e241e259ba6f1d0f",
+      "SEL.csv.gz": "0a26d0376682266695f5f1baaf1fdb46af8eb929978901489ef6b8c715612f6a",
+      "SEL_U2_uppers.csv.gz": "15b3ba3b0015cd586c7ff480c234055f7363bd61dfdc15999c1ef9065e6e402b"
+    }
+  },
+  "hashes": {
+    "kaggle_training/stage3/data_access.py": "839405e7c3639aee87fe9c6905075f1e49668fdc2755982aa9c8b7ac64552f5a",
+    "kaggle_training/stage3/served.py": "86ff3cd13a20c782fed8ce1f4afc4669795ebc113c88a891ee912e6eeaaad1e0",
+    "kaggle_training/stage3/events.py": "add8af5e9df9baaa32527857b6bb856c9d71b8bcb46c9f2673b56bbe927e84fa",
+    "kaggle_training/stage3/e1_layer.py": "290616ba8b07e2cb6e399820371c0a58f21e52e0a8b672a61df5bd2a61729767",
+    "kaggle_training/stage3/u2_artifacts.py": "242941430314446d4d2aed5fbc9fdc8b5b77650ed5ab2a7e82f2b66b8d642162",
+    "kaggle_training/stage3/final/common.py": "c585cf8a72731d75821cef5d98983ebecfb52aadd322d93e1598d4d4ed70bc8c",
+    "kaggle_training/stage3/final/calibrate.py": "4ccfa8714b7e129e68d4bbc723a4ce7728bc9a86b7ecabe7cb85c8fa60c83fcd",
+    "kaggle_training/stage3/final/final_access.py": "f35f658e5d2de2cc4396e31b43ca970ff79aee8ec9f875157b13e6591b126c8a",
+    "kaggle_training/stage3/final/final_runner.py": "cf2e3272a4764cf64a38b404ad78369d54a55ec1bec5f32cb1131121cb48918d",
+    "kaggle_training/stage3/kaggle/pkg_steps.py": "1b0eb5aa7094f696ca2906d1c2ad8be2e5ae012d271bdb973c200301818c0dba",
+    "kaggle_training/stage3/kaggle/pins.json": "2213750e1431392941b8e6449880020d5560c9bf8d01b2df0a2d0cc1886bb7b0",
+    "ml/v2/__init__.py": "8783e193eee6d5c776f50d9ed1c0396e4a8f99a724050393d5a4968ee89293ac",
+    "ml/v2/features.py": "359a1af066c56c1c2b9dc6dd68f51dc1870a279bf1b99d8571c14f1270ad4d12",
+    "ml/v2/forecast.py": "5b9c8d9e2f80158a93bdf40eb99114c0db6919196be2d7ea7226005fd572203e",
+    "ml/v2/methods.py": "b7ac7a08b4e32b799bcc8394e2a7e289cecb6c1bb1c10cf15d1f994e95f02a93",
+    "ml/v2/registry.py": "a5a6a38a8578a54c372fb40b5072a70990dbabd80602ca3116829806454c46b6",
+    "ml/models_v2/manifest.json": "800ff78e560fc74b553623b03ce401cb34c50b992564814ae3385ecdc88cd26b",
+    "ml/models_v2/shared_total_7.json": "527438cea9132213f6a09f94905b5ebff4756c435e7b5cf2cc2ec71eb24a5041",
+    "ml/models_v2/shared_total_28.json": "8916771384e4fa8f3d0dfecdc7901fe6d49fefe8fc6ff1ea74a9a71cc1bec2bf",
+    "data/m5/calendar.csv": "d12b5914ef03e66649adf5dd9e996e6602251c22b7a6af8f1f7e3aa12f8860f5",
+    "data/m5/sales_train_evaluation.csv.zip": "7c2e7770397258a4b2531ececdcb2f7c6ec5321d8af856a52289265d281ed941",
+    "data/m5/sell_prices.csv.zip": "f58bfc7bf8422e4d8493d461cd4f26f3ed627e204c129228ef5a7326e41b6de7",
+    "kaggle_training/stage3/data_dev/pakistan_dev_2016-07-01_2017-12-31.csv": "fa96772c26d7a1d84e239cadea2efba80e41b5778603dfcc3f79cabcc9ec19f4",
+    "kaggle_training/stage3/data_dev/pakistan_dev_manifest.json": "f35c13bef1a1cf6a8af8215e3fadf2e0268f40b0fad5848fee32677e40762476",
+    "kaggle_training/stage3/outputs/reservation_m5.json": "ba8f1a1b4c28af627679274ce7979bbd0aae7b284c4ea3129184e9f2e968d3ab",
+    "kaggle_training/stage3/outputs/dev_protocol.json": "5b4b618c3fb3326531f64a12bd0ca5a996937fbafe89a4ad4f2932473ec4569c",
+    "kaggle_training/stage3/outputs/dev_protocol_amendment_A1.json": "916c0b11b42dce3a20d82c6d5b85d16d3ee0a5da36efdfe49eabc8b11a1c72ea",
+    "kaggle_training/stage3/outputs/dev_protocol_amendment_A2.json": "9ad641be36dde1e7898c2ae255cc70b8d798d5dff1f903c5958f7a9a0d064119",
+    "kaggle_training/stage3/outputs/us/uncertainty_selection.json": "3cd73c572d673614b494bcec340bd0af0108ddbdf301f5bd6504172495940e4e",
+    "kaggle_training/stage3/outputs/us/decision_selection.json": "1dbd29abaa0086e6ba3759bebee99bb800cc8fecebaa36d7a6ae6194fdbc35b1",
+    "kaggle_training/stage3/outputs/final_prep/exact_recheck.json": "6c0118d10987a4d23917514bc30932f2e88996cf089f68c47242bbd958117916",
+    "kaggle_training/stage3/outputs/u2_selected/index.json": "10e8485bc6127e9075a9d5a993d618d0b4fc9a0bdaa01e81fc30de1687294e6b",
+    "kaggle_training/stage3/outputs/u2_selected/U2_h7_p0.8.json": "2153c5d9aae68badd65f8abdc6b4821b6da5513f7649a1f80a9d17996296df27",
+    "kaggle_training/stage3/outputs/u2_selected/U2_h28_p0.8.json": "f3d9ce7a5c3e1793a1a6c11967aa109a85e746993780cc49189cd626bc3335ab",
+    "kaggle_training/stage3/outputs/u2_selected/U2_h7_p0.9.json": "c9881ea7d37ed49a829866bf5972213abda709f5cbd37cba4b0b692004c53fd2",
+    "kaggle_training/stage3/outputs/u2_selected/U2_h28_p0.9.json": "9a55d971882797bff52efc88a98252972e7658aefd25ec6b9c14a54c43bb196d",
+    "kaggle_training/stage3/outputs/research_models/R12_7.json": "c4c28a011337527c9ba294113d901de972d3b99df98d3b035949c9abe911355c",
+    "kaggle_training/stage3/outputs/research_models/R12_28.json": "cf5421307ee82fe860c5cfee97d7b90b6c33915c19a060b0faf837afd8be6019",
+    "kaggle_training/stage3/outputs/research_models/R13_7.json": "1137d71eb862861ae37c7dd1e56f2fa5b38ee162f96c45b7f75eab6b182f9018",
+    "kaggle_training/stage3/outputs/research_models/R13_28.json": "ae6fc884dde258f9a787c0ff3a00f73fac60726f4ae4f8cc4e201c30b23d0362",
+    "kaggle_training/stage3/outputs/research_models/R14_7.json": "2204a9e2423d382f2011b89b88133c6de2875e1d96b51be463162c17a091464a",
+    "kaggle_training/stage3/outputs/research_models/R14_28.json": "ed68a1e8dd54f52a4ce47d6df0f4d09966ce2a2832115f213ee5fef478bdbdaa"
+  }
+}

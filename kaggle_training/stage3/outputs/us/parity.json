@@ -1,0 +1,22 @@
+{
+  "FIT_A": {
+    "model": "R12",
+    "max_abs_difference_units": 1.52587890625e-05,
+    "sampled_rows": 300
+  },
+  "FIT_B": {
+    "model": "R13",
+    "max_abs_difference_units": 1.3709068298339844e-05,
+    "sampled_rows": 300
+  },
+  "CAL": {
+    "model": "R14",
+    "max_abs_difference_units": 2.002716064453125e-05,
+    "sampled_rows": 300
+  },
+  "SEL": {
+    "model": "R14",
+    "max_abs_difference_units": 6.973743438720703e-06,
+    "sampled_rows": 300
+  }
+}

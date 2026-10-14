@@ -43,7 +43,7 @@ const ANOMALY_TYPE_LABELS = {
   unusually_large_order: 'Unusually large order (kept)',
 };
 
-const COLS = ['product_name', 'category', 'price', 'quantity', 'sale_date', 'revenue', 'stock_level', 'reorder_threshold'];
+const COLS = ['product_name', 'category', 'price', 'quantity', 'sale_date', 'revenue'];
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 function FreshnessBadge({ freshness, loading }) {
@@ -154,11 +154,16 @@ function CoverageForm({ value, onChange }) {
 
 function ResultNotes({ result }) {
   if (!result) return null;
-  const { coverage, large_orders_flagged: large, date_help: dateHelp, source_timezone: tz } = result;
+  const { coverage, large_orders_flagged: large, date_help: dateHelp, source_timezone: tz, stock_columns_ignored: stockIgnored } = result;
   const unconfirmed = !coverage && (result.inserted ?? 0) > 0;
-  if (!coverage && !large && !dateHelp && !unconfirmed) return null;
+  if (!coverage && !large && !dateHelp && !unconfirmed && !stockIgnored) return null;
   return (
     <div className="panel-body result-notes">
+      {stockIgnored && (
+        <p><HiExclamationTriangle aria-hidden="true" style={{ color: 'var(--warning)' }} />
+          Stock columns ignored ({stockIgnored.columns.join(', ')}). {stockIgnored.message}{' '}
+          <a href="/inventory" className="link-arrow" style={{ display: 'inline-flex' }}>Go to Inventory <HiArrowRight /></a></p>
+      )}
       {unconfirmed && (
         <p><HiExclamationTriangle aria-hidden="true" style={{ color: 'var(--warning)' }} />
           Saved, but not confirmed complete: these sales appear everywhere, yet they do not count toward forecasts until you confirm the period they cover (Upload history → Confirm period).</p>
@@ -244,7 +249,9 @@ function RollbackModal({ version, onClose, onConfirm, loading }) {
       <p className="dialog-kicker" style={{ color: 'var(--danger)' }}>Version #{version.version_number}</p>
       <h2 id="rollback-title" className="dialog-title" style={{ marginTop: 10 }}>Roll back this upload?</h2>
       <p id="rollback-description" style={{ margin: '14px 0 20px', fontSize: 13.5, lineHeight: 1.7, color: 'var(--muted)' }}>
-        This permanently deletes <strong style={{ color: 'var(--danger)' }}>{fmtNum(version.rows_added)} records</strong> from your sales history. It cannot be undone.
+        {version.source === 'stock_count'
+          ? <>The <strong style={{ color: 'var(--danger)' }}>{fmtNum(version.rows_added)} stock counts</strong> from this file stop being used; earlier counts apply again. The file stays in history as rolled back.</>
+          : <>This permanently deletes <strong style={{ color: 'var(--danger)' }}>{fmtNum(version.rows_added)} records</strong> from your sales history. It cannot be undone.</>}
       </p>
       <label htmlFor="rollback-confirmation" className="label-text">Type <strong style={{ color: 'var(--foreground)' }}>ROLLBACK</strong> to confirm</label>
       <input type="text" id="rollback-confirmation" value={text} onChange={(e) => setText(e.target.value)} placeholder="ROLLBACK" className="input-field" autoComplete="off" />
@@ -303,7 +310,7 @@ export default function UploadPage() {
     setAnomaliesLoading(false);
   }, []);
 
-  useEffect(() => { fetchPageData(); }, [fetchPageData]);
+  useEffect(() => { queueMicrotask(fetchPageData); }, [fetchPageData]);
 
   // ── Derived stats ──────────────────────────────────────────────────────────
   const totalRecords = freshness?.total_records ?? 0;
@@ -384,7 +391,7 @@ export default function UploadPage() {
       setRollbackTarget(null);
       fetchPageData();
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Rollback failed');
+      toast.error(err.response?.data?.message || err.response?.data?.error || 'Rollback failed');
     } finally {
       setRollbackLoading(false);
     }
@@ -403,10 +410,10 @@ export default function UploadPage() {
 
   // ── Sample CSV ────────────────────────────────────────────────────────────
   const downloadSample = () => {
-    const csv = `product_name,category,price,quantity,sale_date,revenue,stock_level,reorder_threshold
-Wireless Mouse,Electronics,29.99,50,2023-10-01,1499.50,150,20
-Mechanical Keyboard,Electronics,89.99,20,2023-10-02,1799.80,85,15
-Desk Mat,Accessories,19.99,100,2023-10-02,1999.00,300,50`;
+    const csv = `product_name,category,price,quantity,sale_date,revenue
+Wireless Mouse,Electronics,29.99,50,2023-10-01,1499.50
+Mechanical Keyboard,Electronics,89.99,20,2023-10-02,1799.80
+Desk Mat,Accessories,19.99,100,2023-10-02,1999.00`;
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
     a.download = 'nexus_sample_data.csv'; a.click();
@@ -579,7 +586,7 @@ Desk Mat,Accessories,19.99,100,2023-10-02,1999.00,300,50`;
         </div>
 
         <Panel aria-labelledby="history-title">
-          <PanelHeader title="Upload history" titleId="history-title" description="Every import is kept as a version. Only confirmed periods count toward forecasts; the latest active version can be rolled back">
+          <PanelHeader title="Upload history" titleId="history-title" description="Every import is kept as a version. Only confirmed periods count toward forecasts. Sales imports and stock-count files share one version history: only the latest active version can be rolled back, so newer versions of either kind must be rolled back first">
             {versions.length > 0 && <span className="badge">{versions.length} versions</span>}
           </PanelHeader>
           <div className="table-scroll">
@@ -593,18 +600,20 @@ Desk Mat,Accessories,19.99,100,2023-10-02,1999.00,300,50`;
                 ) : versions.length > 0 ? (
                   versions.map((v, i) => {
                     const isLatestActive = i === 0 && !v.is_rolled_back;
+                    const isCount = v.source === 'stock_count';
                     const q = parseFloat(v.quality_score);
                     return (
                       <tr key={v.id} className={v.is_rolled_back ? 'is-muted' : ''}>
-                        <td className="is-strong is-mono">#{v.version_number}</td>
+                        <td className="is-strong"><span className="is-mono">#{v.version_number}</span>{isCount && <span className="list-row-aside"> · Stock count</span>}</td>
                         <td>{fmtDate(v.created_at)}</td>
                         <td className="is-num" style={{ color: 'var(--success)' }}>{fmtNum(v.rows_added)}</td>
                         <td className="is-num" style={{ color: 'var(--warning)' }}>{fmtNum(v.rows_skipped)}</td>
                         <td className="is-num" style={{ color: 'var(--danger)' }}>{fmtNum(v.rows_rejected)}</td>
-                        <td><span className={`status ${qStatus(q)}`}>{q.toFixed(0)}</span></td>
+                        <td>{Number.isFinite(q) ? <span className={`status ${qStatus(q)}`}>{q.toFixed(0)}</span> : <span className="text-faint">—</span>}</td>
                         <td>{v.is_rolled_back ? <StatusBadge tone="critical">Rolled back</StatusBadge> : <StatusBadge tone="success">Active</StatusBadge>}</td>
                         <td className="cell-note">
                           {v.is_rolled_back ? '—'
+                            : isCount ? <span title="Stock counts are not sales and do not affect forecasts">Not sales data</span>
                             : v.coverage_start ? <span className="status status-success">Confirmed · {v.coverage_start} → {v.coverage_end}</span>
                             : v.rows_rejected > 0 ? <span title="Rows were rejected, so this upload cannot be confirmed complete">Not confirmed · rejected rows</span>
                             : <button onClick={() => setConfirmTarget(v)} className="btn-ghost btn-sm"><HiShieldCheck />Confirm period</button>}

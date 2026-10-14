@@ -1,0 +1,3 @@
+Connected to PostgreSQL database
+applying 005_suppliers_purchasing
+Applied: 005_suppliers_purchasing

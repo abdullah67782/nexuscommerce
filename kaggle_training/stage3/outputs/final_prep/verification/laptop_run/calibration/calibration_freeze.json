@@ -1,0 +1,41 @@
+{
+  "calibration_freeze_id": "nexus-stage3-calibration-freeze-v1",
+  "protocol_sha256": "8c385172f651bef23b40cbb75a8508af8d3ffbc62c54781914406c3472a445af",
+  "source_run": {
+    "output_zip_sha256": "2b0582b1cbef3c53af181b511d3192706f4bac600195d29e372d065c2104235e",
+    "environment": {
+      "python": "3.12.4",
+      "numpy": "1.26.4",
+      "pandas": "2.2.2",
+      "scipy": "1.17.1",
+      "xgboost": "3.4.1",
+      "platform": "Windows-10-10.0.19045-SP0",
+      "cpu_count": 12,
+      "gpu": null,
+      "xgboost_cuda_build": true,
+      "pins_ok": {
+        "numpy": true,
+        "pandas": true,
+        "xgboost": true,
+        "scipy": true
+      },
+      "unpinned_override": false
+    },
+    "note": "app ML environment (ml/venv) on the owner's Windows laptop; all 7 package steps exited 0"
+  },
+  "artifacts": {
+    "calibration_pk.json": "9d9f014b923ccf8c3fee503f443c8fe868852782fa8305e09651ed3d165a0edc",
+    "calibration_pk_rows.csv.gz": "cc6993a9dd5fc40fc4d994e8d3cdd4e6c52282798275b1d17322c413ab1770d5",
+    "calibration_us.json": "fc73f5d2b592a282d774f0d3b6d5a22797d872c586a8ed0db955a6e9d4742d12",
+    "calibration_us_rows.csv.gz": "66ec0e475b9737d147ccb4d69d1332d7e564b95b663bb441fb512b93fcbacb08"
+  },
+  "u2_boosters_used": "selected CPU development boosters (outputs/u2_selected), hashes in final_protocol.json; never retrained",
+  "verification": {
+    "package_SHA256SUMS": "all match",
+    "development_reproduction": "FIT_A, FIT_B, CAL, SEL reproduced exactly (0 rows differing)",
+    "selected_booster_predictions": "identical to development on this machine (max diff 0)",
+    "calibration_vs_cloud_crosscheck": "US: every quantile, U2 correction and D1 r_p identical; rows identical. PK: rows identical; E1 beta max |diff| 5.6e-17",
+    "u2_retrain": "not bitwise reproducible across builds; see U2_REPRODUCIBILITY.md"
+  },
+  "frozen_at": "2026-10-13T10:57:49+00:00"
+}

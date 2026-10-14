@@ -1,0 +1,4 @@
+◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+Connected to PostgreSQL database
+applying 004_inventory_ledger
+Applied: 004_inventory_ledger

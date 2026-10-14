@@ -31,6 +31,7 @@ data/Pakistan Largest Ecommerce Dataset.csv
 data/m5/
 data/store_item_demand/
 kaggle_training/original_training/datasets/
+kaggle_training/stage3/data_dev/
 *.zip
 
 # ── Office documents & local backups (kept on disk, not in the repo) ────
@@ -45,3 +46,4 @@ Thumbs.db
 desktop.ini
 .vscode/
 .idea/
+kaggle_training/stage3/kaggle/dist/

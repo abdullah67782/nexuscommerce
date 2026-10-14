@@ -1,0 +1,37 @@
+period,h,scope,kind,windows,wape,bias_pct,methods
+FIT,7,named_categories,all,4965,79.25765697129893,-10.34256429031766,"{'shared_model': 2685, 'average_28': 2280}"
+FIT,7,named_categories,event,1815,85.39862963163023,-27.521871950022774,"{'average_28': 1005, 'shared_model': 810}"
+FIT,7,named_categories,non_event,3150,72.83039187925057,7.637643493383031,"{'shared_model': 1875, 'average_28': 1275}"
+FIT,7,uncategorised,all,331,89.20359790342,1.6983736463205708,"{'shared_model': 179, 'average_28': 152}"
+FIT,7,uncategorised,event,121,93.74308491902927,-28.143460594469413,"{'average_28': 67, 'shared_model': 54}"
+FIT,7,uncategorised,non_event,210,82.90829683188703,43.082638085579084,"{'shared_model': 125, 'average_28': 85}"
+FIT,28,named_categories,all,4650,73.86124640802325,-16.037377422947035,"{'shared_model': 2370, 'average_28': 2280}"
+FIT,28,named_categories,event,3075,82.3417833374253,-13.346582475659917,"{'average_28': 1755, 'shared_model': 1320}"
+FIT,28,named_categories,non_event,1575,49.07442563998657,-23.902003523531356,"{'shared_model': 1050, 'average_28': 525}"
+FIT,28,uncategorised,all,310,84.59984158975125,2.4314763010119806,"{'shared_model': 158, 'average_28': 152}"
+FIT,28,uncategorised,event,205,101.59396991805731,2.0140308969947984,"{'average_28': 117, 'shared_model': 88}"
+FIT,28,uncategorised,non_event,105,26.59112366902839,3.8564080316145266,"{'shared_model': 70, 'average_28': 35}"
+CAL,7,named_categories,all,375,53.62437848826709,-18.238392152468865,{'shared_model': 375}
+CAL,7,named_categories,event,120,56.64136489103774,-22.388876803108996,{'shared_model': 120}
+CAL,7,named_categories,non_event,255,51.60899921817421,-15.465823897584782,{'shared_model': 255}
+CAL,7,uncategorised,all,25,61.333071500377,-9.399732796106477,{'shared_model': 25}
+CAL,7,uncategorised,event,8,61.277217322628104,-18.721539246213155,{'shared_model': 8}
+CAL,7,uncategorised,non_event,17,61.36051350334048,-4.819788187865483,{'shared_model': 17}
+CAL,28,named_categories,all,330,46.974586067933515,-29.062240752113308,{'shared_model': 330}
+CAL,28,named_categories,event,195,50.013843808769984,-28.461034544206942,{'shared_model': 195}
+CAL,28,named_categories,non_event,135,40.55724241749913,-30.331677953529404,{'shared_model': 135}
+CAL,28,uncategorised,all,22,34.45544105370314,-5.8327876706038255,{'shared_model': 22}
+CAL,28,uncategorised,event,13,33.77214783803609,-19.48008531328877,{'shared_model': 13}
+CAL,28,uncategorised,non_event,9,35.60679315357157,17.162969404337364,{'shared_model': 9}
+SEL,7,named_categories,all,390,78.43926545082678,-11.711991777181742,{'shared_model': 390}
+SEL,7,named_categories,event,135,79.18736609052296,-35.2819106515771,{'shared_model': 135}
+SEL,7,named_categories,non_event,255,77.36582211501486,22.108287205099252,{'shared_model': 255}
+SEL,7,uncategorised,all,26,105.5377585438052,6.6289184313041725,{'shared_model': 26}
+SEL,7,uncategorised,event,9,114.68320749044868,-25.520107081749625,{'shared_model': 9}
+SEL,7,uncategorised,non_event,17,91.64505365539257,55.46598772212636,{'shared_model': 17}
+SEL,28,named_categories,all,345,73.714689746534,-39.73836518772625,{'shared_model': 345}
+SEL,28,named_categories,event,225,80.59447924578082,-40.51962838886584,{'shared_model': 225}
+SEL,28,named_categories,non_event,120,45.46623738721004,-36.53049431901715,{'shared_model': 120}
+SEL,28,uncategorised,all,23,98.29327455659923,12.917674847248064,{'shared_model': 23}
+SEL,28,uncategorised,event,15,102.51121923389502,0.15827486604716018,{'shared_model': 15}
+SEL,28,uncategorised,non_event,8,77.08209203019817,77.08209203019817,{'shared_model': 8}

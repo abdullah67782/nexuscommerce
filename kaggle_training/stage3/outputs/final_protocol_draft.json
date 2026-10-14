@@ -1,0 +1,194 @@
+{
+  "protocol_id": "nexus-stage3-final-protocol-v1 (DRAFT)",
+  "status": "draft for review; not frozen; no reserved outcome accessed",
+  "production_unchanged": [
+    "nexus-v2-shared-20261008 models and hashes",
+    "routing rule",
+    "replenishment-1"
+  ],
+  "depends_on": {
+    "dev_protocol.json": "5b4b618c3fb3326531f64a12bd0ca5a996937fbafe89a4ad4f2932473ec4569c",
+    "dev_protocol_amendment_A1.json": "916c0b11b42dce3a20d82c6d5b85d16d3ee0a5da36efdfe49eabc8b11a1c72ea",
+    "reservation_m5.json": "ba8f1a1b4c28af627679274ce7979bbd0aae7b284c4ea3129184e9f2e968d3ab",
+    "data_access.py": "839405e7c3639aee87fe9c6905075f1e49668fdc2755982aa9c8b7ac64552f5a",
+    "served.py": "86ff3cd13a20c782fed8ce1f4afc4669795ebc113c88a891ee912e6eeaaad1e0",
+    "events.py": "add8af5e9df9baaa32527857b6bb856c9d71b8bcb46c9f2673b56bbe927e84fa",
+    "us/uncertainty_selection.json": "3cd73c572d673614b494bcec340bd0af0108ddbdf301f5bd6504172495940e4e",
+    "us/decision_selection.json": "1dbd29abaa0086e6ba3759bebee99bb800cc8fecebaa36d7a6ae6194fdbc35b1",
+    "pk/pk_results.json": "401ad9272f98cd3486325fb7109ecc8b1a5af10707f2053d5c142f337db3021b",
+    "ml/models_v2/manifest.json": "800ff78e560fc74b553623b03ce401cb34c50b992564814ae3385ecdc88cd26b"
+  },
+  "us": {
+    "products": "reservation nexus-stage3-m5-v1 holdout (90 products) x 10 stores, launch = first price week",
+    "base": "frozen release nexus-v2-shared-20261008 served exactly (ml/v2 rule + TSB + 28-day average); parity on 300 sampled forecasts < 1e-3 units",
+    "final_windows": {
+      "within": [
+        "2015-11-01",
+        "2016-05-22"
+      ],
+      "origins": "every 7 days from 2015-11-01",
+      "horizons": [
+        7,
+        28
+      ]
+    },
+    "calibration": {
+      "data": "frozen-release forecasts on development products (consumed 180 + development_extra 150) x 10 stores",
+      "windows_within": [
+        "2015-06-01",
+        "2015-10-31"
+      ],
+      "origins": "every 7 days from 2015-06-01",
+      "computed": [
+        "U0 ratio quantiles per segment x horizon x level",
+        "U1 score quantiles",
+        "U2 conformal corrections (U2 boosters = development boosters, hashed at freeze)",
+        "D1 r_p (28-day U0 ratio quantile)"
+      ],
+      "not_calibrated": [
+        "U3 (own history)",
+        "D2/D2c (own analogue paths; pooled by category x segment x origin from final products' own past)",
+        "E1c (rule)"
+      ],
+      "order": "calibration computed and hashed BEFORE the final outcomes are read"
+    },
+    "candidates": {
+      "event": {
+        "E1c": "25 December closure: F x (h - closed days in window)/h; no parameters",
+        "E1_learned": "not carried (failed development)"
+      },
+      "totals_uncertainty": {
+        "regular|7|0.8": "U0",
+        "regular|7|0.9": "U0",
+        "regular|28|0.8": "U0",
+        "regular|28|0.9": "U0",
+        "occasional|7|0.8": "U2",
+        "occasional|7|0.9": "U0",
+        "occasional|28|0.8": "U0",
+        "occasional|28|0.9": "U0",
+        "rare|7|0.8": "U3",
+        "rare|7|0.9": "U3",
+        "rare|28|0.8": "U0",
+        "rare|28|0.9": "U1",
+        "dormant|7|0.8": null,
+        "dormant|7|0.9": null,
+        "dormant|28|0.8": null,
+        "dormant|28|0.9": "U2",
+        "short_history|7|0.8": "U2",
+        "short_history|7|0.9": "U2",
+        "short_history|28|0.8": "U0",
+        "short_history|28|0.9": "U1"
+      },
+      "decision_protection_frozen_rule": {
+        "regular|0.8": "D1@0.8",
+        "regular|0.9": "D1@0.9",
+        "occasional|0.8": "D2c@0.8",
+        "occasional|0.9": "D1@0.9",
+        "rare|0.8": "D2c@0.8",
+        "rare|0.9": "D2c@0.9",
+        "dormant|0.8": null,
+        "dormant|0.9": null,
+        "short_history|0.8": "D2c@0.8",
+        "short_history|0.9": "D2c@0.9"
+      },
+      "decision_protection_kappa_robust_alternative": {
+        "regular|0.8": null,
+        "regular|0.9": "D2c@0.9",
+        "occasional|0.8": "D2c@0.8",
+        "occasional|0.9": "D2c@0.9",
+        "rare|0.8": "D2c@0.8",
+        "rare|0.9": "D2c@0.9",
+        "short_history|0.8": "D2c@0.8",
+        "short_history|0.9": "D2c@0.9",
+        "dormant|0.8": null,
+        "dormant|0.9": null
+      },
+      "decision_selection_to_use": "PENDING architect decision D2"
+    },
+    "decision_track": {
+      "pairs": [
+        [
+          3,
+          7
+        ],
+        [
+          7,
+          7
+        ],
+        [
+          3,
+          14
+        ],
+        [
+          7,
+          14
+        ],
+        [
+          14,
+          7
+        ]
+      ],
+      "excluded": "L14/R14 (29 days > 28)",
+      "kappa": "1.0 all pairs; 0.5 and 1.5 on (7,7)",
+      "scenarios": [
+        "none",
+        "mid"
+      ],
+      "paths": 100,
+      "success": "no shortage in window a..a+R-1 (a = L+2) on actual daily demand",
+      "reported": [
+        "lost units (lower bound)",
+        "end stock",
+        "shortage before arrival",
+        "mean Q vs D0"
+      ]
+    }
+  },
+  "pakistan": {
+    "series": "15 named categories (primary); uncategorised reported separately; recorded order quantities",
+    "base": "frozen release served exactly",
+    "final_windows": {
+      "within": [
+        "2018-01-01",
+        "2018-08-28"
+      ],
+      "origins": "every 7 days from 2018-01-01",
+      "horizons": [
+        7,
+        28
+      ]
+    },
+    "calibration": {
+      "U0_U1_windows_within": [
+        "2017-07-01",
+        "2017-12-31"
+      ]
+    },
+    "event_layer": {
+      "fit_windows_within": [
+        "2016-07-29",
+        "2017-12-31"
+      ],
+      "events": [
+        "Independence Day",
+        "Eid al-Adha"
+      ],
+      "alpha": 10,
+      "label": "events with >= 2 fit occurrences only; others unadjusted (PENDING decision D3)"
+    },
+    "event_dates": "confirmed from official notifications and recorded before the run",
+    "uncertainty": "U0/U1 coverage reported descriptively; no suggestion unless the frozen criterion passes"
+  },
+  "criteria": {
+    "event": "event-window WAPE >= 5% better at both horizons; non-event and overall WAPE <= +0.5 points; |event bias| not larger; date-block and cluster 95% intervals of the improvement exclude 0; >= 2 fit occurrences per event",
+    "totals_uncertainty": "coverage within +/-5 points (+/-10 rare) in event AND non-event windows; >= 200 windows and >= 30 series",
+    "decision_protection": "coverage within +/-5 (+/-10 rare) on every pair and scenario at kappa 1 [plus kappa 0.5/1.5 on (7,7) if decision D2 adopts the robust rule]",
+    "scope": "a pass authorises a suggestion only for the evaluated market, segment, horizon and level"
+  },
+  "statistics": {
+    "date_block_bootstrap": "4-week blocks over origin dates, B=500",
+    "cluster_bootstrap": "products (US) / categories (Pakistan)",
+    "occurrences": "counted per event; overlapping windows of one occurrence are one occurrence"
+  },
+  "execution": "one runner script, hashed at freeze; refuses a second run (lock file) or any hash mismatch; every outcome reported"
+}

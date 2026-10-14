@@ -1,0 +1,251 @@
+{
+  "0_after_migration_and_demo_script": {
+    "items": {
+      "Bridal Clutch": {
+        "on_hand": 6,
+        "known": true,
+        "state": "stale",
+        "tracking": "declared_unverified",
+        "alert": "above",
+        "legacy": null
+      },
+      "Ceramic Mug Set": {
+        "on_hand": 21,
+        "known": true,
+        "state": "last_known",
+        "tracking": "declared_unverified",
+        "alert": "above",
+        "legacy": 25
+      },
+      "Lawn Suit 3-Piece": {
+        "on_hand": 55,
+        "known": true,
+        "state": "last_known",
+        "tracking": "declared_unverified",
+        "alert": "above",
+        "legacy": 80
+      },
+      "Pashmina Shawl": {
+        "on_hand": null,
+        "known": false,
+        "state": "unverified_only",
+        "tracking": "not_applicable",
+        "alert": "unknown_stock",
+        "legacy": 12
+      },
+      "Prayer Mat": {
+        "on_hand": 0,
+        "known": true,
+        "state": "last_known",
+        "tracking": "declared_unverified",
+        "alert": "below",
+        "legacy": null
+      }
+    },
+    "tables": {
+      "snapshots": 7,
+      "movements": 4,
+      "legacy_inventory_rows": 3,
+      "legacy_inventory_units": 117
+    }
+  },
+  "1_overview_text": {
+    "Pashmina Shawl": "\u2014 no count\nold value 12, unverified",
+    "Prayer Mat": "0",
+    "Lawn Suit 3-Piece": "55"
+  },
+  "2_count_shipment_newer_count": {
+    "before_newer_count": 55,
+    "newer_count_entered": 54,
+    "on_hand_after": 54,
+    "movements_relation": [
+      [
+        -4,
+        "before_count_included"
+      ],
+      [
+        -2,
+        "before_count_included"
+      ],
+      [
+        -3,
+        "before_count_included"
+      ]
+    ]
+  },
+  "4_replay": {
+    "first": [
+      201,
+      1
+    ],
+    "on_hand_after_first": 50,
+    "replay": [
+      200,
+      {
+        "recorded": 0,
+        "replayed": 1
+      }
+    ],
+    "on_hand_after_replay": 50,
+    "conflicting_replay": [
+      409,
+      "event_conflict",
+      "Some event ids were already recorded with different contents. Nothing was recorded."
+    ],
+    "tables_unchanged_by_replay_and_conflict": true
+  },
+  "3_revoke_newer_count": {
+    "on_hand_after_revoke": 51,
+    "expected": "64 (older count) - 3 - 2 - 4 (demo shipments) - 4 (e2e shipment) = 51"
+  },
+  "count_same_instant": {
+    "conflict_prompt_shown": true,
+    "on_hand_after_replace": 5,
+    "history": [
+      [
+        5,
+        "active"
+      ],
+      [
+        6,
+        "superseded"
+      ]
+    ]
+  },
+  "5_sales_upload": {
+    "tables_before": {
+      "snapshots": 9,
+      "movements": 5,
+      "legacy_inventory_rows": 3,
+      "legacy_inventory_units": 117
+    },
+    "tables_after": {
+      "snapshots": 9,
+      "movements": 5,
+      "legacy_inventory_rows": 3,
+      "legacy_inventory_units": 117
+    },
+    "on_hand_before": {
+      "Bridal Clutch": 5,
+      "Ceramic Mug Set": 21,
+      "Lawn Suit 3-Piece": 51,
+      "Pashmina Shawl": null,
+      "Prayer Mat": 0
+    },
+    "on_hand_after": {
+      "Bridal Clutch": 5,
+      "Ceramic Mug Set": 21,
+      "Lawn Suit 3-Piece": 51,
+      "Pashmina Shawl": null,
+      "Prayer Mat": 0,
+      "Silk Dupatta": null
+    },
+    "mug_tracking_before_after": [
+      "declared_unverified",
+      "partial"
+    ],
+    "new_product": {
+      "on_hand": null,
+      "known": false,
+      "state": "missing",
+      "tracking": "not_applicable",
+      "alert": "not_set",
+      "legacy": null
+    }
+  },
+  "count_file": {
+    "latest_version": {
+      "version_number": 7,
+      "source": "stock_count",
+      "rows_added": 2,
+      "rows_rejected": 2
+    },
+    "after_import": {
+      "Silk Dupatta": 14,
+      "Ceramic Mug Set": 19
+    },
+    "rollback": [
+      200,
+      "stock_count",
+      2
+    ],
+    "after_rollback": {
+      "Silk Dupatta": null,
+      "Ceramic Mug Set": 21
+    }
+  },
+  "6_isolation": {
+    "responses": {
+      "GET item": 404,
+      "PATCH policy": 404,
+      "POST count on A product id": 400,
+      "POST count by A product name": 400,
+      "POST movement on A product": 404,
+      "POST shipment via A source": 404,
+      "POST revoke A count": 404,
+      "GET A source mapping": 404,
+      "GET items list (B)": 0,
+      "GET alerts (B)": 0
+    },
+    "tables_unchanged": true
+  },
+  "7_error_state_text": "Inventory could not be loaded\n\nSimulated failure. No figures are shown rather than sample ones.\n\nRetry",
+  "final": {
+    "items": {
+      "Bridal Clutch": {
+        "on_hand": 5,
+        "known": true,
+        "state": "stale",
+        "tracking": "declared_unverified",
+        "alert": "above",
+        "legacy": null
+      },
+      "Ceramic Mug Set": {
+        "on_hand": 21,
+        "known": true,
+        "state": "last_known",
+        "tracking": "partial",
+        "alert": "above",
+        "legacy": 25
+      },
+      "Lawn Suit 3-Piece": {
+        "on_hand": 51,
+        "known": true,
+        "state": "last_known",
+        "tracking": "declared_unverified",
+        "alert": "above",
+        "legacy": 80
+      },
+      "Pashmina Shawl": {
+        "on_hand": null,
+        "known": false,
+        "state": "unverified_only",
+        "tracking": "not_applicable",
+        "alert": "unknown_stock",
+        "legacy": 12
+      },
+      "Prayer Mat": {
+        "on_hand": 0,
+        "known": true,
+        "state": "last_known",
+        "tracking": "declared_unverified",
+        "alert": "below",
+        "legacy": null
+      },
+      "Silk Dupatta": {
+        "on_hand": null,
+        "known": false,
+        "state": "missing",
+        "tracking": "not_applicable",
+        "alert": "not_set",
+        "legacy": null
+      }
+    },
+    "tables": {
+      "snapshots": 11,
+      "movements": 5,
+      "legacy_inventory_rows": 3,
+      "legacy_inventory_units": 117
+    }
+  }
+}

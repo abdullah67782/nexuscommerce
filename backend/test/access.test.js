@@ -12,8 +12,11 @@ before(async () => {
   const res = await ctx.api('POST', '/data/upload', { token: a.token, form: csvForm(salesCsv(['Mouse'], 40)) });
   assert.equal(res.status, 200);
   aProductId = (await ctx.pool.query(`SELECT id FROM products WHERE user_id = $1`, [a.id])).rows[0].id;
-  // Low stock so it appears in A's inventory alerts.
-  await ctx.pool.query('UPDATE inventory SET stock_level = 2 WHERE product_id = $1', [aProductId]);
+  // Low stock (counted 2, threshold 10) so it appears in A's inventory alerts.
+  const c = await ctx.api('POST', '/inventory/snapshots', { token: a.token, json: {
+    idempotency_key: 'c1', observed_at: new Date(Date.now() - 3600000).toISOString(), items: [{ product_id: aProductId, quantity: 2 }] } });
+  assert.equal(c.status, 201, JSON.stringify(c.body));
+  await ctx.api('PATCH', `/inventory/items/${aProductId}/policy`, { token: a.token, json: { reorder_threshold: 10 } });
   // An ownerless product, as created by the old seeder.
   orphanId = (await ctx.pool.query(`INSERT INTO products (name) VALUES ('Orphan') RETURNING id`)).rows[0].id;
   await ctx.pool.query(`INSERT INTO sales (product_id, quantity, sale_date, revenue) VALUES ($1, 3, '2026-01-05', 30)`, [orphanId]);
@@ -57,7 +60,7 @@ test('dashboard stats and data quality are per seller', async () => {
 
 test('inventory alerts are per seller', async () => {
   const mine = await ctx.api('GET', '/inventory/alerts', { token: a.token });
-  assert.equal(mine.body.length, 1);
+  assert.deepEqual(mine.body.map(x => [x.product_id, x.stock_level, x.risk_level]), [[aProductId, 2, 'high']]);
   const theirs = await ctx.api('GET', '/inventory/alerts', { token: b.token });
   assert.deepEqual(theirs.body, []);
 });

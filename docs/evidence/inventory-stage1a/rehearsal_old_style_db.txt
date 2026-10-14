@@ -1,0 +1,18 @@
+Applied on the real database: 001_baseline, 002_import_identity, 003_data_coverage
+Pending: 004_inventory_ledger
+
+1. Backup  -> backend/backups/nexus_rehearse4_pre_migrate_20261008T105653.dump
+   62 KB
+2. Restore -> scratch database nexus_rehearse4_rehearsal_20261008t105653
+   restore verified: {"users":"2","products":"32","sales":"1800","sales_units":"5400","imports":"2","attributed_sales":"1800","upload_versions":"2","inventory_rows":"34","inventory_units":"1034"}
+3. Migrate the scratch copy
+   applying 004_inventory_ledger
+   applied: 004_inventory_ledger
+4. Verify
+   inventory evidence: 34 legacy rows kept (duplicate_not_selected 2, migrated 29, negative_not_migrated 1, ownerless_not_migrated 2); 29 unverified values, 827 units
+   row counts and quarantine unchanged; schema current
+
+REHEARSAL PASSED.
+Next: stop the backend, run `npm run migrate`, then start it again.
+Keep nexus_rehearse4_pre_migrate_20261008T105653.dump until the migrated app has been checked; restore it with:
+  dropdb nexus_rehearse4 && createdb nexus_rehearse4 && pg_restore -d nexus_rehearse4 --no-owner "backend/backups/nexus_rehearse4_pre_migrate_20261008T105653.dump"

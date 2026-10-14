@@ -1,0 +1,15 @@
+{
+  "version": "upper-estimates-1",
+  "policy_version": "upper-estimates-policy-1",
+  "evaluated_release": "nexus-v2-shared-20261008",
+  "xgboost_version": "3.4.1",
+  "files": {
+    "calibration_us.json": "fc73f5d2b592a282d774f0d3b6d5a22797d872c586a8ed0db955a6e9d4742d12",
+    "U2_h7_p0.8.json": "2153c5d9aae68badd65f8abdc6b4821b6da5513f7649a1f80a9d17996296df27",
+    "policy.json": "9220e43bef865b8064aafead010cf54efaaf5a895d30862ed12f2ffa86b2feed"
+  },
+  "frozen_sources": {
+    "calibration_us.json": "kaggle_training/stage3/outputs/final_prep/verification/laptop_run/calibration/calibration_us.json",
+    "U2_h7_p0.8.json": "kaggle_training/stage3/outputs/u2_selected/U2_h7_p0.8.json"
+  }
+}
