@@ -1,6 +1,6 @@
 # Inventory AI — feature checklist against the agreed architecture
 
-**Two scopes:** the **staged operational release** (Stages 1a–3 as approved) is complete. The **full original architecture** is **not** complete: six items in §9–§10 are unbuilt and explicitly deferred by the owner.
+**Two scopes:** the **staged operational release** (Stages 1a–3 as approved) is complete. The six further architecture items in §9–§10 were not built. They are outside the delivered module and recorded as future extensions in `docs/inventory-ai-future-extensions.md` (owner decision, 2026-10-14).
 
 Reconciliation of `docs/inventory-ai-architecture-proposal.md` (§4–§11) and the approved stage plans (Stage 1 plan, Stage 2 design, Stage 3 proposal and decisions) with what is built. Updated 2026-10-14.
 
@@ -13,7 +13,7 @@ Reconciliation of `docs/inventory-ai-architecture-proposal.md` (§4–§11) and 
 | **Reference (benchmark)** | Shown with its evidence label; not calibrated to the store |
 | **Research only** | Evaluated; not offered as a feature |
 | **Pending** | Waiting for clearance or evidence (listed in §11) |
-| **Unbuilt — deferred by the owner** | In the original architecture but not built in this module. On 2026-10-14 the owner explicitly deferred it to a later stage. The full architecture is therefore **not** complete. |
+| **Unbuilt — deferred by the owner** | In the original architecture but not built. On 2026-10-14 the owner closed the module at its staged scope; the item is recorded in `docs/inventory-ai-future-extensions.md`. |
 
 ## 1. Stock foundation (architecture §4; Stage 1a)
 

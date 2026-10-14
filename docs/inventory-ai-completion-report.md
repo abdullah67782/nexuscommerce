@@ -1,6 +1,6 @@
 # Inventory AI module — completion report (2026-10-14)
 
-**Scope.** The **staged operational release** (Stages 1a–3 as approved) is complete. The **full original architecture** is **not** complete: six items are unbuilt and explicitly deferred by the owner (see below).
+**Scope.** The **staged operational release** (Stages 1a–3 as approved) is complete. Six further architecture items were not built. They are recorded as future extensions in `docs/inventory-ai-future-extensions.md` and do not keep this module open (owner decision, 2026-10-14).
 
 **Review follow-up (Codex review of `0ef3572`):**
 - **Supplier performance.** An order cancelled after a partial receipt is no longer counted as a completed or on-time delivery. Delivery needs the full ordered quantity. Such orders are kept apart (`cancelled_after_partial`) and stay outside the lead-time statistics and the learned estimate. Covered by a regression test.
@@ -48,7 +48,7 @@ The owner directed the module's completion. Codex was the architect and reviewer
 | AI purchasing protection | **Research only.** The one-time final evaluation found that no cell passed: no candidate demonstrated superiority over the seller-set safety stock under the frozen comparison (G4; short history also G1). It is not integrated. See `docs/inventory-stage3-sequential-results.md`. |
 | Learned event effects (US, Pakistan) | Research only; they failed the final evaluation (`docs/inventory-stage3-final-results.md`) |
 | Two-sided ranges, daily paths | Not built: not validated |
-| Budget optimiser, anomaly detection, excess-stock advice, assistant, outcomes view, reject / snooze | **Unbuilt — explicitly deferred by the owner on 2026-10-14** to a later stage. The full architecture is therefore not complete. |
+| Budget optimiser, anomaly detection, excess-stock advice, assistant, outcomes view, reject / snooze | **Unbuilt — future extensions** (`docs/inventory-ai-future-extensions.md`), outside the delivered module (owner decision, 2026-10-14). |
 
 ## Verification
 
